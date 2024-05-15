@@ -19,18 +19,20 @@ import argparse
 parser = argparse.ArgumentParser(description='Generate code using OpenAI ChatGPT')
 parser.add_argument("-prompt", "--prompt", type=str, help='Prompt to generate code from')
 args = parser.parse_args()
-print(args.prompt)
+
+#create a openai instance
 client = OpenAI()
 
+#generate code
 completion = client.chat.completions.create(
-  model="gpt-3.5-turbo-16k",
+  model="gpt-3.5-turbo",
   messages=[
     {"role": "system", "content": "you are a master programmer in ROS. You can generate clean and easy to understand code for any Node."},
     {"role": "user", "content": f"{args.prompt}"},
   ]
 )
 
-#print the content
+#print only the code
 code_snippet = re.search(r'```(?:python|cpp)\n(.+?)\n```', completion.choices[0].message.content, re.DOTALL)
 if code_snippet:
     code = code_snippet.group(1).strip()

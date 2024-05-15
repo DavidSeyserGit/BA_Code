@@ -3,9 +3,19 @@
 #include <vector>
 #include <algorithm>
 
+/*
+    1. calculate fitness of the prompts
+    2. find 2 best prompts
+    3. crossover 2 best prompts to generate a child prompt that is better then the parent prompts
+    4. mutate the child prompt to make a better prompt
+    5. repeat steps 1-4 until the target is reached
+*/
+
 struct PromptOutput {
     std::string prompt;
     std::string output;
+    bool compiles;
+    double halsteadVolume;
     double fitness; // Change int to double for fitness
 };
 
@@ -37,50 +47,53 @@ int levenshtein_distance(const std::string& s1, const std::string& s2) {
 }
 
 void fitness(const std::string& target, std::vector<PromptOutput>& po) {
+
+    /*
+    need a better heuristic to find similarities LLM output and existing code
+    ideally something similar like the metrics in spreadsheets
+
+    Better code is:
+        compiles
+        low Halsted volume
+        low Levenshtein distance
+        low Lines of Code
+        low amount of errors
+    */
+
     for (auto& entry : po) {
         int distance = levenshtein_distance(target, entry.output);
         entry.fitness = 1.0 - static_cast<double>(distance) / std::max(target.length(), entry.output.length());
     }
 }
 
+//calling the bashscript that will compile the output of the LLM, when the code compiles 1 is returned otherwise 0
+int executeBashScript{
+    return 0;
+}
+
 int main() {
     std::string target = "Hello, World, tonight we party!";
     std::vector<PromptOutput> po{
-        {"Hey, create a message to the world", "Greetings, Universe, tonight we party!"},
+        {"Hey, create a message to the world", "Greetings, Universe, tonight we party!", false},
         {"Generate me a message that we party", "Heere, World, toniht weparty!"},
         {"do me a favor and make this", "Hello, onight we party!"},
     };
 
     fitness(target, po);
 
-    std::vector<PromptOutput> po_and_fitness;
+    //Sorting and outputing the best candidate
 
-    // Create a vector with the prompts and the fitness values
-    for (auto& entry : po) {
-        po_and_fitness.push_back({entry.prompt, entry.output, entry.fitness});
+    std::vector<std::pair<std::string, double>> promptAndString;
+    for(auto& entry : po) {
+        promptAndString.push_back({entry.prompt, entry.fitness});
     }
+    std::sort(promptAndString.begin(), promptAndString.end(), [](const std::pair<std::string, double>& a, const std::pair<std::string, double>& b) {
+        return a.second > b.second;
+    });
 
-    std::sort(po_and_fitness.begin(), po_and_fitness.end(),
-          [](const PromptOutput& a, const PromptOutput& b) {
-              return a.fitness > b.fitness;
-          });
-
-    // Print all fitness values (now sorted)
-    for (auto& entry : po_and_fitness) {
-    std::cout << "Fitness: " << entry.fitness << ", Prompt: " << entry.prompt << std::endl;
-    }
-
-    //cut the string in half of po_and_fitness.at(0).output
-    std::string max_half = po_and_fitness.at(0).output.substr(0, po_and_fitness.at(0).output.size() / 2);
-    //change it so that the second half is used from po_and_fitness.at(1).output
-    std::string max2_half = po_and_fitness.at(1).output.substr(po_and_fitness.at(1).output.size() / 2, po_and_fitness.at(1).output.size() / 2);
-
-    std::cout << "Max half: " << max_half << std::endl;
-    std::cout << "Max2 half: " << max2_half << std::endl;
-
-    std::string new_string = max_half + max2_half;
-
-    std::cout << "New string: " << new_string << std::endl;
+    //first sorted -> prompt is the first item in the entry
+    std::cout << "Best prompt: " << promptAndString[0].first << " " << promptAndString[0].second << std::endl;
+    std::cout << promptAndString[1].first << std::endl;
 
     return 0;
 }

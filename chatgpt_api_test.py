@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+"""
 from openai import OpenAI
 import re
 import argparse
@@ -39,3 +39,9 @@ if code_snippet:
     print(code)
 else:
     print(completion.choices[0].message.content)
+"""
+
+term = input()
+match term:
+  case "openai":
+    print("openai")

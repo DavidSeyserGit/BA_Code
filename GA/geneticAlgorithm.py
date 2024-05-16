@@ -17,6 +17,12 @@
 import requests
 import random
 import string
+import argparse
+
+parser = argparse.ArgumentParser(description='Generate code using LLM')
+parser.add_argument("-api", "--api", type=str, help='what api to use, openai or ollama or google')
+parser.add_argument("-model", "--model", type=str, help='what model to use')
+args = parser.parse_args()
 
 def getPrompts(filename):
     with open(filename, 'r') as file:
@@ -26,26 +32,32 @@ def getPrompts(filename):
 
 #needs to be modified to also include CHATGPT & Gemini1.5Flash
 def getCodeFromLLM(prompt):
-    url = 'http://localhost:11434/api/generate'
-    data = {
-        "model": "phi3", #needs to be a argument in the command line later
-        "prompt": prompt,
-        "stream": False
-    }
-    r = requests.post(url, json=data)
-    if r.status_code == 200: #connection is succesful
-        response_data = r.json()
-        response = response_data.get('response')
-        start_index = response.find("```")
-        if start_index == -1:
-            return None
-        end_index = response.find("```", start_index + 3)
-        if end_index == -1:
-            return None 
-        codeBlock = response[start_index + 3 : end_index].strip()
-        if codeBlock.startswith("python"):
-            codeBlock = codeBlock[len("python"):].strip()
-        return codeBlock
+    match parser.api:
+        case google:
+            pass
+        case openai:
+            pass
+        case _:
+            url = 'http://localhost:11434/api/generate'
+            data = {
+                "model": "phi3", #TODO: needs to be a argument in the command line later
+                "prompt": prompt,
+                "stream": False
+            }
+            r = requests.post(url, json=data)
+            if r.status_code == 200: #connection is succesful
+                response_data = r.json()
+                response = response_data.get('response')
+                start_index = response.find("```")
+                if start_index == -1:
+                    return None
+                end_index = response.find("```", start_index + 3)
+                if end_index == -1:
+                    return None 
+                codeBlock = response[start_index + 3 : end_index].strip()
+                if codeBlock.startswith("python"):
+                    codeBlock = codeBlock[len("python"):].strip()
+                return codeBlock
 
 def getFitness(code):
     #write the code to a file and make a compilation test

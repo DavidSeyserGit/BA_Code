@@ -34,7 +34,7 @@ def getPrompts(filename):
 def getCodeFromLLM(prompt):
     match parser.model:
         case "google":
-            pass
+            return None
         case "openai":
             pass
         case _:

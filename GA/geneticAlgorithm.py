@@ -32,10 +32,10 @@ def getPrompts(filename):
 
 #needs to be modified to also include CHATGPT & Gemini1.5Flash
 def getCodeFromLLM(prompt):
-    match parser.api:
-        case google:
+    match parser.model:
+        case "google":
             pass
-        case openai:
+        case "openai":
             pass
         case _:
             url = 'http://localhost:11434/api/generate'

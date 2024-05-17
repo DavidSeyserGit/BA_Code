@@ -18,6 +18,9 @@ import requests
 import random
 import string
 import argparse
+from openai import OpenAI
+import re
+
 
 parser = argparse.ArgumentParser(description='Generate code using LLM')
 parser.add_argument("-api", "--api", type=str, help='what api to use, openai or ollama or google')
@@ -29,15 +32,14 @@ def getPrompts(filename):
         prompts = file.readlines()
     return [prompt.strip() for prompt in prompts]
 
-
+model = args.model
 #needs to be modified to also include CHATGPT & Gemini1.5Flash
 def getCodeFromLLM(prompt):
-    match parser.model:
-        case "google":
+        if model == "google":
             return None
-        case "openai":
-            pass
-        case _:
+        elif model == "openai":
+            client = OpenAI()
+        else:
             url = 'http://localhost:11434/api/generate'
             data = {
                 "model": "phi3", #TODO: needs to be a argument in the command line later

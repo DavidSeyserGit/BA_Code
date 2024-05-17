@@ -18,6 +18,9 @@ import requests
 import random
 import string
 import argparse
+from openai import OpenAI
+import re
+
 
 parser = argparse.ArgumentParser(description='Generate code using LLM')
 parser.add_argument("-api", "--api", type=str, help='what api to use, openai or ollama or google')
@@ -29,18 +32,32 @@ def getPrompts(filename):
         prompts = file.readlines()
     return [prompt.strip() for prompt in prompts]
 
-
+model = args.model
+api = args.api
 #needs to be modified to also include CHATGPT & Gemini1.5Flash
+#the return of the function should be the filtered code block of the model
 def getCodeFromLLM(prompt):
-    match parser.model:
+    match api:
         case "google":
-            return None
+            print("google not implemented yet") 
+        
         case "openai":
-            pass
+            client = OpenAI()
+            completion = client.chat.completions.create(
+                model=model,
+                messages=[
+                    {"role": "system", "content": "you are a master programmer in ROS. You can generate clean and easy to understand code for any Node."},
+                    {"role": "user", "content": f"{prompt}"},
+                ]
+            )
+            codeBlock = re.search(r'```(?:python|cpp)\n(.+?)\n```', completion.choices[0].message.content, re.DOTALL)
+            code = codeBlock.group(1).strip() if codeBlock else None
+            return code
+        
         case _:
             url = 'http://localhost:11434/api/generate'
             data = {
-                "model": "phi3", #TODO: needs to be a argument in the command line later
+                "model": model, #TODO: needs to be a argument in the command line later
                 "prompt": prompt,
                 "stream": False
             }

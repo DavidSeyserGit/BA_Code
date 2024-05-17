@@ -33,15 +33,18 @@ def getPrompts(filename):
     return [prompt.strip() for prompt in prompts]
 
 model = args.model
+api = args.api
 #needs to be modified to also include CHATGPT & Gemini1.5Flash
 #the return of the function should be the filtered code block of the model
 def getCodeFromLLM(prompt):
-        if model == "google":
-            return None
-        elif model == "openai":
+    match api:
+        case "google":
+            print("google not implemented yet") 
+        
+        case "openai":
             client = OpenAI()
             completion = client.chat.completions.create(
-                model="gpt-3.5-turbo",
+                model=model,
                 messages=[
                     {"role": "system", "content": "you are a master programmer in ROS. You can generate clean and easy to understand code for any Node."},
                     {"role": "user", "content": f"{prompt}"},
@@ -50,10 +53,11 @@ def getCodeFromLLM(prompt):
             codeBlock = re.search(r'```(?:python|cpp)\n(.+?)\n```', completion.choices[0].message.content, re.DOTALL)
             code = codeBlock.group(1).strip() if codeBlock else None
             return code
-        else:
+        
+        case _:
             url = 'http://localhost:11434/api/generate'
             data = {
-                "model": "phi3", #TODO: needs to be a argument in the command line later
+                "model": model, #TODO: needs to be a argument in the command line later
                 "prompt": prompt,
                 "stream": False
             }

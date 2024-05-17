@@ -1,15 +1,15 @@
+#!/usr/bin/env python
+
 import rospy
 from std_msgs.msg import String
 
-def chatter_callback(data):
-    print("Received: %s" % data.data)
+def callback(data):
+    rospy.loginfo(rospy.get_caller_id() + "I heard %s", data.data)
 
 def listener():
-    rospy.init_node('chatter_listener', anonymous=True)
-    rospy.Subscriber('/chatter', String, chatter_callback)
-    r = rospy.Rate(10/float(rospy.get_param("~loop_rate")))
-    while not rospy.is_shutdown():
-        r.sleep()
+    rospy.init_node('listener', anonymous=True)
+    rospy.Subscriber("chatter", String, callback)
+    rospy.spin()
 
 if __name__ == '__main__':
     listener()

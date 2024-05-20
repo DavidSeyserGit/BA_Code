@@ -15,17 +15,21 @@
 #TODO: add a case where either ollama or google api is used for different models
 
 import requests
-import random
-import string
 import argparse
 from openai import OpenAI
 import re
+import subprocess
 
 
 parser = argparse.ArgumentParser(description='Generate code using LLM')
 parser.add_argument("-api", "--api", type=str, help='what api to use, openai or ollama or google')
 parser.add_argument("-model", "--model", type=str, help='what model to use')
 args = parser.parse_args()
+
+#compile uses catkin_make and needs the directory where to code is saved
+def compileCode(dir):
+    result = subprocess.call("catkin_make",shell=True, cwd=dir)
+    return result
 
 def getPrompts(filename):
     with open(filename, 'r') as file:
@@ -34,6 +38,7 @@ def getPrompts(filename):
 
 model = args.model
 api = args.api
+
 #needs to be modified to also include CHATGPT & Gemini1.5Flash
 #the return of the function should be the filtered code block of the model
 def getCodeFromLLM(prompt):
@@ -123,6 +128,7 @@ if __name__ == "__main__":
     for prompt in prompts:
         code = getCodeFromLLM(prompt)
         if code:
+            #TODO: add the file to a catkin workspace
             with open("test.py", "w") as file:
                 file.write(code)
             print("CODE!")

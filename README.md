@@ -3,5 +3,5 @@ This is the code for my Bachelorthesis about generating ROS source code with Lar
 This script has two parameters that need to be passed via the command line.
     
 ```
-python3 geneticAlgorithm.py -api -model
+python3 geneticAlgorithm.py -api "your api" -model "your model"
 ```

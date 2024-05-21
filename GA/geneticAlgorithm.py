@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-#TODO: add a case where either ollama or google api is used for different models
+#TODO: Clean up the code an split it into different files for better readability
 
 import requests
 import argparse
@@ -26,20 +26,24 @@ parser.add_argument("-api", "--api", type=str, help='what api to use, openai or 
 parser.add_argument("-model", "--model", type=str, help='what model to use')
 args = parser.parse_args()
 
+model = args.model
+api = args.api
+
 #compile uses catkin_make and needs the directory where to code is saved
 def compileCode(dir):
-    result = subprocess.call("catkin_make",shell=True, cwd=dir)
-    return result
+    try:
+        result = subprocess.call("catkin_make",shell=True, cwd=dir)
+        return result #returns 0 if the command was successful
+    
+    except Exception as e:
+        print(f"An error occurred: {e}")
 
 def getPrompts(filename):
     with open(filename, 'r') as file:
         prompts = file.readlines()
     return [prompt.strip() for prompt in prompts]
 
-model = args.model
-api = args.api
-
-#needs to be modified to also include CHATGPT & Gemini1.5Flash
+#Gemini1.5 api still needed
 #the return of the function should be the filtered code block of the model
 def getCodeFromLLM(prompt):
     match api:

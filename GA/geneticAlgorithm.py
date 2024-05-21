@@ -81,17 +81,19 @@ def getCodeFromLLM(prompt):
                     codeBlock = codeBlock[len("python"):].strip()
                 return codeBlock
 
+#if code compiles fitness should be calculated
 def getFitness(code):
     #write the code to a file and make a compilation test
     #make a levenshtein distance test
         # https://www.geeksforgeeks.org/introduction-to-levenshtein-distance/
-    #code complexity test
     pass
 
 def crossover(parent1, parent2):
     pass
 
 def mutate(child):
+    #mutate the child randomly by swapping/adding/subtracting words from the prompt.
+    #TODO: needs a way to change only certain parts of the prompt without loosing the meaning of the sentence
     pass
 
 def genetic_algorithm(population, generations):

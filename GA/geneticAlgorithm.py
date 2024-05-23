@@ -19,7 +19,7 @@ import argparse
 from openai import OpenAI
 import re
 import subprocess
-from ..catkin_test import *
+from ..catkinCompile import *
 
 parser = argparse.ArgumentParser(description='Generate code using LLM')
 parser.add_argument("-api", "--api", type=str, help='what api to use, openai or ollama or google')
@@ -31,6 +31,8 @@ api = args.api
 
 #compile uses catkin_make and needs the directory where to code is saved
 #Code will be obsolete when the function will be in utility
+
+"""
 def compileCode(dir):
     try:
         result = subprocess.call("catkin_make",shell=True, cwd=dir)
@@ -38,6 +40,7 @@ def compileCode(dir):
     
     except Exception as e:
         print(f"An error occurred: {e}")
+"""
 
 def getPrompts(filename):
     with open(filename, 'r') as file:
@@ -67,14 +70,15 @@ def getCodeFromLLM(prompt):
         case _:
             url = 'http://localhost:11434/api/generate'
             data = {
-                "model": model, #TODO: needs to be a argument in the command line later
+                "model": model,
                 "prompt": prompt,
                 "stream": False
             }
             r = requests.post(url, json=data)
             if r.status_code == 200: #connection is succesful
                 response_data = r.json()
-                response = response_data.get('response')
+                response = response_data.get('response') #just get the textbased response from the LLM not the data behind it
+                #filtering the output so the repsonse is only the code itself
                 start_index = response.find("```")
                 if start_index == -1:
                     return None
@@ -135,7 +139,7 @@ if __name__ == "__main__":
     for prompt in prompts:
         code = getCodeFromLLM(prompt)
         if code:
-            #TODO: add the file to a catkin workspace
+            #TODO: add the file to a catkin workspace & compile it
             with open("test.py", "w") as file:
                 file.write(code)
             print("CODE!")

@@ -32,16 +32,6 @@ api = args.api
 #compile uses catkin_make and needs the directory where to code is saved
 #Code will be obsolete when the function will be in utility
 
-"""
-def compileCode(dir):
-    try:
-        result = subprocess.call("catkin_make",shell=True, cwd=dir)
-        return result #returns 0 if the command was successful
-    
-    except Exception as e:
-        print(f"An error occurred: {e}")
-"""
-
 def getPrompts(filename):
     with open(filename, 'r') as file:
         prompts = file.readlines()
@@ -133,13 +123,18 @@ def genetic_algorithm(population, generations):
     return max(fitness_scores, key=fitness_scores.get)
 
 if __name__ == "__main__":
-    
-    #currently just writes the code to a file -> will be in fitness or seperate function later
     prompts = getPrompts("example1.txt")
+    path = "/mnt/d/test_ws"
     for prompt in prompts:
         code = getCodeFromLLM(prompt)
         if code:
-            #TODO: add the file to a catkin workspace & compile it
-            with open("test.py", "w") as file:
-                file.write(code)
-            print("CODE!")
+            with open(f"{path}/src/test.py", "w") as file:
+                
+                try:
+                    #writing the code to the file might be to slow????
+                    file.write(code)
+                    compile = catkinCompile(path)
+                    print(compile) #outputs if the code was compiled successfully
+                    
+                except Exception as e:
+                    print(f"An error occurred: {e}")

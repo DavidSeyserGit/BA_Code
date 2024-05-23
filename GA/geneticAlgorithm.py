@@ -12,34 +12,32 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-#TODO: add a case where either ollama or google api is used for different models
+#TODO: Clean up the code an split it into different files for better readability
 
 import requests
 import argparse
 from openai import OpenAI
 import re
 import subprocess
-
+from catkinCompile import *
 
 parser = argparse.ArgumentParser(description='Generate code using LLM')
 parser.add_argument("-api", "--api", type=str, help='what api to use, openai or ollama or google')
 parser.add_argument("-model", "--model", type=str, help='what model to use')
 args = parser.parse_args()
 
+model = args.model
+api = args.api
+
 #compile uses catkin_make and needs the directory where to code is saved
-def compileCode(dir):
-    result = subprocess.call("catkin_make",shell=True, cwd=dir)
-    return result
+#Code will be obsolete when the function will be in utility
 
 def getPrompts(filename):
     with open(filename, 'r') as file:
         prompts = file.readlines()
     return [prompt.strip() for prompt in prompts]
 
-model = args.model
-api = args.api
-
-#needs to be modified to also include CHATGPT & Gemini1.5Flash
+#Gemini1.5 api still needed
 #the return of the function should be the filtered code block of the model
 def getCodeFromLLM(prompt):
     match api:
@@ -62,14 +60,15 @@ def getCodeFromLLM(prompt):
         case _:
             url = 'http://localhost:11434/api/generate'
             data = {
-                "model": model, #TODO: needs to be a argument in the command line later
+                "model": model,
                 "prompt": prompt,
                 "stream": False
             }
             r = requests.post(url, json=data)
             if r.status_code == 200: #connection is succesful
                 response_data = r.json()
-                response = response_data.get('response')
+                response = response_data.get('response') #just get the textbased response from the LLM not the data behind it
+                #filtering the output so the repsonse is only the code itself
                 start_index = response.find("```")
                 if start_index == -1:
                     return None
@@ -81,17 +80,19 @@ def getCodeFromLLM(prompt):
                     codeBlock = codeBlock[len("python"):].strip()
                 return codeBlock
 
+#if code compiles fitness should be calculated
 def getFitness(code):
     #write the code to a file and make a compilation test
     #make a levenshtein distance test
         # https://www.geeksforgeeks.org/introduction-to-levenshtein-distance/
-    #code complexity test
     pass
 
 def crossover(parent1, parent2):
     pass
 
 def mutate(child):
+    #mutate the child randomly by swapping/adding/subtracting words from the prompt.
+    #TODO: needs a way to change only certain parts of the prompt without loosing the meaning of the sentence
     pass
 
 def genetic_algorithm(population, generations):
@@ -122,13 +123,18 @@ def genetic_algorithm(population, generations):
     return max(fitness_scores, key=fitness_scores.get)
 
 if __name__ == "__main__":
-    
-    #currently just writes the code to a file -> will be in fitness or seperate function later
     prompts = getPrompts("example1.txt")
+    path = "/mnt/d/test_ws"
     for prompt in prompts:
         code = getCodeFromLLM(prompt)
         if code:
-            #TODO: add the file to a catkin workspace
-            with open("test.py", "w") as file:
-                file.write(code)
-            print("CODE!")
+            with open(f"{path}/src/test.py", "w") as file:
+                
+                try:
+                    #writing the code to the file might be to slow????
+                    file.write(code)
+                    compile = catkinCompile(path)
+                    print(compile) #outputs if the code was compiled successfully
+                    
+                except Exception as e:
+                    print(f"An error occurred: {e}")

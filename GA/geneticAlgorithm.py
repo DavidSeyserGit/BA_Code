@@ -19,7 +19,7 @@ import argparse
 from openai import OpenAI
 import re
 import subprocess
-
+from ..catkin_test import *
 
 parser = argparse.ArgumentParser(description='Generate code using LLM')
 parser.add_argument("-api", "--api", type=str, help='what api to use, openai or ollama or google')
@@ -30,6 +30,7 @@ model = args.model
 api = args.api
 
 #compile uses catkin_make and needs the directory where to code is saved
+#Code will be obsolete when the function will be in utility
 def compileCode(dir):
     try:
         result = subprocess.call("catkin_make",shell=True, cwd=dir)

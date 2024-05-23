@@ -15,7 +15,6 @@
 from openai import OpenAI
 import re
 import argparse
-import /utility/catkin_test.py as ct
 
 parser = argparse.ArgumentParser(description='Generate code using OpenAI ChatGPT')
 parser.add_argument("-prompt", "--prompt", type=str, help='Prompt to generate code from')

@@ -19,7 +19,7 @@ import argparse
 from openai import OpenAI
 import re
 import subprocess
-from ..catkinCompile import *
+from catkinCompile import *
 
 parser = argparse.ArgumentParser(description='Generate code using LLM')
 parser.add_argument("-api", "--api", type=str, help='what api to use, openai or ollama or google')

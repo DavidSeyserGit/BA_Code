@@ -49,7 +49,7 @@ def getCodeFromLLM(prompt):
             completion = client.chat.completions.create(
                 model=model,
                 messages=[
-                    {"role": "system", "content": "you are a master programmer in ROS. You can generate clean and easy to understand code for any Node."},
+                    {"role": "system", "content": "You are an expert in ROS (Robot Operating System) programming with extensive experience in developing robust, efficient, and maintainable code. Your task is to generate clean, well-documented, and easy-to-understand code for any ROS Node. Ensure that the code follows best practices, including modularity, readability, and reusability. Provide clear comments and documentation to help users understand the functionality and structure of the code. Additionally, include any necessary setup instructions and dependencies required to run the code successfully."},
                     {"role": "user", "content": f"{prompt}"},
                 ]
             )
@@ -79,10 +79,8 @@ def getCodeFromLLM(prompt):
                 if codeBlock.startswith("python"):
                     codeBlock = codeBlock[len("python"):].strip()
                 return codeBlock
-
-#if code compiles fitness should be calculated
+            
 def getFitness(code):
-    #write the code to a file and make a compilation test
     #make a levenshtein distance test
         # https://www.geeksforgeeks.org/introduction-to-levenshtein-distance/
     pass

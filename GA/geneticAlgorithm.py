@@ -81,8 +81,13 @@ def getCodeFromLLM(prompt):
                 return codeBlock
             
 def getFitness(code):
+    #prompt length
+    #code length
+    #maintainability index
     #make a levenshtein distance test
         # https://www.geeksforgeeks.org/introduction-to-levenshtein-distance/
+        
+    #every metric should have different weights and the max of the fitness function should be the best possible code
     pass
 
 def crossover(parent1, parent2):

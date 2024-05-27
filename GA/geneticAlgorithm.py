@@ -39,7 +39,7 @@ def getPrompts(filename):
 
 #Gemini1.5 api still needed
 #the return of the function should be the filtered code block of the model
-def getCodeFromLLM(prompt):
+def getCodeFromLLM(prompt): #need to parse the api and model as a parameter when i want to clean the codebase
     match api:
         case "google":
             print("google not implemented yet") 
@@ -80,9 +80,11 @@ def getCodeFromLLM(prompt):
                     codeBlock = codeBlock[len("python"):].strip()
                 return codeBlock
             
-def getFitness(code):
+def getFitness(code, prompt):
     #prompt length
+    promptLength = len(prompt)
     #code length
+    codeLenth = len(code)
     #maintainability index
     #make a levenshtein distance test
         # https://www.geeksforgeeks.org/introduction-to-levenshtein-distance/
@@ -131,8 +133,9 @@ if __name__ == "__main__":
     for prompt in prompts:
         code = getCodeFromLLM(prompt)
         if code:
+            #if compile is succesfull the fitness needs to be calculated
             with open(f"{path}/src/test.py", "w") as file:
-                
+                #have to parse the prompt into the functions below too
                 try:
                     #writing the code to the file might be to slow????
                     file.write(code)

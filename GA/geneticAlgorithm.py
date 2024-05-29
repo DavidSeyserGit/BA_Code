@@ -18,6 +18,7 @@ from openai import OpenAI
 import re
 import subprocess
 from catkinCompile import *
+import CodeGenLLM as cg
 
 parser = argparse.ArgumentParser(description='Generate code using LLM')
 parser.add_argument("-a", "--api", type=str, help='what api to use, openai or ollama or google')
@@ -124,7 +125,6 @@ def genetic_algorithm(population, generations): #population are all prompts, mig
 
 if __name__ == "__main__":
     prompts = getPrompts("example1.txt")
-    #path = "/mnt/d/test_ws" #path needs to be a command line argument
     for prompt in prompts:
         code = getCodeFromLLM(prompt) #is in the genetic-algo function later
         if code:
@@ -132,8 +132,11 @@ if __name__ == "__main__":
                 try:
                     #writing the code to the file might be to slow????
                     file.write(code)
-                    compile = catkinCompile(wsPath) #path to the catkin_ws is different from the path to the file
-                    print(compile) #outputs if the code was compiled successfully
+                    compile = catkinCompile(wsPath, args.verbose)#path to the catkin_ws is different from the path to the file
+                    
+                    if(args.verbose):
+                        print(compile) #outputs if the code was compiled successfully
                     
                 except Exception as e:
                     print(f"An error occurred: {e}")
+    print("Code written to file")

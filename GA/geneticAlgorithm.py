@@ -24,22 +24,19 @@ from catkinCompile import *
 parser = argparse.ArgumentParser(description='Generate code using LLM')
 parser.add_argument("-api", "--api", type=str, help='what api to use, openai or ollama or google')
 parser.add_argument("-model", "--model", type=str, help='what model to use')
+parser.add_argument("-path", "--path", type=str, help='path to the catkin_ws')
 args = parser.parse_args()
 
-model = args.model
 api = args.api
-
-#compile uses catkin_make and needs the directory where to code is saved
-#Code will be obsolete when the function will be in utility
+model = args.model
+wsPath = args.path
 
 def getPrompts(filename):
     with open(filename, 'r') as file:
         prompts = file.readlines()
     return [prompt.strip() for prompt in prompts]
 
-#Gemini1.5 api still needed
-#the return of the function should be the filtered code block of the model
-def getCodeFromLLM(prompt): #need to parse the api and model as a parameter when i want to clean the codebase
+def getCodeFromLLM(prompt):
     match api:
         case "google":
             print("google not implemented yet") 
@@ -58,7 +55,7 @@ def getCodeFromLLM(prompt): #need to parse the api and model as a parameter when
             return code
         
         case _:
-            url = 'http://localhost:11434/api/generate'
+            url = 'http://localhost:11434/api/generate' #ollama api url
             data = {
                 "model": model,
                 "prompt": prompt,
@@ -67,9 +64,8 @@ def getCodeFromLLM(prompt): #need to parse the api and model as a parameter when
             r = requests.post(url, json=data)
             if r.status_code == 200: #connection is succesful
                 response_data = r.json()
-                response = response_data.get('response') #just get the textbased response from the LLM not the data behind it
-                #filtering the output so the repsonse is only the code itself
-                start_index = response.find("```")
+                response = response_data.get('response') #filtering the output of the LLM to only the repsonse
+                start_index = response.find("```") #filtering for the codeblock
                 if start_index == -1:
                     return None
                 end_index = response.find("```", start_index + 3)
@@ -100,7 +96,7 @@ def mutate(child):
     #TODO: needs a way to change only certain parts of the prompt without loosing the meaning of the sentence
     pass
 
-def genetic_algorithm(population, generations):
+def genetic_algorithm(population, generations): #population are all prompts, might need to be changed later to use the getPrompt function
     for _ in range(generations):
         fitness_scores = {}
         for prompt in population:
@@ -129,17 +125,15 @@ def genetic_algorithm(population, generations):
 
 if __name__ == "__main__":
     prompts = getPrompts("example1.txt")
-    path = "/mnt/d/test_ws"
+    #path = "/mnt/d/test_ws" #path needs to be a command line argument
     for prompt in prompts:
-        code = getCodeFromLLM(prompt)
+        code = getCodeFromLLM(prompt) #is in the genetic-algo function later
         if code:
-            #if compile is succesfull the fitness needs to be calculated
-            with open(f"{path}/src/test.py", "w") as file:
-                #have to parse the prompt into the functions below too
+            with open(f"{wsPath}/src/test.py", "w") as file:
                 try:
                     #writing the code to the file might be to slow????
                     file.write(code)
-                    compile = catkinCompile(path)
+                    compile = catkinCompile(wsPath)
                     print(compile) #outputs if the code was compiled successfully
                     
                 except Exception as e:

@@ -14,6 +14,6 @@ def catkinCompile(path, verbose=False):
 
 
 if __name__ == "__main__":
-    result = test_catkin("/mnt/d/test_ws")
+    result = catkinCompile("/mnt/d/test_ws")
     print(result)
 

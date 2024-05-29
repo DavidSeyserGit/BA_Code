@@ -52,6 +52,21 @@ def getPrompts(filename):
     with open(filename, 'r') as file:
         prompts = file.readlines()
     return [prompt.strip() for prompt in prompts]
+
+def writeAndCompile(code, path):
+    with open(f"{path}/src/test/src/test.py", "w") as file: 
+            try:
+                file.write(code)
+            except Exception as e:
+                logging.error(f"An error occurred: {e}")
+                
+            try:
+                logging.debug("starting catkin compilation")
+                compile = catkinCompile(wsPath, args.verbose)#path to the catkin_ws is different from the path to the file
+                logging.debug(f"Compilation result: {"success" if compile == 0 else "failed"}")
+                
+            except Exception as e:
+                logging.error(f"An error occurred: {e}")
             
 def getFitness(code, prompt):
     promptLength = len(prompt)
@@ -89,7 +104,7 @@ def genetic_algorithm(population, generations): #population are all prompts, mig
                         logging.debug(f"Generating code using {args.api} with model {args.model}")
                         code = cg.codeFromOllama(prompt, model)
                         logging.debug("Generating successful")
-            
+
             except NotImplementedError as nie:
                 logging.error(f"{nie}")
                 exit(1)
@@ -98,6 +113,8 @@ def genetic_algorithm(population, generations): #population are all prompts, mig
             except Exception as e:
                 logging.critical(f"An error occurred: {e}")
                 raise
+            
+            writeAndCompile(code, wsPath)
             #generate code -> compile code -> get fitness score
             #TODO: make sure code actually gets to the compile stage before getting the fitness score
             if code: #TODO: if compilation is successful
@@ -131,44 +148,6 @@ if __name__ == "__main__":
     
     logging.info("Starting code generation")
     prompts = getPrompts("example1.txt")
-    for prompt in prompts:
-        try:
-            match api:
-                case "google":
-                    raise NotImplementedError("Google not implemented yet")
-        
-                case "openai":
-                    logging.debug(f"Generating code using {args.api} with model {args.model}")
-                    code = cg.codeFromOpenai(prompt, model)
-                    logging.debug("Generating successful")
-                    
-                case _:
-                    logging.debug(f"Generating code using {args.api} with model {args.model}")
-                    code = cg.codeFromOllama(prompt, model)
-                    logging.debug("Generating successful")
-            
-        except NotImplementedError as nie:
-            logging.error(f"{nie}")
-            exit(1)
-        
-        #exception handling when no code can be created
-        except Exception as e:
-            logging.critical(f"An error occurred: {e}")
-            raise
-        
-        with open(f"{wsPath}/src/test/src/test.py", "w") as file: 
-            try:
-                file.write(code)
-            except Exception as e:
-                logging.error(f"An error occurred: {e}")
-                
-            try:
-                logging.debug("starting catkin compilation")
-                compile = catkinCompile(wsPath, args.verbose)#path to the catkin_ws is different from the path to the file
-                logging.debug(f"Compilation result: {"success" if compile == 0 else "failed"}")
-                
-            except Exception as e:
-                logging.error(f"An error occurred: {e}")
                 
     logging.info("End of Program")
                 

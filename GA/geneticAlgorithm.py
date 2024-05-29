@@ -76,6 +76,7 @@ def getFitness(code, prompt):
         # https://www.geeksforgeeks.org/introduction-to-levenshtein-distance/
         
     #every metric should have different weights and the max of the fitness function should be the best possible code
+    return promptLength / codeLenth
     pass
 
 def crossover(parent1, parent2):
@@ -124,13 +125,15 @@ def genetic_algorithm(population, generations): #population are all prompts, mig
                 pass
                 
         sortedPopulation = sorted(fitness_scores, key=fitness_scores.get, reverse=True)
+
         bestPrompts = sortedPopulation[:len(population) // 2]
-        
+
         # Generate new population
         new_population = []
         for _ in range(len(population) - len(bestPrompts)):
             #first two elements of best prompt -> parent1, parent2
             parent1, parent2 = bestPrompts[:2]
+            logging.debug(f"Creating child from {parent1} and {parent2}")
             child = crossover(parent1, parent2)
             mutated_child = mutate(child)
             new_population.append(mutated_child)

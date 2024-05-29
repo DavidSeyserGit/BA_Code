@@ -97,24 +97,33 @@ if __name__ == "__main__":
         try:
             match api:
                 case "google":
-                    raise NotImplementedError("1")
-                
+                    raise NotImplementedError("Google not implemented yet")
+        
                 case "openai":
+                    logging.debug(f"Generating code using {args.api} with model {args.model}")
                     code = cg.codeFromOpenai(prompt, model)
+                    logging.debug("Generating successful")
                 case _:
+                    logging.debug(f"Generating code using {args.api} with model {args.model}")
                     code = cg.codeFromOllama(prompt, model)
+                    logging.debug("Generating successful")
             
         except NotImplementedError as nie:
-            logging.error("Implementation Error")
+            logging.error(f"{nie}")
             exit(1)
         
         with open(f"{wsPath}/src/test/src/test.py", "w") as file: 
             try:
                 #writing the code to the file might be to slow????
                 file.write(code)
-                compile = catkinCompile(wsPath, args.verbose)#path to the catkin_ws is different from the path to the file
-                logging.debug(f"Compilation result: {compile}")
+            except Exception as e:
+                print(f"An error occurred: {e}")
                 
+            try:
+                logging.debug("starting catkin compilation")
+                compile = catkinCompile(wsPath, args.verbose)#path to the catkin_ws is different from the path to the file
+                logging.debug(f"Compilation result: {"success" if compile == 0 else "failed"}")
                 
             except Exception as e:
                 print(f"An error occurred: {e}")
+                

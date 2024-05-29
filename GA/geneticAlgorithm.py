@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-#TODO: Clean up the code an split it into different files for better readability
-
 import requests
 import argparse
 from openai import OpenAI
@@ -22,9 +20,10 @@ import subprocess
 from catkinCompile import *
 
 parser = argparse.ArgumentParser(description='Generate code using LLM')
-parser.add_argument("-api", "--api", type=str, help='what api to use, openai or ollama or google')
-parser.add_argument("-model", "--model", type=str, help='what model to use')
-parser.add_argument("-path", "--path", type=str, help='path to the catkin_ws')
+parser.add_argument("-a", "--api", type=str, help='what api to use, openai or ollama or google')
+parser.add_argument("-m", "--model", type=str, help='what model to use')
+parser.add_argument("-p", "--path", type=str, help='path to the catkin_ws')
+parser.add_argument("-v", "--verbose",action=argparse.BooleanOptionalAction, default=False, help='enable verbose output') #no use currently, should be used to get verbose and non verbose output in the command line
 args = parser.parse_args()
 
 api = args.api
@@ -129,11 +128,11 @@ if __name__ == "__main__":
     for prompt in prompts:
         code = getCodeFromLLM(prompt) #is in the genetic-algo function later
         if code:
-            with open(f"{wsPath}/src/test.py", "w") as file:
+            with open(f"{wsPath}/src/test/src/test.py", "w") as file: 
                 try:
                     #writing the code to the file might be to slow????
                     file.write(code)
-                    compile = catkinCompile(wsPath)
+                    compile = catkinCompile(wsPath) #path to the catkin_ws is different from the path to the file
                     print(compile) #outputs if the code was compiled successfully
                     
                 except Exception as e:

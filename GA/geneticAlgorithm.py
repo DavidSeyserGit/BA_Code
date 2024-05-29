@@ -54,9 +54,7 @@ def getPrompts(filename):
     return [prompt.strip() for prompt in prompts]
             
 def getFitness(code, prompt):
-    #prompt length
     promptLength = len(prompt)
-    #code length
     codeLenth = len(code)
     #maintainability index
     #make a levenshtein distance test
@@ -78,7 +76,9 @@ def genetic_algorithm(population, generations): #population are all prompts, mig
         fitness_scores = {}
         for prompt in population:
             code = None #needs to be changed to the right function from CodeGenLLM
-            if code:
+            #generate code -> compile code -> get fitness score
+            #TODO: make sure code actually gets to the compile stage before getting the fitness score
+            if code: #TODO: if compilation is successful
                 fitness_scores[prompt] = getFitness(code)
             else:
                 #throw a warning force fitness to be 0 for this prompt, and jumpt to the next prompt
@@ -100,6 +100,11 @@ def genetic_algorithm(population, generations): #population are all prompts, mig
     
     return max(fitness_scores, key=fitness_scores.get)
 
+
+
+
+
+#for testing purposes
 if __name__ == "__main__":
     
     logging.info("Starting code generation")
@@ -124,12 +129,16 @@ if __name__ == "__main__":
             logging.error(f"{nie}")
             exit(1)
         
+        #exception handling when no code can be created
+        except Exception as e:
+            logging.critical(f"An error occurred: {e}")
+            raise
+        
         with open(f"{wsPath}/src/test/src/test.py", "w") as file: 
             try:
-                #writing the code to the file might be to slow????
                 file.write(code)
             except Exception as e:
-                print(f"An error occurred: {e}")
+                logging.error(f"An error occurred: {e}")
                 
             try:
                 logging.debug("starting catkin compilation")
@@ -137,5 +146,7 @@ if __name__ == "__main__":
                 logging.debug(f"Compilation result: {"success" if compile == 0 else "failed"}")
                 
             except Exception as e:
-                print(f"An error occurred: {e}")
+                logging.error(f"An error occurred: {e}")
+                
+    logging.info("End of Program")
                 

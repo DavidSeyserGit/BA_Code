@@ -118,7 +118,7 @@ def genetic_algorithm(population, generations): #population are all prompts, mig
             #generate code -> compile code -> get fitness score
             #TODO: make sure code actually gets to the compile stage before getting the fitness score
             if code: #TODO: if compilation is successful
-                fitness_scores[prompt] = getFitness(code)
+                fitness_scores[prompt] = getFitness(code, prompt)
             else:
                 #throw a warning force fitness to be 0 for this prompt, and jumpt to the next prompt
                 pass
@@ -147,7 +147,8 @@ def genetic_algorithm(population, generations): #population are all prompts, mig
 if __name__ == "__main__":
     
     logging.info("Starting code generation")
-    prompts = getPrompts("example1.txt")
+    prompts = getPrompts("example1.txt") #returns a list of prompts / is inital population
+    genetic_algorithm(prompts, 10)
                 
     logging.info("End of Program")
                 

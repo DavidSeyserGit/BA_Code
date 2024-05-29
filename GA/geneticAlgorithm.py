@@ -75,7 +75,29 @@ def genetic_algorithm(population, generations): #population are all prompts, mig
     for _ in range(generations):
         fitness_scores = {}
         for prompt in population:
-            code = None #needs to be changed to the right function from CodeGenLLM
+            try:
+                match api:
+                    case "google":
+                        raise NotImplementedError("Google not implemented yet")
+            
+                    case "openai":
+                        logging.debug(f"Generating code using {args.api} with model {args.model}")
+                        code = cg.codeFromOpenai(prompt, model)
+                        logging.debug("Generating successful")
+                        
+                    case _:
+                        logging.debug(f"Generating code using {args.api} with model {args.model}")
+                        code = cg.codeFromOllama(prompt, model)
+                        logging.debug("Generating successful")
+            
+            except NotImplementedError as nie:
+                logging.error(f"{nie}")
+                exit(1)
+            
+            #exception handling when no code can be created
+            except Exception as e:
+                logging.critical(f"An error occurred: {e}")
+                raise
             #generate code -> compile code -> get fitness score
             #TODO: make sure code actually gets to the compile stage before getting the fitness score
             if code: #TODO: if compilation is successful

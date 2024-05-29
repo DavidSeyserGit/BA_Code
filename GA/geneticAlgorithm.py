@@ -12,33 +12,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-#TODO: Clean up the code an split it into different files for better readability
-
 import requests
 import argparse
 from openai import OpenAI
 import re
 import subprocess
 from catkinCompile import *
+import CodeGenLLM as cg
 
 parser = argparse.ArgumentParser(description='Generate code using LLM')
-parser.add_argument("-api", "--api", type=str, help='what api to use, openai or ollama or google')
-parser.add_argument("-model", "--model", type=str, help='what model to use')
+parser.add_argument("-a", "--api", type=str, help='what api to use, openai or ollama or google')
+parser.add_argument("-m", "--model", type=str, help='what model to use')
+parser.add_argument("-p", "--path", type=str, help='path to the catkin_ws')
+parser.add_argument("-v", "--verbose",action=argparse.BooleanOptionalAction, default=False, help='enable verbose output') #no use currently, should be used to get verbose and non verbose output in the command line
 args = parser.parse_args()
 
-model = args.model
 api = args.api
-
-#compile uses catkin_make and needs the directory where to code is saved
-#Code will be obsolete when the function will be in utility
+model = args.model
+wsPath = args.path
 
 def getPrompts(filename):
     with open(filename, 'r') as file:
         prompts = file.readlines()
     return [prompt.strip() for prompt in prompts]
 
-#Gemini1.5 api still needed
-#the return of the function should be the filtered code block of the model
 def getCodeFromLLM(prompt):
     match api:
         case "google":
@@ -49,7 +46,7 @@ def getCodeFromLLM(prompt):
             completion = client.chat.completions.create(
                 model=model,
                 messages=[
-                    {"role": "system", "content": "you are a master programmer in ROS. You can generate clean and easy to understand code for any Node."},
+                    {"role": "system", "content": "You are an expert in ROS (Robot Operating System) programming with extensive experience in developing robust, efficient, and maintainable code. Your task is to generate clean, well-documented, and easy-to-understand code for any ROS Node. Ensure that the code follows best practices, including modularity, readability, and reusability. Provide clear comments and documentation to help users understand the functionality and structure of the code. Additionally, include any necessary setup instructions and dependencies required to run the code successfully."},
                     {"role": "user", "content": f"{prompt}"},
                 ]
             )
@@ -58,7 +55,7 @@ def getCodeFromLLM(prompt):
             return code
         
         case _:
-            url = 'http://localhost:11434/api/generate'
+            url = 'http://localhost:11434/api/generate' #ollama api url
             data = {
                 "model": model,
                 "prompt": prompt,
@@ -67,9 +64,8 @@ def getCodeFromLLM(prompt):
             r = requests.post(url, json=data)
             if r.status_code == 200: #connection is succesful
                 response_data = r.json()
-                response = response_data.get('response') #just get the textbased response from the LLM not the data behind it
-                #filtering the output so the repsonse is only the code itself
-                start_index = response.find("```")
+                response = response_data.get('response') #filtering the output of the LLM to only the repsonse
+                start_index = response.find("```") #filtering for the codeblock
                 if start_index == -1:
                     return None
                 end_index = response.find("```", start_index + 3)
@@ -79,12 +75,17 @@ def getCodeFromLLM(prompt):
                 if codeBlock.startswith("python"):
                     codeBlock = codeBlock[len("python"):].strip()
                 return codeBlock
-
-#if code compiles fitness should be calculated
-def getFitness(code):
-    #write the code to a file and make a compilation test
+            
+def getFitness(code, prompt):
+    #prompt length
+    promptLength = len(prompt)
+    #code length
+    codeLenth = len(code)
+    #maintainability index
     #make a levenshtein distance test
         # https://www.geeksforgeeks.org/introduction-to-levenshtein-distance/
+        
+    #every metric should have different weights and the max of the fitness function should be the best possible code
     pass
 
 def crossover(parent1, parent2):
@@ -95,7 +96,7 @@ def mutate(child):
     #TODO: needs a way to change only certain parts of the prompt without loosing the meaning of the sentence
     pass
 
-def genetic_algorithm(population, generations):
+def genetic_algorithm(population, generations): #population are all prompts, might need to be changed later to use the getPrompt function
     for _ in range(generations):
         fitness_scores = {}
         for prompt in population:
@@ -124,17 +125,18 @@ def genetic_algorithm(population, generations):
 
 if __name__ == "__main__":
     prompts = getPrompts("example1.txt")
-    path = "/mnt/d/test_ws"
     for prompt in prompts:
-        code = getCodeFromLLM(prompt)
+        code = getCodeFromLLM(prompt) #is in the genetic-algo function later
         if code:
-            with open(f"{path}/src/test.py", "w") as file:
-                
+            with open(f"{wsPath}/src/test/src/test.py", "w") as file: 
                 try:
                     #writing the code to the file might be to slow????
                     file.write(code)
-                    compile = catkinCompile(path)
-                    print(compile) #outputs if the code was compiled successfully
+                    compile = catkinCompile(wsPath, args.verbose)#path to the catkin_ws is different from the path to the file
+                    
+                    if(args.verbose):
+                        print(compile) #outputs if the code was compiled successfully
                     
                 except Exception as e:
                     print(f"An error occurred: {e}")
+    print("Code written to file")

@@ -15,6 +15,7 @@
 import argparse
 from openai import OpenAI
 import logging
+import coloredlogs
 
 from catkinCompile import *
 import CodeGenLLM as cg
@@ -31,7 +32,17 @@ model = args.model
 wsPath = args.path
 
 logLevel = logging.DEBUG if args.verbose else logging.INFO
-logging.basicConfig(level=logLevel, format='%(asctime)s - %(levelname)s - %(message)s')
+coloredlogs.install(
+    level=logLevel,
+    fmt='%(asctime)s - %(levelname)s - %(message)s',
+    level_styles={
+        'debug': {'color': 'cyan'},
+        'info': {'color': 'white'},
+        'warning': {'color': 'yellow'},
+        'error': {'color': 'red'},
+        'critical': {'color': 'magenta'}
+    }
+)
 logging.getLogger("httpcore").setLevel(logging.WARNING)
 logging.getLogger("httpx").setLevel(logging.WARNING)
 openai_logger = logging.getLogger("openai")
@@ -103,6 +114,7 @@ if __name__ == "__main__":
                     logging.debug(f"Generating code using {args.api} with model {args.model}")
                     code = cg.codeFromOpenai(prompt, model)
                     logging.debug("Generating successful")
+                    
                 case _:
                     logging.debug(f"Generating code using {args.api} with model {args.model}")
                     code = cg.codeFromOllama(prompt, model)

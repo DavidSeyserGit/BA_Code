@@ -46,7 +46,7 @@ coloredlogs.install(
 logging.getLogger("httpcore").setLevel(logging.WARNING)
 logging.getLogger("httpx").setLevel(logging.WARNING)
 openai_logger = logging.getLogger("openai")
-openai_logger.setLevel(logging.INFO)
+openai_logger.setLevel(logging.WARNING)
 
 def getPrompts(filename):
     with open(filename, 'r') as file:
@@ -64,6 +64,7 @@ def writeAndCompile(code, path):
                 logging.debug("starting catkin compilation")
                 compile = catkinCompile(wsPath, args.verbose)#path to the catkin_ws is different from the path to the file
                 logging.debug(f"Compilation result: {"success" if compile == 0 else "failed"}")
+                return not compile #!RETURNS 0 IF SUCCESSFUL, SO THIS WAY I CAN LATER CHECK IF IT SUCCEEDED
                 
             except Exception as e:
                 logging.error(f"An error occurred: {e}")
@@ -115,10 +116,10 @@ def genetic_algorithm(population, generations): #population are all prompts, mig
                 logging.critical(f"An error occurred: {e}")
                 raise
             
-            writeAndCompile(code, wsPath)
+            compile = writeAndCompile(code, wsPath)
             #generate code -> compile code -> get fitness score
             #TODO: make sure code actually gets to the compile stage before getting the fitness score
-            if code: #TODO: if compilation is successful
+            if compile :
                 fitness_scores[prompt] = getFitness(code, prompt)
             else:
                 #throw a warning force fitness to be 0 for this prompt, and jumpt to the next prompt
@@ -133,7 +134,8 @@ def genetic_algorithm(population, generations): #population are all prompts, mig
         for _ in range(len(population) - len(bestPrompts)):
             #first two elements of best prompt -> parent1, parent2
             parent1, parent2 = bestPrompts[:2]
-            logging.warning(f"Creating child from {parent1} and {parent2}")
+            logging.warning(f"Creating child from '{parent1}' and '{parent2}'")
+            exit(1)
             child = crossover(parent1, parent2)
             mutated_child = mutate(child)
             new_population.append(mutated_child)

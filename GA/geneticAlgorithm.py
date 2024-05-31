@@ -95,7 +95,7 @@ def genetic_algorithm(population, generations): #population are all prompts, mig
             try:
                 match api:
                     case "google":
-                        raise NotImplementedError("Google not implemented yet")
+                        raise NotImplementedError("Not available")
             
                     case "openai":
                         logging.debug(f"Generating code using {args.api} with model {args.model}")
@@ -134,13 +134,13 @@ def genetic_algorithm(population, generations): #population are all prompts, mig
         for _ in range(len(population) - len(bestPrompts)):
             #first two elements of best prompt -> parent1, parent2
             parent1, parent2 = bestPrompts[:2]
-            logging.warning(f"Creating child from '{parent1}' and '{parent2}'")
-            exit(1)
+            logging.warning(f"Creating child from '{parent1}' and '{parent2}'") #change logging to debug later
             child = crossover(parent1, parent2)
             mutated_child = mutate(child)
             new_population.append(mutated_child)
         
         population = bestPrompts + new_population
+        logging.error(population)
     
     return max(fitness_scores, key=fitness_scores.get)
 

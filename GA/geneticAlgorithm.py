@@ -17,7 +17,7 @@ from openai import OpenAI
 import logging
 import coloredlogs
 import sys
-import datetime
+from datetime import datetime
 
 from catkinCompile import *
 import CodeGenLLM as cg
@@ -49,7 +49,7 @@ coloredlogs.install(
 logging.getLogger("httpcore").setLevel(logging.WARNING)
 logging.getLogger("httpx").setLevel(logging.WARNING)
 openai_logger = logging.getLogger("openai")
-openai_logger.setLevel(logging.WARNING)
+openai_logger.setLevel(logging.INFO)
 
 def getPrompts(filename):
     with open(filename, 'r') as file:

@@ -133,7 +133,7 @@ def genetic_algorithm(population, generations): #population are all prompts, mig
 
         parent1, parent2 = bestPrompts[:2]
         
-        logging.warning(f"Creating child from '{parent1}' and '{parent2}'")
+        logging.debug(f"Creating child from '{parent1}' and '{parent2}'")
             
         child = crossover(parent1, parent2)
         mutated_child = mutate(child)

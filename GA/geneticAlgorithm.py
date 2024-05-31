@@ -16,6 +16,8 @@ import argparse
 from openai import OpenAI
 import logging
 import coloredlogs
+import sys
+import datetime
 
 from catkinCompile import *
 import CodeGenLLM as cg
@@ -25,6 +27,7 @@ parser.add_argument("-a", "--api", type=str, help='what api to use, openai or ol
 parser.add_argument("-m", "--model", type=str, help='what model to use')
 parser.add_argument("-p", "--path", type=str, help='path to the catkin_ws')
 parser.add_argument("-v", "--verbose",action=argparse.BooleanOptionalAction, default=False, help='enable verbose output') #no use currently, should be used to get verbose and non verbose output in the command line
+parser.add_argument("-pf", "--prompt", type=str, help='the file with the inital prompts')
 args = parser.parse_args()
 
 api = args.api
@@ -86,11 +89,12 @@ def crossover(parent1, parent2):
 def mutate(child):
     #mutate the child randomly by swapping/adding/subtracting words from the prompt.
     #TODO: needs a way to change only certain parts of the prompt without loosing the meaning of the sentence
-    pass
+    return "generate a ros subscriber"
 
 def genetic_algorithm(population, generations): #population are all prompts, might need to be changed later to use the getPrompt function
     for _ in range(generations):
         fitness_scores = {}
+        
         for prompt in population:
             try:
                 match api:
@@ -111,39 +115,36 @@ def genetic_algorithm(population, generations): #population are all prompts, mig
                 logging.error(f"{nie}")
                 exit(1)
             
-            #exception handling when no code can be created
             except Exception as e:
                 logging.critical(f"An error occurred: {e}")
                 raise
             
             compile = writeAndCompile(code, wsPath)
-            #generate code -> compile code -> get fitness score
-            #TODO: make sure code actually gets to the compile stage before getting the fitness score
-            if compile :
+            if compile:
                 fitness_scores[prompt] = getFitness(code, prompt)
             else:
-                #throw a warning force fitness to be 0 for this prompt, and jumpt to the next prompt
-                pass
-                
-        sortedPopulation = sorted(fitness_scores, key=fitness_scores.get, reverse=True)
+                fitness_scores[prompt] = 0  # Assign 0 fitness if compilation fails
 
+        sortedPopulation = sorted(fitness_scores, key=fitness_scores.get, reverse=True)
         bestPrompts = sortedPopulation[:len(population) // 2]
 
-        # Generate new population
-        new_population = []
-        for _ in range(len(population) - len(bestPrompts)):
-            #first two elements of best prompt -> parent1, parent2
-            parent1, parent2 = bestPrompts[:2]
-            logging.warning(f"Creating child from '{parent1}' and '{parent2}'") #change logging to debug later
-            child = crossover(parent1, parent2)
-            mutated_child = mutate(child)
-            new_population.append(mutated_child)
-        
-        population = bestPrompts + new_population
-        logging.error(population)
-    
-    return max(fitness_scores, key=fitness_scores.get)
+        #! I need to make sure that i always have a minimum of 4 elements in the population
+        new_population = population.copy()
 
+        parent1, parent2 = bestPrompts[:2]
+        
+        logging.warning(f"Creating child from '{parent1}' and '{parent2}'")
+            
+        child = crossover(parent1, parent2)
+        mutated_child = mutate(child)
+        
+        new_population.append(mutated_child)
+        #new_population.append(mutated_child)
+        
+        population = new_population
+        logging.debug(population)
+        
+    return population
 
 
 
@@ -151,9 +152,31 @@ def genetic_algorithm(population, generations): #population are all prompts, mig
 #for testing purposes
 if __name__ == "__main__":
     
+    startTime = datetime.now()
+    
+    if args.verbose:
+        sys.tracebacklimit = 1
+    else:
+        sys.tracebacklimit = 0
+    
     logging.info("Starting code generation")
-    prompts = getPrompts("example1.txt") #returns a list of prompts / is inital population
-    genetic_algorithm(prompts, 10)
-                
+    try:
+        prompts = getPrompts(args.prompt) #returns a list of prompts / is inital population
+    except FileNotFoundError:
+        logging.error(f"File: {args.prompt} not found")
+
+    except Exception as e:
+        logging.error(f"An unexpected error occurred: {e}")
+        
+    try:
+        genetic_algorithm(prompts, 10)
+    except NameError as name:
+        logging.error(name)       
+        
+    endTime = datetime.now()
+    elapsedTime = endTime-startTime
+    
+    logging.info(f"Operation took: {elapsedTime}")
+         
     logging.info("End of Program")
                 

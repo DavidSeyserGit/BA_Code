@@ -1,3 +1,2 @@
 generate a ROS1 noetic subscriber in python, only create the code, no explanation
 code a ROS subscriber in python, only create the code, no explanation
-make a ros subscriber that subscribes to the topic /chatter in python, only create the code, no explanation, only create one code

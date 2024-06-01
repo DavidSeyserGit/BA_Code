@@ -18,6 +18,7 @@ import logging
 import coloredlogs
 import sys
 from datetime import datetime
+import random
 
 from catkinCompile import *
 import CodeGenLLM as cg
@@ -84,12 +85,42 @@ def getFitness(code, prompt):
     pass
 
 def crossover(parent1, parent2):
-    pass
+    parent1Words = parent1.split()
+    parent2Words = parent2.split()
+    
+    # Determine the crossover point within the range of the shorter parent's length
+    crossover_point = min(len(parent1Words), len(parent2Words)) // 2
+
+    # Ensure the crossover point is within a sensible range
+    if len(parent1Words) == 0 or len(parent2Words) == 0:
+        return parent1 if len(parent1Words) > 0 else parent2
+
+    # Create the child by combining parts of parent1 and parent2
+    childWords = parent1Words[:crossover_point] + parent2Words[crossover_point:]
+
+    # Join the words back into a string
+    child = ' '.join(childWords)
+    
+    return child
 
 def mutate(child):
     #mutate the child randomly by swapping/adding/subtracting words from the prompt.
-    #TODO: needs a way to change only certain parts of the prompt without loosing the meaning of the sentence
-    return "generate a ros subscriber"
+    substitutionWords = ['node', 'topic', 'message', 'publish', 'subscribe', 'service', 'client', 'action', 'goal', 'result']
+    
+    # Split the prompt into words
+    words = child.split()
+    
+    # Mutate the string
+    for i in range(len(words)):
+        if random.random() < 0.2:
+            # Substitute the word at position i
+            newWord = random.choice(substitutionWords)
+            words[i] = newWord
+    
+    # Join the words back into a string
+    mutatedPrompt = ' '.join(words)
+    return mutatedPrompt
+
 
 def genetic_algorithm(population, generations): #population are all prompts, might need to be changed later to use the getPrompt function
     for _ in range(generations):
@@ -126,22 +157,24 @@ def genetic_algorithm(population, generations): #population are all prompts, mig
                 fitness_scores[prompt] = 0  # Assign 0 fitness if compilation fails
 
         sortedPopulation = sorted(fitness_scores, key=fitness_scores.get, reverse=True)
-        bestPrompts = sortedPopulation[:len(population) // 2]
+        bestPrompts = sortedPopulation[:2]
+        
+        #bestPrompts = sortedPopulation[:len(population) // 2]
 
         #! I need to make sure that i always have a minimum of 4 elements in the population
-        new_population = population.copy()
+        newPopulation = population.copy()
 
         parent1, parent2 = bestPrompts[:2]
         
         logging.debug(f"Creating child from '{parent1}' and '{parent2}'")
             
         child = crossover(parent1, parent2)
-        mutated_child = mutate(child)
+        mutatedChild = mutate(child)
         
-        new_population.append(mutated_child)
+        newPopulation.append(mutatedChild)
         #new_population.append(mutated_child)
         
-        population = new_population
+        population = newPopulation
         logging.debug(population)
         
     return population

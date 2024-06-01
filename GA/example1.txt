@@ -1,3 +1,2 @@
-generate a ROS1 noetic pub in python
-code a ROS publisher in python
-pub in ROS1 python
+generate a ROS1 noetic publisher in python
+code a ROS publisher in python with /chatter

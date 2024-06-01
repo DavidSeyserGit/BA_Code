@@ -77,13 +77,17 @@ def writeAndCompile(code, path):
             
 def getFitness(code, prompt):
     #fitness should be maximized for the code to be good
-    codeLenth, promptLength = fu.CodePromptLength(code, prompt, 3, 1)
-    levenDist = fu.LevenshteinDistance(code, 10)
-    fitness = 1/(codeLenth+1) + levenDist + promptLength/2
+    #codeLenth, promptLength = fu.CodePromptLength(code, prompt, 1, 1)
+    levenDist = fu.LevenshteinDistance(code, 1000)
+    complexity = fu.Complexity(code)
+    logging.debug(f"Complexity: {complexity}, Levenshtein distance: {levenDist}")
+    fitness = complexity + levenDist
     return fitness
 
 
 def crossover(parent1, parent2):
+    #might be useful to use 'worse' prompt as parent2 randomly to get more diversity
+    
     if not parent1 or not parent2:
         logging.error("One or both parents are empty.")
         return parent1 if parent1 else parent2
@@ -123,7 +127,7 @@ def mutate(child):
     for i in range(len(words)):
         mutationType = random.random()
         
-        if mutationType < 0.8: 
+        if mutationType < 0.4: 
             # Substituting based on the context of the current word
             current_word = words[i]
             if current_word in substitutionWords['nouns']:
@@ -141,12 +145,12 @@ def mutate(child):
             words.pop(i)
             num_words -= 1  
             
-        elif mutationType < 0.6: 
+        elif mutationType < 0.1: 
             newWord = random.choice(substitutionWords['misc'] + substitutionWords['adjectives'])
             words.insert(i, newWord)
             num_words += 1
         
-        elif mutationType < 0.4: 
+        elif mutationType < 0.1: 
             newWord = random.choice(substitutionWords['type'])
             words.insert(i, newWord)
             num_words += 1
@@ -195,7 +199,7 @@ def genetic_algorithm(population, generations):
                 if compile:
                     fitnessScores[prompt] = getFitness(code, prompt)
                 else:
-                    fitnessScores[prompt] = 0  # Assign 0 fitness if compilation fails
+                    fitnessScores[prompt] = float('inf') 
 
                 evaluatedPrompts[prompt] = fitnessScores[prompt]  # Cache the evaluated prompt
 
@@ -203,8 +207,13 @@ def genetic_algorithm(population, generations):
         best_prompts = sorted_population[:2]
 
         new_population = sorted_population.copy()
-
-        parent1, parent2 = best_prompts[:2]
+        
+        #use the best prompt as parent1 to create the next generation & for 70% of the time use the second best prompts as parent2 othwerwise use a random prompt
+        if random.random() < 0.7:
+            parent1, parent2 = best_prompts[:2]
+        else:
+            parent1 = best_prompts[0]
+            parent2 = random.choice(sorted_population)
         
         logging.debug(f"Creating child from '{parent1}' and '{parent2}'")
         
@@ -255,6 +264,4 @@ if __name__ == "__main__":
     logging.info(f"Best prompt: {bestPrompt}")
     
     logging.info(f"Operation took: {elapsedTime}")
-         
-    logging.info("End of Program")
-                
+ 

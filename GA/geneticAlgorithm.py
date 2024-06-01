@@ -22,6 +22,7 @@ import random
 
 from catkinCompile import *
 import CodeGenLLM as cg
+import fitnessUtil as fu
 
 parser = argparse.ArgumentParser(description='Generate code using LLM')
 parser.add_argument("-a", "--api", type=str, help='what api to use, openai or ollama or google')
@@ -74,15 +75,10 @@ def writeAndCompile(code, path):
                 logging.error(f"An error occurred: {e}")
             
 def getFitness(code, prompt):
-    promptLength = len(prompt)
-    codeLenth = len(code)
-    #maintainability index
-    #make a levenshtein distance test
-        # https://www.geeksforgeeks.org/introduction-to-levenshtein-distance/
-        
-    #every metric should have different weights and the max of the fitness function should be the best possible code
+
+    codeLenth, promptLength = fu.CodePromptLength(code, prompt, 1, 1)
+
     return promptLength / codeLenth
-    pass
 
 def crossover(parent1, parent2):
     parent1Words = parent1.split()
@@ -112,7 +108,7 @@ def mutate(child):
     
     # Mutate the string
     for i in range(len(words)):
-        if random.random() < 0.2:
+        if random.random() < 0.1:
             # Substitute the word at position i
             newWord = random.choice(substitutionWords)
             words[i] = newWord
@@ -124,6 +120,7 @@ def mutate(child):
 
 def genetic_algorithm(population, generations): #population are all prompts, might need to be changed later to use the getPrompt function
     for _ in range(generations):
+        logging.info(f"Generation: {_}")
         fitness_scores = {}
         
         for prompt in population:
@@ -176,8 +173,9 @@ def genetic_algorithm(population, generations): #population are all prompts, mig
         
         population = newPopulation
         logging.debug(population)
+        logging.debug(sortedPopulation)
         
-    return population
+    return sortedPopulation[0] #return the best prompt from the final
 
 
 
@@ -193,8 +191,10 @@ if __name__ == "__main__":
         sys.tracebacklimit = 0
     
     logging.info("Starting code generation")
+    
     try:
         prompts = getPrompts(args.prompt) #returns a list of prompts / is inital population
+        
     except FileNotFoundError:
         logging.error(f"File: {args.prompt} not found")
 
@@ -202,12 +202,15 @@ if __name__ == "__main__":
         logging.error(f"An unexpected error occurred: {e}")
         
     try:
-        genetic_algorithm(prompts, 10)
+        bestPrompt = genetic_algorithm(prompts, 2)
+        
     except NameError as name:
         logging.error(name)       
         
     endTime = datetime.now()
     elapsedTime = endTime-startTime
+    
+    logging.info(f"Best prompt: {bestPrompt}")
     
     logging.info(f"Operation took: {elapsedTime}")
          

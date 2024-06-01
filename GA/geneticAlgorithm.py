@@ -79,7 +79,7 @@ def getFitness(code, prompt):
     #fitness should be maximized for the code to be good
     codeLenth, promptLength = fu.CodePromptLength(code, prompt, 3, 1)
     levenDist = fu.LevenshteinDistance(code, 10)
-    fitness = 1/codeLenth + levenDist
+    fitness = 1/(codeLenth+1) + levenDist + promptLength/2
     return fitness
 
 
@@ -95,7 +95,7 @@ def crossover(parent1, parent2):
         logging.error("One or both parents have no words.")
         return parent1 if parent1Words else parent2
 
-    crossover_point = min(len(parent1Words), len(parent2Words)) // 2
+    crossover_point = random.randint(1, min(len(parent1Words), len(parent2Words)) - 1)
     childWords = parent1Words[:crossover_point] + parent2Words[crossover_point:]
 
     child = ' '.join(childWords)
@@ -111,8 +111,10 @@ def mutate(child):
     
     substitutionWords = {
         'nouns': ['node', 'topic', 'message', 'service', 'client', 'action', 'callback', 'event', 'handler', 'object', 'method', 'class', 'module', 'function', 'procedure', 'thread', 'process', 'signal', 'slot', 'interface', 'instance', 'attribute', 'property', 'element', 'entity'],
-        'type': ['publish', 'subscribe', 'loop'],
-        'actions': ['code', 'create', 'design', 'generate', 'make']
+        'type': ['publisher', 'subscriber', 'loop'],
+        'actions': ['code', 'create', 'design', 'generate', 'make'],
+        'misc' : ['with topic', 'callback'],
+        'adjectives': ['with', 'the', 'and'],
     }
     
     words = child.split()
@@ -130,13 +132,22 @@ def mutate(child):
                 words[i] = random.choice(substitutionWords['type'])
             elif current_word in substitutionWords['actions']:
                 words[i] = random.choice(substitutionWords['actions'])
+            elif current_word in substitutionWords['misc']:
+                words[i] = random.choice(substitutionWords['misc'])
+            elif current_word in substitutionWords['adjectives']:
+                words[i] = random.choice(substitutionWords['adjectives'])
             
-        elif mutationType < 0.04 and num_words > 1: 
+        elif mutationType < 0.3 and num_words > 1: 
             words.pop(i)
             num_words -= 1  
             
-        elif mutationType < 0.2: 
-            newWord = random.choice(substitutionWords['nouns'] + substitutionWords['type'])
+        elif mutationType < 0.6: 
+            newWord = random.choice(substitutionWords['misc'] + substitutionWords['adjectives'])
+            words.insert(i, newWord)
+            num_words += 1
+        
+        elif mutationType < 0.4: 
+            newWord = random.choice(substitutionWords['type'])
             words.insert(i, newWord)
             num_words += 1
         

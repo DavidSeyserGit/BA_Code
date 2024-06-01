@@ -1,2 +1,3 @@
-generate a ROS1 noetic subscriber in python, only create the code, no explanation
-code a ROS subscriber in python, only create the code, no explanation
+generate a ROS1 noetic pub in python
+code a ROS publisher in python
+pub in ROS1 python

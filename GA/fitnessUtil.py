@@ -2,7 +2,7 @@ import logging
 
 def CodePromptLength(code, prompt, ka, kb):
     if not isinstance(code, str) or code is None:
-        code_length = 100000  #penalize for no code
+        code_length = float('inf')  #penalize for no code
     else:
         code_length = kb * len(code)
         
@@ -12,24 +12,24 @@ def CodePromptLength(code, prompt, ka, kb):
 
 
 def LevenshteinDistance(code, kc):
+    if code is None:
+        return float('inf')
     
     with open('target.txt', 'r') as file:
         target = file.read()
-    if not isinstance(code, str) or code is None:
-        m = 100000  #penalize for no code
-    else:
-        m = len(code)
+
+    m = len(code)
     n = len(target)
     
     # Create a matrix to store the distances
     dp = [[0] * (n + 1) for _ in range(m + 1)]
-    
-    # Initialize the first row and column of the matrix
+
+    # Base cases: initialize first row and column
     for i in range(m + 1):
         dp[i][0] = i
     for j in range(n + 1):
         dp[0][j] = j
-    
+
     # Compute the distances
     for i in range(1, m + 1):
         for j in range(1, n + 1):

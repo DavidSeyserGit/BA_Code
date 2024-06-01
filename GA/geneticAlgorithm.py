@@ -179,7 +179,7 @@ def genetic_algorithm(population, generations):
         logging.debug(population)
         logging.debug(newPopulation)
 
-    return sorted_population[0]
+    return sortedPopulation[0]
 
 
 #for testing purposes

@@ -144,7 +144,7 @@ def genetic_algorithm(population, generations):
                     exit(1)
 
                 except Exception as e:
-                    logging.critical(f"An error occurred: {e}")
+                    logging.critical(f"An error occurred: {e}") 
                     raise
 
                 compile = writeAndCompile(code, wsPath)
@@ -155,17 +155,17 @@ def genetic_algorithm(population, generations):
 
                 evaluatedPrompts[prompt] = fitnessScores[prompt]  # Cache the evaluated prompt
 
-        sorted_population = sorted(fitnessScores, key=fitnessScores.get, reverse=True)
-        best_prompts = sorted_population[:2]
-
-        new_population = sorted_population.copy()
+        sortedPopulation = sorted(fitnessScores, key=fitnessScores.get, reverse=True)
+        bestPrompts = sortedPopulation[:2]
         
-        #use the best prompt as parent1 to create the next generation & for 90% of the time use the second best prompts as parent2 othwerwise use a random prompt
+        newPopulation = population.copy()  # Initialize with the entire current population
+        
+        # Use the best prompt as parent1 to create the next generation & for 90% of the time use the second best prompts as parent2 otherwise use a random prompt
         if random.random() < 0.9:
-            parent1, parent2 = best_prompts[:2]
+            parent1, parent2 = bestPrompts[:2]
         else:
-            parent1 = best_prompts[0]
-            parent2 = random.choice(sorted_population)
+            parent1 = bestPrompts[0]
+            parent2 = random.choice(sortedPopulation)
         
         logging.debug(f"Creating child from '{parent1}' and '{parent2}'")
         
@@ -173,14 +173,13 @@ def genetic_algorithm(population, generations):
         mutated_child = mutate(child)
 
         if mutated_child not in evaluatedPrompts:
-            new_population.append(mutated_child)
+            newPopulation.append(mutated_child)
 
-        population = new_population
+        population = newPopulation
         logging.debug(population)
-        logging.debug(sorted_population)
+        logging.debug(newPopulation)
 
-    return sorted_population[0]  # Return the best prompt from the final generation
-
+    return sorted_population[0]
 
 
 #for testing purposes

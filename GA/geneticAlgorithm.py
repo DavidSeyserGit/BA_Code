@@ -77,8 +77,9 @@ def writeAndCompile(code, path):
             
 def getFitness(code, prompt):
     #fitness should be maximized for the code to be good
-    codeLenth, promptLength = fu.CodePromptLength(code, prompt, 1, 1)
-    fitness = 1/codeLenth + 1/promptLength
+    codeLenth, promptLength = fu.CodePromptLength(code, prompt, 3, 1)
+    levenDist = fu.LevenshteinDistance(code, 10)
+    fitness = 1/codeLenth + levenDist
     return fitness
 
 
@@ -102,29 +103,48 @@ def crossover(parent1, parent2):
 
     return child
 
+
 def mutate(child):
     if not child:
         logging.error("Child is empty.")
         return child
-
-    substitutionWords = [
-        'node', 'topic', 'message', 'publish', 'subscribe', 'service', 'client',
-        'action', 'goal', 'result', 'parameter', 'callback', 'event', 'loop', 
-        'handler', 'object', 'method', 'class', 'variable', 'constant', 'module',
-        'function', 'procedure', 'thread', 'process', 'event', 'signal', 'slot',
-        'interface', 'instance', 'attribute', 'property', 'element', 'entity'
-    ]
+    
+    substitutionWords = {
+        'nouns': ['node', 'topic', 'message', 'service', 'client', 'action', 'callback', 'event', 'handler', 'object', 'method', 'class', 'module', 'function', 'procedure', 'thread', 'process', 'signal', 'slot', 'interface', 'instance', 'attribute', 'property', 'element', 'entity'],
+        'type': ['publish', 'subscribe', 'loop'],
+        'actions': ['code', 'create', 'design', 'generate', 'make']
+    }
+    
     words = child.split()
+    num_words = len(words)
 
     for i in range(len(words)):
-        if random.random() < 0.05:
-            newWord = random.choice(substitutionWords)
-            words[i] = newWord
-
+        mutationType = random.random()
+        
+        if mutationType < 0.8: 
+            # Substituting based on the context of the current word
+            current_word = words[i]
+            if current_word in substitutionWords['nouns']:
+                words[i] = random.choice(substitutionWords['nouns'])
+            elif current_word in substitutionWords['type']:
+                words[i] = random.choice(substitutionWords['type'])
+            elif current_word in substitutionWords['actions']:
+                words[i] = random.choice(substitutionWords['actions'])
+            
+        elif mutationType < 0.04 and num_words > 1: 
+            words.pop(i)
+            num_words -= 1  
+            
+        elif mutationType < 0.2: 
+            newWord = random.choice(substitutionWords['nouns'] + substitutionWords['type'])
+            words.insert(i, newWord)
+            num_words += 1
+        
     mutatedPrompt = ' '.join(words)
-    logging.debug(f"Mutation result: {mutatedPrompt}")
-
+    logging.warning(f"Mutation result: {mutatedPrompt}")
     return mutatedPrompt
+
+
 
 def genetic_algorithm(population, generations):
     evaluatedPrompts = {}  # Cache for evaluated prompts and their fitness scores

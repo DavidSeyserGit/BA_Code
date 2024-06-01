@@ -1,12 +1,43 @@
-def CodePromptLength(code, prompt, ka , kb):
-    if type(code) != str:
-        codeLenth = 100000
-    promptLength = ka*(len(prompt))
-    codeLenth = kb*(len(code))
+import logging
+
+def CodePromptLength(code, prompt, ka, kb):
+    if not isinstance(code, str) or code is None:
+        code_length = 100000  #penalize for no code
+    else:
+        code_length = kb * len(code)
         
-    return promptLength, codeLenth
+    prompt_length = ka * len(prompt)
+    
+    return prompt_length, code_length
 
 
-    #maintainability index
-    #make a levenshtein distance test
-        # https://www.geeksforgeeks.org/introduction-to-levenshtein-distance/
+def LevenshteinDistance(code, kc):
+    
+    with open('target.txt', 'r') as file:
+        target = file.read()
+    if not isinstance(code, str) or code is None:
+        m = 100000  #penalize for no code
+    else:
+        m = len(code)
+    n = len(target)
+    
+    # Create a matrix to store the distances
+    dp = [[0] * (n + 1) for _ in range(m + 1)]
+    
+    # Initialize the first row and column of the matrix
+    for i in range(m + 1):
+        dp[i][0] = i
+    for j in range(n + 1):
+        dp[0][j] = j
+    
+    # Compute the distances
+    for i in range(1, m + 1):
+        for j in range(1, n + 1):
+            if code[i - 1] == target[j - 1]:
+                dp[i][j] = dp[i - 1][j - 1]
+            else:
+                dp[i][j] = min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]) + 1
+                
+    logging.debug(f"Levenshtein distance: {dp[m][n]}")
+    # Return the Levenshtein distance
+    return kc / ((dp[m][n])+1)

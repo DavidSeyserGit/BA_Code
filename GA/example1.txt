@@ -1,2 +1,2 @@
 generate a ROS1 noetic publisher in python
-code a ROS publisher in python with /chatter
+code a ROS publisher in python with the topic chatter

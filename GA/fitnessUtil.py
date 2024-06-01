@@ -1,5 +1,6 @@
 def CodePromptLength(code, prompt, ka , kb):
-    
+    if type(code) != str:
+        codeLenth = 100000
     promptLength = ka*(len(prompt))
     codeLenth = kb*(len(code))
         

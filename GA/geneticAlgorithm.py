@@ -30,6 +30,7 @@ parser.add_argument("-m", "--model", type=str, help='what model to use')
 parser.add_argument("-p", "--path", type=str, help='path to the catkin_ws')
 parser.add_argument("-v", "--verbose",action=argparse.BooleanOptionalAction, default=False, help='enable verbose output') #no use currently, should be used to get verbose and non verbose output in the command line
 parser.add_argument("-pf", "--prompt", type=str, help='the file with the inital prompts')
+parser.add_argument("-g", "--generations", type=int, help='the number of generations to run the genetic algorithm')
 args = parser.parse_args()
 
 api = args.api
@@ -75,108 +76,118 @@ def writeAndCompile(code, path):
                 logging.error(f"An error occurred: {e}")
             
 def getFitness(code, prompt):
-
+    #fitness should be maximized for the code to be good
     codeLenth, promptLength = fu.CodePromptLength(code, prompt, 1, 1)
+    fitness = 1/codeLenth + 1/promptLength
+    return fitness
 
-    return promptLength / codeLenth
 
 def crossover(parent1, parent2):
+    if not parent1 or not parent2:
+        logging.error("One or both parents are empty.")
+        return parent1 if parent1 else parent2
+
     parent1Words = parent1.split()
     parent2Words = parent2.split()
-    
-    # Determine the crossover point within the range of the shorter parent's length
+
+    if not parent1Words or not parent2Words:
+        logging.error("One or both parents have no words.")
+        return parent1 if parent1Words else parent2
+
     crossover_point = min(len(parent1Words), len(parent2Words)) // 2
-
-    # Ensure the crossover point is within a sensible range
-    if len(parent1Words) == 0 or len(parent2Words) == 0:
-        return parent1 if len(parent1Words) > 0 else parent2
-
-    # Create the child by combining parts of parent1 and parent2
     childWords = parent1Words[:crossover_point] + parent2Words[crossover_point:]
 
-    # Join the words back into a string
     child = ' '.join(childWords)
-    
+    logging.debug(f"Crossover result: {child}")
+
     return child
 
 def mutate(child):
-    #mutate the child randomly by swapping/adding/subtracting words from the prompt.
-    substitutionWords = ['node', 'topic', 'message', 'publish', 'subscribe', 'service', 'client', 'action', 'goal', 'result']
-    
-    # Split the prompt into words
+    if not child:
+        logging.error("Child is empty.")
+        return child
+
+    substitutionWords = [
+        'node', 'topic', 'message', 'publish', 'subscribe', 'service', 'client',
+        'action', 'goal', 'result', 'parameter', 'callback', 'event', 'loop', 
+        'handler', 'object', 'method', 'class', 'variable', 'constant', 'module',
+        'function', 'procedure', 'thread', 'process', 'event', 'signal', 'slot',
+        'interface', 'instance', 'attribute', 'property', 'element', 'entity'
+    ]
     words = child.split()
-    
-    # Mutate the string
+
     for i in range(len(words)):
-        if random.random() < 0.1:
-            # Substitute the word at position i
+        if random.random() < 0.05:
             newWord = random.choice(substitutionWords)
             words[i] = newWord
-    
-    # Join the words back into a string
+
     mutatedPrompt = ' '.join(words)
+    logging.debug(f"Mutation result: {mutatedPrompt}")
+
     return mutatedPrompt
 
+def genetic_algorithm(population, generations):
+    evaluatedPrompts = {}  # Cache for evaluated prompts and their fitness scores
 
-def genetic_algorithm(population, generations): #population are all prompts, might need to be changed later to use the getPrompt function
-    for _ in range(generations):
-        logging.info(f"Generation: {_}")
-        fitness_scores = {}
-        
+    for generation in range(generations):
+        logging.info(f"Generation: {generation}")
+        fitnessScores = {}
+
         for prompt in population:
-            try:
-                match api:
-                    case "google":
-                        raise NotImplementedError("Not available")
-            
-                    case "openai":
-                        logging.debug(f"Generating code using {args.api} with model {args.model}")
-                        code = cg.codeFromOpenai(prompt, model)
-                        logging.debug("Generating successful")
-                        
-                    case _:
-                        logging.debug(f"Generating code using {args.api} with model {args.model}")
-                        code = cg.codeFromOllama(prompt, model)
-                        logging.debug("Generating successful")
-
-            except NotImplementedError as nie:
-                logging.error(f"{nie}")
-                exit(1)
-            
-            except Exception as e:
-                logging.critical(f"An error occurred: {e}")
-                raise
-            
-            compile = writeAndCompile(code, wsPath)
-            if compile:
-                fitness_scores[prompt] = getFitness(code, prompt)
+            if prompt in evaluatedPrompts:
+                fitnessScores[prompt] = evaluatedPrompts[prompt]
             else:
-                fitness_scores[prompt] = 0  # Assign 0 fitness if compilation fails
+                try:
+                    match api:
+                        case "google":
+                            raise NotImplementedError("Not available")
 
-        sortedPopulation = sorted(fitness_scores, key=fitness_scores.get, reverse=True)
-        bestPrompts = sortedPopulation[:2]
-        
-        #bestPrompts = sortedPopulation[:len(population) // 2]
+                        case "openai":
+                            logging.debug(f"Generating code using {args.api} with model {args.model}")
+                            code = cg.codeFromOpenai(prompt, model)
+                            logging.debug("Generating successful")
 
-        #! I need to make sure that i always have a minimum of 4 elements in the population
-        newPopulation = population.copy()
+                        case _:
+                            logging.debug(f"Generating code using {args.api} with model {args.model}")
+                            code = cg.codeFromOllama(prompt, model)
+                            logging.debug("Generating successful")
 
-        parent1, parent2 = bestPrompts[:2]
+                except NotImplementedError as nie:
+                    logging.error(f"{nie}")
+                    exit(1)
+
+                except Exception as e:
+                    logging.critical(f"An error occurred: {e}")
+                    raise
+
+                compile = writeAndCompile(code, wsPath)
+                if compile:
+                    fitnessScores[prompt] = getFitness(code, prompt)
+                else:
+                    fitnessScores[prompt] = 0  # Assign 0 fitness if compilation fails
+
+                evaluatedPrompts[prompt] = fitnessScores[prompt]  # Cache the evaluated prompt
+
+        sorted_population = sorted(fitnessScores, key=fitnessScores.get, reverse=True)
+        best_prompts = sorted_population[:2]
+
+        new_population = sorted_population.copy()
+
+        parent1, parent2 = best_prompts[:2]
         
         logging.debug(f"Creating child from '{parent1}' and '{parent2}'")
-            
+        
         child = crossover(parent1, parent2)
-        mutatedChild = mutate(child)
-        
-        newPopulation.append(mutatedChild)
-        #new_population.append(mutated_child)
-        
-        population = newPopulation
-        logging.debug(population)
-        logging.debug(sortedPopulation)
-        
-    return sortedPopulation[0] #return the best prompt from the final
+        mutated_child = mutate(child)
 
+        if mutated_child not in evaluatedPrompts:
+            new_population.append(mutated_child)
+
+        population = new_population
+        logging.debug(population)
+        logging.debug(sorted_population)
+
+    return sorted_population[0]  # Return the best prompt from the final generation
 
 
 
@@ -202,7 +213,7 @@ if __name__ == "__main__":
         logging.error(f"An unexpected error occurred: {e}")
         
     try:
-        bestPrompt = genetic_algorithm(prompts, 2)
+        bestPrompt = genetic_algorithm(prompts, args.generations)
         
     except NameError as name:
         logging.error(name)       

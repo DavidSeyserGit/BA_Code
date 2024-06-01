@@ -5,5 +5,5 @@ This code needs a Python Version of at least 3.10
 This script has two parameters that need to be passed via the command line.
     
 ```
-python3 geneticAlgorithm.py -api "your api" -model "your model"
+python3 geneticAlgorithm.py -a "API" -m "MODEL" -p "PATH TO CATKIN_WS" -pf "PATH TO PROMPT FILE" -g "NUMBER OF GENERATIONS"
 ```

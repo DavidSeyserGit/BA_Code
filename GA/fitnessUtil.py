@@ -2,7 +2,7 @@ import logging
 import radon.complexity as radon_complexity
 import radon.metrics as radon_metrics
 import radon.raw as radon_raw
-import language_tool_python
+# import language_tool_python
 
 def Complexity(code):
     if code is None:
@@ -54,7 +54,7 @@ def Complexity(code):
         logging.error(f"Error analyzing code metrics: {e}")
         return 0
 
-
+'''
 def grammatical_score(prompt):
     try:
         # Initialize the grammar checker
@@ -69,6 +69,7 @@ def grammatical_score(prompt):
     except Exception as e:
         print(f"Error checking grammar: {e}")
         return 0
+'''
 
 def CodePromptLength(code, prompt, ka, kb):
     if not isinstance(code, str) or code is None:

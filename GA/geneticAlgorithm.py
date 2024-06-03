@@ -111,7 +111,31 @@ def crossover(parent1, parent2):
     return child
 
 def mutate(child):
-    return child
+    #mutation of the string child
+    if not child:
+        logging.error("Child is empty.")
+        return child
+    
+    substitute = {
+        "Publisher": ["Subscriber", "ServiceServer", "ServiceClient", "ActionServer", "ActionClient"],
+        "Subscriber": ["Publisher", "ServiceServer", "ServiceClient", "ActionServer", "ActionClient"],
+        "generate": ["create", "build", "construct", "design", "develop", "fabricate"],
+        "callback": ["handler", "function", "routine", "method"],
+        "topic": ["service", "action", "parameter"],
+        "function": ["method", "routine", "procedure"],
+        "import": ["include", "use"],
+        "from": ["import from"],
+        "as": ["alias"],
+        "return": ["yield", "provide"]
+    }
+    
+    words = child.split()
+    for i in range(len(words)):
+        if random.random() < 0.3 and words[i] in substitute:
+            alternative_words = substitute[words[i]]
+            words[i] = random.choice(alternative_words)
+    return ' '.join(words)
+
 
 def genetic_algorithm(population, generations):
     evaluatedPrompts = {}  # Cache for evaluated prompts and their fitness scores

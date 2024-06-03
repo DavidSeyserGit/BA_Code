@@ -125,16 +125,18 @@ def mutate(child):
         "function": ["method", "routine", "procedure"],
         "import": ["include", "use"],
         "from": ["import from"],
-        "as": ["alias"],
-        "return": ["yield", "provide"]
     }
     
     words = child.split()
+    
     for i in range(len(words)):
         if random.random() < 0.3 and words[i] in substitute:
             alternative_words = substitute[words[i]]
             words[i] = random.choice(alternative_words)
-    return ' '.join(words)
+            
+    child = ' '.join(words)
+    logging.critical(f"Mutation result: {child}")
+    return child
 
 
 def genetic_algorithm(population, generations):

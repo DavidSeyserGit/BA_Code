@@ -1,6 +1,7 @@
 import requests
 from openai import OpenAI
 import re
+import logging
 
 def codeFromGoogle(prompt, api, model):
     return None
@@ -19,23 +20,28 @@ def codeFromOpenai(prompt, model):
     return code
         
 def codeFromOllama(prompt, model):
-    url = 'http://localhost:11434/api/generate' #ollama api url
-    data = {
-        "model": model,
-        "prompt": prompt,
-        "stream": False
-    }
-    r = requests.post(url, json=data)
-    if r.status_code == 200: #connection is succesful
-        response_data = r.json()
-        response = response_data.get('response') #filtering the output of the LLM to only the repsonse
-        start_index = response.find("```") #filtering for the codeblock
-        if start_index == -1:
-            return None
-        end_index = response.find("```", start_index + 3)
-        if end_index == -1:
-            return None 
-        codeBlock = response[start_index + 3 : end_index].strip()
-        if codeBlock.startswith("python"):
-            codeBlock = codeBlock[len("python"):].strip()
-        return codeBlock
+    try:
+        url = 'http://localhost:11434/api/generate' #ollama api url
+        data = {
+            "model": model,
+            "prompt": prompt,
+            "stream": False
+        }
+        r = requests.post(url, json=data)
+        if r.status_code == 200: #connection is succesful
+            response_data = r.json()
+            response = response_data.get('response') #filtering the output of the LLM to only the repsonse
+            start_index = response.find("```") #filtering for the codeblock
+            if start_index == -1:
+                return None
+            end_index = response.find("```", start_index + 3)
+            if end_index == -1:
+                return None 
+            codeBlock = response[start_index + 3 : end_index].strip()
+            if codeBlock.startswith("python"):
+                codeBlock = codeBlock[len("python"):].strip()
+            return codeBlock
+        
+    except Exception as e:
+            logging.critical("Connection refused")
+    

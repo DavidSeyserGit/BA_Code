@@ -79,10 +79,14 @@ def writeAndCompile(code, path):
 def getFitness(code, prompt):
     #fitness should be maximized for the code to be good
     #codeLenth, promptLength = fu.CodePromptLength(code, prompt, 1, 1)
-    levenDist = fu.LevenshteinDistance(code, 100)
     #grammaticalScore = fu.grammatical_score(prompt)
-    complexity = fu.Complexity(code)
+    #* test cases for each different example might be a better indicator if the code is good or not
+    
+    levenDist = fu.LevenshteinDistance(code, 100) # is currently used to determine how close the code is to the ideal code
+    complexity = fu.Complexity(code) #cyclomatic complexity, halstead, LOC, Comments
+    
     logging.debug(f"Complexity: {complexity}, Levenshtein distance: {levenDist}")
+    
     fitness = complexity * levenDist
     logging.warning(f"Fitness: {fitness}")
     return fitness
@@ -116,6 +120,8 @@ def mutate(child):
         logging.error("Child is empty.")
         return child
     
+    
+    #might not be the best way
     substitute = {
         "Publisher": ["Subscriber", "ServiceServer", "ServiceClient", "ActionServer", "ActionClient"],
         "Subscriber": ["Publisher", "ServiceServer", "ServiceClient", "ActionServer", "ActionClient"],
@@ -129,6 +135,7 @@ def mutate(child):
     
     words = child.split()
     
+    #could be usefull to have different ways to mutate the word (sub, delete, adding)
     for i in range(len(words)):
         if random.random() < 0.3 and words[i] in substitute:
             alternative_words = substitute[words[i]]

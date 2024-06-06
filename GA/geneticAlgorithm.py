@@ -215,7 +215,6 @@ def genetic_algorithm(population, generations):
     return sortedPopulation[0]
 
 
-#for testing purposes
 if __name__ == "__main__":
     
     startTime = datetime.now()

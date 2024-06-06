@@ -30,8 +30,8 @@ def pubTest():
                 break
 
     process.terminate()  # Terminate the process
-
-    return dataReceived
+    #return value is a modifer for the fitness function
+    return (1.1 if dataReceived else 0.9)
 
 
 def subTest():

@@ -24,6 +24,7 @@ import requests
 from catkinCompile import *
 import CodeGenLLM as cg
 import fitnessUtil as fu
+import benchmarkTestCases as bt
 
 parser = argparse.ArgumentParser(description='Generate code using LLM')
 parser.add_argument("-a", "--api", type=str, help='what api to use, openai or ollama or google')
@@ -32,6 +33,7 @@ parser.add_argument("-p", "--path", type=str, help='path to the catkin_ws')
 parser.add_argument("-v", "--verbose",action=argparse.BooleanOptionalAction, default=False, help='enable verbose output') #no use currently, should be used to get verbose and non verbose output in the command line
 parser.add_argument("-pf", "--prompt", type=str, help='the file with the inital prompts')
 parser.add_argument("-g", "--generations", type=int, help='the number of generations to run the genetic algorithm')
+parser.add_argument("-b", "--benchmark", type=str, help='what type of benchmark is tested')
 args = parser.parse_args()
 
 api = args.api
@@ -76,18 +78,26 @@ def writeAndCompile(code, path):
             except Exception as e:
                 logging.error(f"An error occurred: {e}")
             
-def getFitness(code, prompt):
-    #fitness should be maximized for the code to be good
-    #codeLenth, promptLength = fu.CodePromptLength(code, prompt, 1, 1)
-    #grammaticalScore = fu.grammatical_score(prompt)
-    #* test cases for each different example might be a better indicator if the code is good or not
+def getFitness(code, prompt, benchmark):
     
+    match benchmark:
+        case "subscriber":
+            #benchmarkScore = bt.subTest()
+            pass
+        case "publisher":
+            benchmarkScore = bt.pubTest()
+        case "tf":
+            pass
+        case _:
+            benchmarkScore = 1
+            
     levenDist = fu.LevenshteinDistance(code, 100) # is currently used to determine how close the code is to the ideal code
     complexity = fu.Complexity(code) #cyclomatic complexity, halstead, LOC, Comments
     
-    logging.debug(f"Complexity: {complexity}, Levenshtein distance: {levenDist}")
+    logging.debug(f"Complexity: {complexity}, Levenshtein distance: {levenDist}, BenchmarkScore = {benchmarkScore}")
     
-    fitness = complexity * levenDist
+    fitness = complexity * levenDist * benchmarkScore
+    
     logging.warning(f"Fitness: {fitness}")
     return fitness
 
@@ -182,7 +192,7 @@ def genetic_algorithm(population, generations):
 
                 compile = writeAndCompile(code, wsPath)
                 if compile:
-                    fitnessScores[prompt] = getFitness(code, prompt)
+                    fitnessScores[prompt] = getFitness(code, prompt, args.benchmark)
                 else:
                     fitnessScores[prompt] = float('inf') 
 

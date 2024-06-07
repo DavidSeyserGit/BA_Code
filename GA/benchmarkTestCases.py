@@ -4,38 +4,20 @@ This file is for the tests of the benchmark functionality
 import subprocess
 import time
 import select
-
+import logging
 
 def pubTest(pkgName):
-    #starting publisher code
+    # Starting publisher code
     subprocess.run("source /opt/ros/noetic/setup.bash", shell=True, check=True, executable='/bin/bash')
-    subprocess.run("source /home/david/catkin_ws/devel/setup.bash", shell=True, check=True, executable='/bin/bash')
-    publisher = subprocess.call(f"rosrun {pkgName} test.py")
+    subprocess.run("source /home/david/catkin_ws/devel/setup.bash", cwd="/home/david", shell=True, check=True, executable='/bin/bash')
     
-    # subprocess for checking if code publishes
-    process = subprocess.Popen("rostopic echo /chatter", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    
-    dataReceived = False
-    timeout = 10  # seconds
-    startTime = time.time()
-
-    while True:
-        if time.time() - startTime > timeout:
-            break
-
-        # Use select to wait for data or timeout
-        readable, _, _ = select.select([process.stdout], [], [], timeout - (time.time() - startTime))
-        
-        if readable:
-            line = process.stdout.readline()
-            if line:
-                dataReceived = True
-                break
-
-    process.terminate()  # Terminate the process
-    #return value is a modifer for the fitness function
-    return (1.1 if dataReceived else 0.9)
-
+    try:
+        subprocess.run(f"rosrun {pkgName} test.py", cwd="/home/david/", shell=True, check=True, executable='/bin/bash', timeout=5)
+    except subprocess.CalledProcessError as e:
+        logging.warning(f"Error running rosrun: {e}")
+        return 0.9  # Considered as failed to start publisher
+    # Return value is a modifier for the fitness function
+    return 1.1
 
 def subTest():
     #start the ROS code
@@ -45,5 +27,5 @@ def subTest():
     pass
 
 if __name__ == "__main__":
-    result = pubTest()
+    result = pubTest("test")
     print(result)

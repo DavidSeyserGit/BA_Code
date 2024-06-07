@@ -6,8 +6,11 @@ import time
 import select
 
 
-def pubTest():
-    # code to start the ROS code
+def pubTest(pkgName):
+    #starting publisher code
+    subprocess.run("source /opt/ros/noetic/setup.bash", shell=True, check=True, executable='/bin/bash')
+    subprocess.run("source /home/david/catkin_ws/devel/setup.bash", shell=True, check=True, executable='/bin/bash')
+    publisher = subprocess.call(f"rosrun {pkgName} test.py")
     
     # subprocess for checking if code publishes
     process = subprocess.Popen("rostopic echo /chatter", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)

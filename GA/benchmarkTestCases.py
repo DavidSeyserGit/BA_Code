@@ -15,6 +15,7 @@ def list_topics():
 
 def rosCleanUp():
     subprocess.run("rosnode cleanup", shell=True, check=True)
+    subprocess.run("rosnode kill -a", shell=True, executable='/bin/bash')
 
 def rosEnviroment():
     try:
@@ -60,12 +61,13 @@ def pubTest(pkgName):
         else:
             logging.warning("No data received from publisher")
             return 0.7
+        
     except subprocess.TimeoutExpired:
         logging.warning("No data received from publisher within timeout")
         return 0.7
+    
     finally:
         os.killpg(os.getpgid(publisher_process.pid), signal.SIGTERM)
-        
         
 def subTest(pkgName):
     logging.basicConfig(level=logging.INFO)
@@ -89,62 +91,55 @@ def subTest(pkgName):
     time.sleep(3)  # Wait for the subscriber to initialize
 
     topics_after = list_topics()
-    new_topics = topics_after - topics_before
-    logging.info(f"Topics after running subscriber: {topics_after}")
+    new_topics = set(topics_after) - set(topics_before)
+    logging.info(f"Topics after running subscriber: {new_topics}")
 
     if not new_topics:
         logging.warning("No new topics detected")
         os.killpg(os.getpgid(subscriber.pid), signal.SIGTERM)
         return 0.7
 
-    publishers = []
-    for topic in new_topics:
-        logging.info(f"Publishing to new topic: {topic}")
-        publisher = subprocess.Popen(
-            ["rostopic", "pub", "-1", topic, "std_msgs/String", "hello"],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            preexec_fn=os.setsid
-        )
-        publishers.append(publisher)
+    new_topic = new_topics.pop()
+    logging.info(f"Publishing to new topic: {new_topic}")
+    publisher = subprocess.Popen(
+        ["rostopic", "pub", "-r", "1", new_topic, "std_msgs/String", "hello"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        preexec_fn=os.setsid
+    )
     
-    time.sleep(3)  # Give some time for the subscriber to receive the messages
-
-    logging.info("Checking if the subscriber received the message")
+    rosout = subprocess.Popen(
+        ["rostopic", "echo", "/rosout"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        preexec_fn=os.setsid
+    )
+    
     try:
-        output, errors = subscriber.communicate(timeout=10)
-
-        # Check if any message was received
-        if output.strip() or errors.strip():  # Check if there is any non-empty output
-            logging.info(f"Subscriber received a message: {output.strip()}\nErrors: {errors.strip()}")
-            return 2
-        else:
-            logging.warning("Subscriber did not receive any message")
-            return 0.7
-        
+        start_time = time.time()
+        while time.time() - start_time < 10:
+            line = rosout.stdout.readline()
+            if line:
+                logging.info("Subscriber received a message")
+                return 2
+                    
     except subprocess.TimeoutExpired:
-        logging.warning("Subscriber process timed out")
-        return 0.7
-    
-    except Exception as e:
-        logging.error(f"An error occurred: {str(e)}")
-        return 0.7
-    
+        logging.warning("Monitoring /rosout timed out")
+        return False
     finally:
-        # Cleanup processes
+        try:
+            os.killpg(os.getpgid(rosout.pid), signal.SIGTERM)
+        except Exception as e:
+            logging.error(f"Error killing rosout process: {str(e)}")
+        try:
+            os.killpg(os.getpgid(publisher.pid), signal.SIGTERM)
+        except Exception as e:
+            logging.error(f"Error killing publisher process: {str(e)}")
         try:
             os.killpg(os.getpgid(subscriber.pid), signal.SIGTERM)
         except Exception as e:
             logging.error(f"Error killing subscriber process: {str(e)}")
-        
-        for publisher in publishers:
-            try:
-                os.killpg(os.getpgid(publisher.pid), signal.SIGTERM)
-            except Exception as e:
-                logging.error(f"Error killing publisher process: {str(e)}")
-
-
-        
 if __name__ == "__main__":
     result = subTest("test")
     print(result)

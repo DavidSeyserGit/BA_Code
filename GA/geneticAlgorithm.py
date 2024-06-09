@@ -83,7 +83,6 @@ def getFitness(code, prompt, benchmark):
     match benchmark:
         case "subscriber":
             benchmarkScore = bt.subTest("test")
-            pass
         case "publisher":
             benchmarkScore = bt.pubTest("test")
         case "tf":

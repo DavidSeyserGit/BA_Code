@@ -1,0 +1,87 @@
+generation,prompt,code,fitness
+0,generate a ROS1 noetic subscriber in python,"#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import String
+
+def callback(data):
+    rospy.loginfo(""I heard: %s"", data.data)
+
+def listener():
+    rospy.init_node('listener', anonymous=True)
+    rospy.Subscriber(""chatter"", String, callback)
+    rospy.spin()
+
+if __name__ == '__main__':
+    listener()",1.244979919678715
+0,code a ROS sub in python with the topic chatter,"#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import String
+
+def chatter_callback(msg):
+    rospy.loginfo(""Received: %s"", msg.data)
+
+def chatter_subscriber():
+    rospy.init_node('chatter_subscriber', anonymous=True)
+    
+    rospy.Subscriber('chatter', String, chatter_callback)
+    
+    rospy.spin()
+
+if __name__ == '__main__':
+    try:
+        chatter_subscriber()
+    except rospy.ROSInterruptException:
+        pass",1.789473684210526
+1,code a ROS1 noetic subscriber in python,"#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import String
+
+def callback(data):
+    rospy.loginfo(""I heard: %s"", data.data)
+
+def listener():
+    rospy.init_node('listener', anonymous=True)
+    rospy.Subscriber(""/example_topic"", String, callback)
+    rospy.spin()
+
+if __name__ == '__main__':
+    listener()",1.244979919678715
+2,code a ROS sub in python python,"#!/usr/bin/python
+
+import rospy
+from std_msgs.msg import String
+
+def sensor_data_callback(msg):
+    # Callback function to process the sensor data received from the topic
+    rospy.loginfo(""Received sensor data: %s"", msg.data)
+    
+def sensor_data_subscriber():
+    rospy.init_node('sensor_data_subscriber', anonymous=True)
+    
+    rospy.Subscriber(""/sensor_data"", String, sensor_data_callback)
+    
+    rospy.spin()
+
+if __name__ == '__main__':
+    try:
+        sensor_data_subscriber()
+    except rospy.ROSInterruptException:
+        pass",1.6898044484251384
+9,code a ROS sub in in python,"#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import String
+
+def callback(data):
+    rospy.loginfo(""Received data: %s"", data.data)
+
+def listener():
+    rospy.init_node('listener', anonymous=True)
+    rospy.Subscriber('chatter', String, callback)
+    rospy.spin()
+
+if __name__ == '__main__':
+    listener()",1.2228796844181462

@@ -20,6 +20,7 @@ import sys
 from datetime import datetime
 import random
 import requests
+import csv
 
 from catkinCompile import *
 import CodeGenLLM as cg
@@ -157,7 +158,8 @@ def mutate(child):
 
 def genetic_algorithm(population, generations):
     evaluatedPrompts = {}  # Cache for evaluated prompts and their fitness scores
-
+    results = []
+    
     for generation in range(generations):
         logging.info(f"Generation: {generation}")
         fitnessScores = {}
@@ -189,14 +191,17 @@ def genetic_algorithm(population, generations):
                     logging.critical(f"An error occurred: {e}") 
                     raise
 
-                compile = writeAndCompile(code, wsPath)
-                if compile:
-                    fitnessScores[prompt] = getFitness(code, prompt, args.benchmark)
+                if writeAndCompile(code, wsPath):
+                    fitness = getFitness(code, prompt, args.benchmark)
                 else:
-                    fitnessScores[prompt] = float('inf') 
+                    fitness = float('inf') 
+
+                fitnessScores[prompt] = fitness
+                evaluatedPrompts[prompt] = fitness
 
                 evaluatedPrompts[prompt] = fitnessScores[prompt]  # Cache the evaluated prompt
-
+                results.append({'generation': generation, 'prompt': prompt, 'code': code, 'fitness': fitness})
+                
         sortedPopulation = sorted(fitnessScores, key=fitnessScores.get, reverse=True)
         bestPrompts = sortedPopulation[:2]
         
@@ -220,6 +225,13 @@ def genetic_algorithm(population, generations):
         population = newPopulation
         logging.debug(population)
         logging.debug(newPopulation)
+        
+        with open(f'geneticAlgoritm_{args.benchmark}.csv', 'w', newline='') as csvfile:
+            fieldNames = ['generation', 'prompt', 'code', 'fitness']
+            writer = csv.DictWriter(csvfile, fieldnames=fieldNames)
+            writer.writeheader()
+            for result in results:
+                writer.writerow(result)
 
     return sortedPopulation[0]
 
@@ -256,4 +268,5 @@ if __name__ == "__main__":
     logging.info(f"Best prompt: {bestPrompt}")
     
     logging.info(f"Operation took: {elapsedTime}")
+    sys.exit(0)
  

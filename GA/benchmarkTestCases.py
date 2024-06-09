@@ -23,6 +23,13 @@ def rosEnviroment():
         subprocess.run("source /home/david/catkin_ws/devel/setup.bash", cwd="/home/david", shell=True, check=True, executable='/bin/bash')
     except subprocess.CalledProcessError as e:
         logging.error(f"Error setting up environment: {e}")
+     
+def killProcess(proc):
+    try:
+        os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
+    except Exception as e:
+        logging.error(f"Error killing process {proc.pid}: {str(e)}")
+        
 
 def pubTest(pkgName):
     logging.basicConfig(level=logging.INFO)
@@ -68,7 +75,7 @@ def pubTest(pkgName):
     
     finally:
         os.killpg(os.getpgid(publisher.pid), signal.SIGTERM)
-        
+
 def subTest(pkgName):
     logging.basicConfig(level=logging.INFO)
     rosEnviroment()  # Setting the environment variables for ROS
@@ -96,13 +103,13 @@ def subTest(pkgName):
 
     if not newTopics:
         logging.warning("No new topics detected")
-        os.killpg(os.getpgid(subscriber.pid), signal.SIGTERM)
+        killProcess(subscriber)
         return 0.7
 
-    new_topic = newTopics.pop()
-    logging.info(f"Publishing to new topic: {new_topic}")
+    newTopic = newTopics.pop()
+    logging.info(f"Publishing to new topic: {newTopic}")
     publisher = subprocess.Popen(
-        ["rostopic", "pub", "-r", "1", new_topic, "std_msgs/String", "hello"],
+        ["rostopic", "pub", "-r", "1", newTopic, "std_msgs/String", "hello"],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         preexec_fn=os.setsid
@@ -115,31 +122,32 @@ def subTest(pkgName):
         text=True,
         preexec_fn=os.setsid
     )
-    
+
     try:
         start_time = time.time()
         while time.time() - start_time < 10:
+            if rosout.poll() is not None:
+                logging.info("rosout process ended unexpectedly")
+                break
+
             line = rosout.stdout.readline()
             if line:
                 logging.info("Subscriber received a message")
                 return 2
                     
-    except subprocess.TimeoutExpired:
-        logging.warning("Monitoring /rosout timed out")
+    except Exception as e:
+        logging.error(f"Exception occurred: {str(e)}")
         return False
     finally:
-        try:
-            os.killpg(os.getpgid(rosout.pid), signal.SIGTERM)
-        except Exception as e:
-            logging.error(f"Error killing rosout process: {str(e)}")
-        try:
-            os.killpg(os.getpgid(publisher.pid), signal.SIGTERM)
-        except Exception as e:
-            logging.error(f"Error killing publisher process: {str(e)}")
-        try:
-            os.killpg(os.getpgid(subscriber.pid), signal.SIGTERM)
-        except Exception as e:
-            logging.error(f"Error killing subscriber process: {str(e)}")
+        killProcess(rosout)
+        killProcess(publisher)
+        killProcess(subscriber)
+
+    logging.warning("Timeout: Subscriber did not receive a message in time")
+    return 0.7
+            
+            
+            
 if __name__ == "__main__":
     result = subTest("test")
     print(result)

@@ -28,24 +28,24 @@ def pubTest(pkgName):
     logging.basicConfig(level=logging.INFO)
     rosEnviroment() #setting the enviroment variables for ROS
     rosCleanUp() #deleting the ROS nodes
-    topics_before = list_topics()
-    logging.info(f"Topics before running publisher: {topics_before}")
+    topicsBefore = list_topics()
+    logging.info(f"Topics before running publisher: {topicsBefore}")
 
     logging.info("Running rosrun command")
-    publisher_process = subprocess.Popen(f"rosrun {pkgName} test.py", cwd="/home/david/", shell=True, executable='/bin/bash', preexec_fn=os.setsid)
+    publisher = subprocess.Popen(f"rosrun {pkgName} test.py", cwd="/home/david/", shell=True, executable='/bin/bash', preexec_fn=os.setsid)
 
     time.sleep(3)
 
-    topics_after = list_topics()
-    logging.info(f"Topics after running publisher: {topics_after}")
+    topicsAfter = list_topics()
+    logging.info(f"Topics after running publisher: {topicsAfter}")
 
-    new_topics = topics_after - topics_before
-    if not new_topics:
+    newTopics = topicsAfter - topicsBefore
+    if not newTopics:
         logging.warning("No new topics detected")
-        os.killpg(os.getpgid(publisher_process.pid), signal.SIGTERM)
+        os.killpg(os.getpgid(publisher.pid), signal.SIGTERM)
         return 0.7
 
-    new_topic = new_topics.pop()
+    new_topic = newTopics.pop()
     logging.info(f"Detected new topic: {new_topic}")
 
     try:
@@ -67,15 +67,15 @@ def pubTest(pkgName):
         return 0.7
     
     finally:
-        os.killpg(os.getpgid(publisher_process.pid), signal.SIGTERM)
+        os.killpg(os.getpgid(publisher.pid), signal.SIGTERM)
         
 def subTest(pkgName):
     logging.basicConfig(level=logging.INFO)
     rosEnviroment()  # Setting the environment variables for ROS
     rosCleanUp()  # Deleting the ROS nodes
     
-    topics_before = list_topics()
-    logging.info(f"Topics before running subscriber: {topics_before}")
+    topicsBefore = list_topics()
+    logging.info(f"Topics before running subscriber: {topicsBefore}")
     
     subscriber = subprocess.Popen(
         f"rosrun {pkgName} test.py",
@@ -90,16 +90,16 @@ def subTest(pkgName):
 
     time.sleep(3)  # Wait for the subscriber to initialize
 
-    topics_after = list_topics()
-    new_topics = set(topics_after) - set(topics_before)
-    logging.info(f"Topics after running subscriber: {new_topics}")
+    topicsAfter = list_topics()
+    newTopics = set(topicsAfter) - set(topicsBefore)
+    logging.info(f"Topics after running subscriber: {newTopics}")
 
-    if not new_topics:
+    if not newTopics:
         logging.warning("No new topics detected")
         os.killpg(os.getpgid(subscriber.pid), signal.SIGTERM)
         return 0.7
 
-    new_topic = new_topics.pop()
+    new_topic = newTopics.pop()
     logging.info(f"Publishing to new topic: {new_topic}")
     publisher = subprocess.Popen(
         ["rostopic", "pub", "-r", "1", new_topic, "std_msgs/String", "hello"],

@@ -146,8 +146,11 @@ def subTest(pkgName):
     logging.warning("Timeout: Subscriber did not receive a message in time")
     return 0.7
             
-            
-            
+def tfTest(pkgName):
+    return 1
+ 
+def motorcontrollerTest(pkgName):
+    return 1           
 if __name__ == "__main__":
     result = subTest("test")
     print(result)

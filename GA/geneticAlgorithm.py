@@ -32,7 +32,7 @@ parser.add_argument("-a", "--api", type=str, help='what api to use, openai or ol
 parser.add_argument("-m", "--model", type=str, help='what model to use')
 parser.add_argument("-p", "--path", type=str, help='path to the catkin_ws')
 parser.add_argument("-v", "--verbose",action=argparse.BooleanOptionalAction, default=False, help='enable verbose output') #no use currently, should be used to get verbose and non verbose output in the command line
-parser.add_argument("-pf", "--prompt", type=str, help='the file with the inital prompts')
+parser.add_argument("-pf", "--prompt", type=str, help='the file with the inital prompts')   
 parser.add_argument("-g", "--generations", type=int, help='the number of generations to run the genetic algorithm')
 parser.add_argument("-b", "--benchmark", type=str, help='what type of benchmark is tested')
 args = parser.parse_args()

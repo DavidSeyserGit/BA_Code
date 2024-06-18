@@ -64,20 +64,20 @@ def getPrompts(filename):
     return [prompt.strip() for prompt in prompts]
 
 def writeAndCompile(code, path):
-    with open(f"{path}/src/test/src/test.py", "w") as file: 
+    with open(f"{path}/src/test/src/test_cpp.cpp", "w") as file: 
             try:
                 file.write(code)
             except Exception as e:
-                logging.error(f"An error occurred: {e}")
+                logging.error(f"An error occurred: {e}")    
                 
-            try:
-                logging.debug("starting catkin compilation")
-                compile = catkinCompile(wsPath, args.verbose)#path to the catkin_ws is different from the path to the file
-                logging.debug(f"Compilation result: {"success" if compile == 0 else "failed"}")
-                return not compile #!RETURNS 0 IF SUCCESSFUL, SO THIS WAY I CAN LATER CHECK IF IT SUCCEEDED
-                
-            except Exception as e:
-                logging.error(f"An error occurred: {e}")
+    try:
+        logging.debug("starting catkin compilation")
+        compile = catkinCompile(wsPath, args.verbose)#path to the catkin_ws is different from the path to the file
+        logging.debug(f"Compilation result: {"success" if compile == 0 else "failed"}")
+        return not compile #!RETURNS 0 IF SUCCESSFUL, SO THIS WAY I CAN LATER CHECK IF IT SUCCEEDED
+        
+    except Exception as e:
+        logging.error(f"An error occurred: {e}")
             
 def getFitness(code, prompt, benchmark):
     
@@ -96,7 +96,7 @@ def getFitness(code, prompt, benchmark):
     
     logging.debug(f"Complexity: {complexity}, Levenshtein distance: {levenDist}, BenchmarkScore = {benchmarkScore}")
     
-    fitness = complexity * levenDist * benchmarkScore
+    fitness = complexity + levenDist * benchmarkScore
     
     logging.warning(f"Fitness: {fitness}")
     return fitness
@@ -194,7 +194,7 @@ def genetic_algorithm(population, generations):
                 if writeAndCompile(code, wsPath):
                     fitness = getFitness(code, prompt, args.benchmark)
                 else:
-                    fitness = float('inf') 
+                    fitness = 0
 
                 fitnessScores[prompt] = fitness
                 evaluatedPrompts[prompt] = fitness
@@ -226,7 +226,7 @@ def genetic_algorithm(population, generations):
         logging.debug(population)
         logging.debug(newPopulation)
         
-        with open(f'geneticAlgoritm_{args.benchmark}.csv', 'w', newline='') as csvfile:
+        with open(f'geneticAlgoritm_{args.benchmark}_{args.model}_cpp.csv', 'w', newline='') as csvfile:
             fieldNames = ['generation', 'prompt', 'code', 'fitness']
             writer = csv.DictWriter(csvfile, fieldnames=fieldNames)
             writer.writeheader()

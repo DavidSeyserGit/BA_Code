@@ -1,2 +1,2 @@
-generate a ROS1 noetic subscriber in python
-code a ROS sub in python with the topic chatter
+generate a ROS1 noetic subscriber in cpp
+code a ROS sub in cpp with the topic chatter

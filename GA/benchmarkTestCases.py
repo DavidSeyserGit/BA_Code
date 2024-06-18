@@ -39,7 +39,7 @@ def pubTest(pkgName):
     logging.info(f"Topics before running publisher: {topicsBefore}")
 
     logging.info("Running rosrun command")
-    publisher = subprocess.Popen(f"rosrun {pkgName} test.py", cwd="/home/david/", shell=True, executable='/bin/bash', preexec_fn=os.setsid)
+    publisher = subprocess.Popen(f"rosrun {pkgName} test_cpp.cpp", cwd="/home/david/", shell=True, executable='/bin/bash', preexec_fn=os.setsid)
 
     time.sleep(3)
 
@@ -150,7 +150,9 @@ def tfTest(pkgName):
     return 1
  
 def motorcontrollerTest(pkgName):
-    return 1           
+    return 1
+      
 if __name__ == "__main__":
     result = subTest("test")
     print(result)
+    

@@ -4,6 +4,10 @@ import radon.metrics as radon_metrics
 import radon.raw as radon_raw
 # import language_tool_python
 
+'''
+radon only works for python code
+    -> write the same for a cpp code.
+'''
 def Complexity(code):
     if code is None:
         return 0
@@ -45,7 +49,7 @@ def Complexity(code):
         
         )
         return fitness
-    
+    #apperantly gets a syntax error here with cpp code.
     except SyntaxError as se:
         logging.error(f"Syntax error in code: {se}")
         return 0

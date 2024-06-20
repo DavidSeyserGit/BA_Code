@@ -1,8 +1,54 @@
 import logging
 import radon.complexity as radon_complexity
-import radon.metrics as radon_metrics
-import radon.raw as radon_raw
+import re
+import math
+from collections import Counter
+#import radon.metrics as radon_metrics
+#import radon.raw as radon_raw
 # import language_tool_python
+
+def calculate_halstead_volume(code):
+    # Tokenize the code
+    tokens = re.findall(r'\b\w+\b|[^\w\s]', code)
+
+    # Define operators and categorize tokens
+    operators = set(['+', '-', '*', '/', '%', '++', '--', '==', '!=', '>', '<', '>=', '<=', 
+                     '&&', '||', '!', '&', '|', '^', '~', '<<', '>>', '=', '+=', '-=', 
+                     '*=', '/=', '%=', '&=', '|=', '^=', '<<=', '>>='])
+    operands = set()
+
+    operator_count = Counter()
+    operand_count = Counter()
+
+    for token in tokens:
+        if token in operators:
+            operator_count[token] += 1
+        else:
+            operands.add(token)
+            operand_count[token] += 1
+
+    # Calculate Halstead metrics
+    n1 = len(operator_count)
+    n2 = len(operand_count)
+    N1 = sum(operator_count.values())
+    N2 = sum(operand_count.values())
+
+    n = n1 + n2
+    N = N1 + N2
+
+    if n == 0:
+        V = 0
+    else:
+        V = N * math.log2(n)
+
+    if n2 == 0:
+        D = 0
+    else:
+        D = (n1 / 2) * (N2 / n2)
+
+    E = D * V
+
+    return V
 
 '''
 radon only works for python code

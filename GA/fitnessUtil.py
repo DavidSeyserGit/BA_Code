@@ -1,8 +1,8 @@
 import logging
-import radon.complexity as radon_complexity
 import re
 import math
 from collections import Counter
+#import radon.complexity as radon_complexity
 #import radon.metrics as radon_metrics
 #import radon.raw as radon_raw
 # import language_tool_python
@@ -48,7 +48,54 @@ def calculate_halstead_volume(code):
 
     E = D * V
 
-    return V
+    return 1/V #higher V indicates more complex code
+
+
+def Complexity():
+    return 1
+
+def CodePromptLength(prompt, code):
+    if not isinstance(code, str) or code is None:
+        code_length = float('inf')  #penalize for no code
+    else:
+        code_length =  len(code)
+        
+    prompt_length = len(prompt)
+    
+    return prompt_length, code_length
+
+
+def LevenshteinDistance(code, kc):
+    if code is None:
+        return float('inf')
+    
+    with open('target.txt', 'r') as file:
+        target = file.read()
+
+    m = len(code)
+    n = len(target)
+    
+    # Create a matrix to store the distances
+    dp = [[0] * (n + 1) for _ in range(m + 1)]
+
+    # Base cases: initialize first row and column
+    for i in range(m + 1):
+        dp[i][0] = i
+    for j in range(n + 1):
+        dp[0][j] = j
+
+    # Compute the distances
+    for i in range(1, m + 1):
+        for j in range(1, n + 1):
+            if code[i - 1] == target[j - 1]:
+                dp[i][j] = dp[i - 1][j - 1]
+            else:
+                dp[i][j] = min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]) + 1
+    # Return the Levenshtein distance
+    return kc / ((dp[m][n])+1)
+
+
+
 
 '''
 radon only works for python code
@@ -105,46 +152,3 @@ def Complexity(code):
         return 0
 
 '''
-
-def Complexity():
-    return 1
-
-def CodePromptLength(prompt, code):
-    if not isinstance(code, str) or code is None:
-        code_length = float('inf')  #penalize for no code
-    else:
-        code_length =  len(code)
-        
-    prompt_length = len(prompt)
-    
-    return prompt_length, code_length
-
-
-def LevenshteinDistance(code, kc):
-    if code is None:
-        return float('inf')
-    
-    with open('target.txt', 'r') as file:
-        target = file.read()
-
-    m = len(code)
-    n = len(target)
-    
-    # Create a matrix to store the distances
-    dp = [[0] * (n + 1) for _ in range(m + 1)]
-
-    # Base cases: initialize first row and column
-    for i in range(m + 1):
-        dp[i][0] = i
-    for j in range(n + 1):
-        dp[0][j] = j
-
-    # Compute the distances
-    for i in range(1, m + 1):
-        for j in range(1, n + 1):
-            if code[i - 1] == target[j - 1]:
-                dp[i][j] = dp[i - 1][j - 1]
-            else:
-                dp[i][j] = min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]) + 1
-    # Return the Levenshtein distance
-    return kc / ((dp[m][n])+1)

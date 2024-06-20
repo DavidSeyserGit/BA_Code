@@ -7,7 +7,7 @@ import radon.raw as radon_raw
 '''
 radon only works for python code
     -> write the same for a cpp code.
-'''
+
 def Complexity(code):
     if code is None:
         return 0
@@ -59,29 +59,17 @@ def Complexity(code):
         return 0
 
 '''
-def grammatical_score(prompt):
-    try:
-        # Initialize the grammar checker
-        tool = language_tool_python.LanguageTool('en-US')
 
-        # Check for grammar errors in the prompt
-        matches = tool.check(prompt)
-        
-        # If no grammar errors are found, return a high score
-        return(1/len(matches) if len(matches) > 0 else 1)
-    
-    except Exception as e:
-        print(f"Error checking grammar: {e}")
-        return 0
-'''
+def Complexity():
+    return 1
 
-def CodePromptLength(code, prompt, ka, kb):
+def CodePromptLength(prompt, code):
     if not isinstance(code, str) or code is None:
         code_length = float('inf')  #penalize for no code
     else:
-        code_length = kb * len(code)
+        code_length =  len(code)
         
-    prompt_length = ka * len(prompt)
+    prompt_length = len(prompt)
     
     return prompt_length, code_length
 

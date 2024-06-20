@@ -93,10 +93,10 @@ def getFitness(code, prompt, benchmark):
             
     levenDist = fu.LevenshteinDistance(code, 100) # is currently used to determine how close the code is to the ideal code
     complexity = fu.Complexity(code) #cyclomatic complexity, halstead, LOC, Comments
+    promptLenght, codeLength = fu.CodePromptLength(prompt, code)
+    logging.debug(f"Complexity: {complexity}, Levenshtein distance: {levenDist}, BenchmarkScore = {benchmarkScore}, Length = {promptLenght, codeLength}")
     
-    logging.debug(f"Complexity: {complexity}, Levenshtein distance: {levenDist}, BenchmarkScore = {benchmarkScore}")
-    
-    fitness = complexity + levenDist * benchmarkScore
+    fitness = (complexity + codeLength + promptLenght + levenDist) * benchmarkScore
     
     logging.warning(f"Fitness: {fitness}")
     return fitness

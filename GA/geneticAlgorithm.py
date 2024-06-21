@@ -92,7 +92,7 @@ def getFitness(code, prompt, benchmark):
             benchmarkScore = 1
     
     ka = 1
-    kb = 0.7
+    kb = 3
     kc = 0.3
     kd = 0.9
     ke = 2

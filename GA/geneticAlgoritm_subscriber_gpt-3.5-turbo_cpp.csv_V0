@@ -1,6 +1,6 @@
 generation,prompt,code,fitness
-0,generate a ROS1 noetic subscriber in cpp,"#include ""ros/ros.h""
-#include ""std_msgs/String.h""
+0,generate a ROS1 noetic subscriber in cpp,"#include <ros/ros.h>
+#include <std_msgs/String.h>
 
 void messageCallback(const std_msgs::String::ConstPtr& msg) {
     ROS_INFO(""Received message: %s"", msg->data.c_str());
@@ -10,136 +10,30 @@ int main(int argc, char **argv) {
     ros::init(argc, argv, ""subscriber_node"");
     ros::NodeHandle nh;
 
-    ros::Subscriber sub = nh.subscribe(""topic_name"", 10, messageCallback);
+    ros::Subscriber sub = nh.subscribe(""chatter"", 10, messageCallback);
+
+    ROS_INFO(""Subscriber node started."");
 
     ros::spin();
 
     return 0;
-}",5.2241063744351175
+}",5.227178949536084
 0,code a ROS sub in cpp with the topic chatter,"#include ""ros/ros.h""
 #include ""std_msgs/String.h""
 
 void chatterCallback(const std_msgs::String::ConstPtr& msg)
 {
-  ROS_INFO(""I heard: [%s]"", msg->data.c_str());
+    ROS_INFO(""I heard: [%s]"", msg->data.c_str());
 }
 
 int main(int argc, char **argv)
 {
-  ros::init(argc, argv, ""listener"");
-  ros::NodeHandle nh;
-
-  ros::Subscriber sub = nh.subscribe(""chatter"", 1000, chatterCallback);
-
-  ros::spin();
-
-  return 0;
-}",5.219065984680256
-1,construct a ROS1 noetic subscriber in cpp,"#include ""ros/ros.h""
-#include ""std_msgs/String.h""
-
-// Callback function to process messages received on the topic
-void messageCallback(const std_msgs::String::ConstPtr& msg) {
-    ROS_INFO(""Received message: %s"", msg->data.c_str());
-}
-
-int main(int argc, char **argv) {
-    // Initialize the ROS node
-    ros::init(argc, argv, ""example_subscriber"");
-    
-    // Create a NodeHandle for handling the communication with the ROS system
+    ros::init(argc, argv, ""listener"");
     ros::NodeHandle nh;
-    
-    // Create a subscriber that listens to the ""/example_topic"" topic and calls messageCallback function when a message is received
-    ros::Subscriber sub = nh.subscribe(""/example_topic"", 10, messageCallback);
-    
-    // Spin to check for incoming messages
+
+    ros::Subscriber sub = nh.subscribe(""chatter"", 1000, chatterCallback);
+
     ros::spin();
-    
+
     return 0;
-}",5.163241352695789
-2,construct a ROS sub in cpp with the service chatter,"#include ""ros/ros.h""
-#include ""std_msgs/String.h""
-
-void chatterCallback(const std_msgs::String::ConstPtr& msg)
-{
-  ROS_INFO(""I heard: [%s]"", msg->data.c_str());
-}
-
-int main(int argc, char** argv)
-{
-  ros::init(argc, argv, ""chatter_subscriber_node"");
-  ros::NodeHandle node;
-
-  ros::Subscriber sub = node.subscribe(""/chatter"", 1000, chatterCallback);
-
-  ros::spin();
-
-  return 0;
-}",5.218988828192712
-3,fabricate a ROS1 noetic subscriber in cpp,"#include ""ros/ros.h""
-#include ""std_msgs/String.h""
-
-void messageCallback(const std_msgs::String::ConstPtr& msg)
-{
-  ROS_INFO(""Received message: %s"", msg->data.c_str());
-}
-
-int main(int argc, char **argv)
-{
-  // Initialize the ROS node
-  ros::init(argc, argv, ""subscriber_node"");
-  ros::NodeHandle nh;
-
-  // Subscribe to the topic ""chatter"" with a queue size of 10
-  ros::Subscriber sub = nh.subscribe(""chatter"", 10, messageCallback);
-
-  // Spin to wait for messages
-  ros::spin();
-
-  return 0;
-}",5.212130174854989
-4,build a ROS1 noetic subscriber in with the action chatter,"#!/usr/bin/env python
-
-import rospy
-from std_msgs.msg import String
-from actionlib import SimpleActionClient
-from your_package_name.msg import YourActionMsgAction, YourActionMsgGoal
-
-class ChatterSubscriberAction(object):
-    def __init__(self):
-        rospy.init_node('chatter_subscriber')
-        self.client = SimpleActionClient('chatter_action', YourActionMsgAction)
-        self.client.wait_for_server()
-        rospy.Subscriber('chatter', String, self.callback)
-
-    def callback(self, data):
-        goal = YourActionMsgGoal()
-        goal.data = data.data
-        self.client.send_goal(goal)
-
-if __name__ == '__main__':
-    try:
-        chatter_subscriber = ChatterSubscriberAction()
-        rospy.spin()
-    except rospy.ROSInterruptException:
-        pass",0
-7,generate a ROS1 sub in cpp with the topic chatter,"#include <ros/ros.h>
-#include <std_msgs/String.h>
-
-void chatterCallback(const std_msgs::String::ConstPtr& msg)
-{
-  ROS_INFO(""I heard: [%s]"", msg->data.c_str());
-}
-
-int main(int argc, char **argv)
-{
-  ros::init(argc, argv, ""listener"");
-  ros::NodeHandle nh;
-
-  ros::Subscriber sub = nh.subscribe(""chatter"", 1000, chatterCallback);
-
-  ros::spin();
-
-  return 0;
-}",5.218363119354091
+}",5.22813405691077

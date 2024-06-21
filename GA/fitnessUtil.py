@@ -7,7 +7,7 @@ from collections import Counter
 #import radon.raw as radon_raw
 # import language_tool_python
 
-def calculate_halstead_volume(code):
+def halsteadVolume(code):
     # Tokenize the code
     tokens = re.findall(r'\b\w+\b|[^\w\s]', code)
 
@@ -51,7 +51,7 @@ def calculate_halstead_volume(code):
     return 1/V #higher V indicates more complex code
 
 
-def Complexity():
+def Complexity(code):
     return 1
 
 def CodePromptLength(prompt, code):

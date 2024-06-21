@@ -91,13 +91,20 @@ def getFitness(code, prompt, benchmark):
         case _:
             benchmarkScore = 1
     
-    halsteadVolume = fu.HalsteadVolume(code)
+    ka = 1
+    kb = 0.7
+    kc = 0.3
+    kd = 0.9
+    ke = 2
+    kf = 1
+    
+    halsteadVolume = fu.halsteadVolume(code)
     levenDist = fu.LevenshteinDistance(code, 100) # is currently used to determine how close the code is to the ideal code
     complexity = fu.Complexity(code) #cyclomatic complexity, halstead, LOC, Comments
     promptLenght, codeLength = fu.CodePromptLength(prompt, code)
-    logging.debug(f"Complexity: {complexity}, Levenshtein distance: {levenDist}, BenchmarkScore = {benchmarkScore}, Length = {promptLenght, codeLength}")
+    logging.debug(f"Complexity: {complexity}, Levenshtein distance: {levenDist}, BenchmarkScore = {benchmarkScore}, Prompt/Code - Length = {promptLenght, codeLength}, Halstead Volume: {1/halsteadVolume}")
     
-    fitness = (complexity + codeLength + promptLenght + levenDist) * benchmarkScore * halsteadVolume
+    fitness = ka * complexity + kb * 1/codeLength + kc * 1/promptLenght + kd * levenDist + ke * benchmarkScore + kf * halsteadVolume
     
     logging.warning(f"Fitness: {fitness}")
     return fitness
@@ -148,7 +155,7 @@ def mutate(child):
     
     #could be usefull to have different ways to mutate the word (sub, delete, adding)
     for i in range(len(words)):
-        if random.random() < 0.3 and words[i] in substitute:
+        if random.random() < 0.6 and words[i] in substitute:
             alternative_words = substitute[words[i]]
             words[i] = random.choice(alternative_words)
             
@@ -209,7 +216,7 @@ def genetic_algorithm(population, generations):
         newPopulation = population.copy()  # Initialize with the entire current population
         
         # Use the best prompt as parent1 to create the next generation & for 90% of the time use the second best prompts as parent2 otherwise use a random prompt
-        if random.random() < 0.9:
+        if random.random() < 0.7:
             parent1, parent2 = bestPrompts[:2]
         else:
             parent1 = bestPrompts[0]
@@ -227,7 +234,7 @@ def genetic_algorithm(population, generations):
         logging.debug(population)
         logging.debug(newPopulation)
         
-        with open(f'geneticAlgoritm_{args.benchmark}_{args.model}_cpp.csv', 'w', newline='') as csvfile:
+        with open(f'geneticAlgoritm_{args.benchmark}_{args.model}_cpp.csv_V0', 'w', newline='') as csvfile:
             fieldNames = ['generation', 'prompt', 'code', 'fitness']
             writer = csv.DictWriter(csvfile, fieldnames=fieldNames)
             writer.writeheader()

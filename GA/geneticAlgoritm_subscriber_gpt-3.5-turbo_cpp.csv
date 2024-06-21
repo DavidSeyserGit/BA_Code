@@ -1,5 +1,104 @@
 generation,prompt,code,fitness
 0,generate a ROS1 noetic subscriber in cpp,"#include ""ros/ros.h""
+#include ""sensor_msgs/Imu.h""
+
+void imuCallback(const sensor_msgs::Imu::ConstPtr& msg) {
+    // This function will be called every time a new IMU message is received
+    // You can process the received IMU data here
+    ROS_INFO(""Received IMU data - Linear acceleration: [x: %f, y: %f, z: %f]"",
+             msg->linear_acceleration.x,
+             msg->linear_acceleration.y,
+             msg->linear_acceleration.z);
+}
+
+int main(int argc, char **argv) {
+    // Initialize the ROS node
+    ros::init(argc, argv, ""imu_subscriber"");
+
+    // Create a NodeHandle object
+    ros::NodeHandle nh;
+
+    // Create a Subscriber object that subscribes to the ""/sensor_data"" topic
+    // The second argument is the size of the message queue
+    ros::Subscriber sub = nh.subscribe<sensor_msgs::Imu>(""/sensor_data"", 1000, imuCallback);
+
+    // Spin to keep the node running and receiving callbacks
+    ros::spin();
+
+    return 0;
+}",1.3043200048794321
+0,code a ROS sub in cpp with the topic chatter,"#include ""ros/ros.h""
+#include ""std_msgs/String.h""
+
+// Callback function to process messages received on the chatter topic
+void chatterCallback(const std_msgs::String::ConstPtr& msg) {
+    ROS_INFO(""I heard: [%s]"", msg->data.c_str());
+}
+
+int main(int argc, char **argv) {
+    // Initialize the ROS node with a unique node name
+    ros::init(argc, argv, ""listener"");
+
+    // Create a NodeHandle for interacting with the ROS system
+    ros::NodeHandle nh;
+
+    // Subscribe to the chatter topic with a queue size of 10 and provide the callback function
+    ros::Subscriber sub = nh.subscribe(""chatter"", 10, chatterCallback);
+
+    // Spin to wait for messages to arrive and invoke the callback function
+    ros::spin();
+
+    return 0;
+}",1.3250991160370662
+1,code a ROS1 noetic subscriber in cpp,"#include ""ros/ros.h""
+#include ""std_msgs/String.h""
+
+void chatterCallback(const std_msgs::String::ConstPtr& msg)
+{
+    ROS_INFO(""I heard: [%s]"", msg->data.c_str());
+}
+
+int main(int argc, char **argv)
+{
+    ros::init(argc, argv, ""example_subscriber_node"");
+    ros::NodeHandle nh;
+
+    ros::Subscriber sub = nh.subscribe(""/chatter"", 1000, chatterCallback);
+
+    ros::spin();
+
+    return 0;
+}",1.2537282624322825
+2,code a ROS sub in cpp cpp,"#include ""ros/ros.h""
+#include ""sensor_msgs/Imu.h""
+
+void imuCallback(const sensor_msgs::Imu::ConstPtr& msg)
+{
+    // Print the received sensor data
+    ROS_INFO(""Received IMU Data:"");
+    ROS_INFO(""Linear Acceleration (x,y,z): %.2f, %.2f, %.2f"",
+             msg->linear_acceleration.x, msg->linear_acceleration.y, msg->linear_acceleration.z);
+    ROS_INFO(""Angular Velocity (x,y,z): %.2f, %.2f, %.2f"",
+             msg->angular_velocity.x, msg->angular_velocity.y, msg->angular_velocity.z);
+    ROS_INFO(""Orientation (x,y,z,w): %.2f, %.2f, %.2f, %.2f"",
+             msg->orientation.x, msg->orientation.y, msg->orientation.z, msg->orientation.w);
+}
+
+int main(int argc, char **argv)
+{
+    // Initialize the ROS node
+    ros::init(argc, argv, ""imu_subscriber"");
+    ros::NodeHandle n;
+
+    // Subscribe to the ""/sensor_data"" topic
+    ros::Subscriber sub = n.subscribe(""/sensor_data"", 1000, imuCallback);
+
+    // Spin to listen for incoming messages
+    ros::spin();
+
+    return 0;
+}",1.0932564046947768
+3,code a ROS noetic subscriber in cpp,"#include ""ros/ros.h""
 #include ""std_msgs/String.h""
 
 void messageCallback(const std_msgs::String::ConstPtr& msg)
@@ -7,50 +106,14 @@ void messageCallback(const std_msgs::String::ConstPtr& msg)
     ROS_INFO(""Received message: %s"", msg->data.c_str());
 }
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
-    ros::init(argc, argv, ""subscriber_node"");
-    ros::NodeHandle n;
-
-    ros::Subscriber sub = n.subscribe(""chatter"", 1000, messageCallback);
-
-    ros::spin();
-
-    return 0;
-}",inf
-0,code a ROS sub in cpp with the topic chatter,"#include ""ros/ros.h""
-#include ""std_msgs/String.h""
-
-void chatterCallback(const std_msgs::String::ConstPtr& msg)
-{
-  ROS_INFO(""I heard: [%s]"", msg->data.c_str());
-}
-
-int main(int argc, char **argv)
-{
-  ros::init(argc, argv, ""listener"");
-  ros::NodeHandle nh;
-
-  ros::Subscriber sub = nh.subscribe(""chatter"", 1000, chatterCallback);
-
-  ros::spin();
-
-  return 0;
-}",inf
-2,develop a ROS1 sub in cpp with the topic chatter,"#include ""ros/ros.h""
-#include ""std_msgs/String.h""
-
-void chatterCallback(const std_msgs::String::ConstPtr& msg) {
-    ROS_INFO(""I heard: [%s]"", msg->data.c_str());
-}
-
-int main(int argc, char **argv) {
-    ros::init(argc, argv, ""listener"");
+    ros::init(argc, argv, ""simple_subscriber_node"");
     ros::NodeHandle nh;
 
-    ros::Subscriber sub = nh.subscribe(""chatter"", 1000, chatterCallback);
+    ros::Subscriber sub = nh.subscribe(""chatter"", 10, messageCallback);
 
     ros::spin();
 
     return 0;
-}",inf
+}",1.305154935133235

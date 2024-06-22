@@ -150,7 +150,7 @@ def tfTest(pkgName):
     return 1
  
 def motorcontrollerTest(pkgName):
-    return 1
+    return 1 #sends data of a topic, can be read through rostopic echo
       
 if __name__ == "__main__":
     result = subTest("test")

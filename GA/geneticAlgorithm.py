@@ -64,7 +64,7 @@ def getPrompts(filename):
     return [prompt.strip() for prompt in prompts]
 
 def writeAndCompile(code, path):
-    with open(f"{path}/src/test/src/test_cpp.cpp", "w") as file: 
+    with open(f"{path}/src/test/scripts/test_py.py", "w") as file: 
             try:
                 file.write(code)
             except Exception as e:
@@ -83,9 +83,9 @@ def getFitness(code, prompt, benchmark):
     
     match benchmark:
         case "subscriber":
-            benchmarkScore = bt.subTest("test", "talker")
+            benchmarkScore = bt.subTest("test", "test.py")
         case "publisher":
-            benchmarkScore = bt.pubTest("test", "talker")
+            benchmarkScore = bt.pubTest("test", "test.py")
         case "tf":
             pass
         case "motorcontroller":
@@ -95,9 +95,9 @@ def getFitness(code, prompt, benchmark):
         case _:
             benchmarkScore = 1
     
-    ka = 3
-    kb = 3
-    kc = 0.01
+    ka = 5
+    kb = 2
+    kc = 0.3
     kd = 0.9
     ke = 4
     kf = 2
@@ -111,8 +111,8 @@ def getFitness(code, prompt, benchmark):
     logging.debug(f"Complexity: {complexity}, Levenshtein distance: {levenDist}, BenchmarkScore = {benchmarkScore}, Prompt/Code - Length = {promptLenght, codeLength}, Halstead Volume: {1/halsteadVolume}, Double Words: {hasDoubleWords}")
     
 
-    doubleWords = -1 if hasDoubleWords else 0
-    fitness = ka * complexity + kb * 1/codeLength + kc * 1/promptLenght + kd * levenDist + ke * benchmarkScore + kf * halsteadVolume
+    doubleWords = -3 if hasDoubleWords else 0
+    fitness = ka * complexity + kb * 1/codeLength + kc * 1/promptLenght + kd * levenDist + ke * benchmarkScore + kf * halsteadVolume + doubleWords
     
     logging.warning(f"Fitness: {fitness}")
     return fitness
@@ -156,23 +156,14 @@ def mutate(child):
         "function": ["method", "routine", "procedure", "operation", "task"],
         "import": ["include", "use", "bring in", "fetch"],
         "from": ["import from", "taken from", "sourced from"],
-        "node": ["component", "unit", "module"],
-        "message": ["note", "communication", "report", "data"],
+        "message": ["note", "communication", "data"],
         "rate": ["speed", "frequency", "pace"],
-        "spin": ["rotate", "turn", "revolve"],
-        "queue": ["line", "list", "sequence"],
         "launch": ["start", "initiate", "begin"],
         "parameter": ["variable", "factor", "component"],
         "interface": [ "connection", "link", "interaction"],
         "robot": ["machine", "automaton", "bot"],
-        "sensor": ["detector", "device"],
         "actuator": ["motor", "driver", "mechanism"],
         "control": ["regulate", "manage","command"],
-        "navigation": ["steering", "movement"],
-        "mapping": ["plotting", "surveying"],
-        "localization": ["positioning", "tracking", "location"],
-        "planning": ["scheduling", "strategy", "arrangement"],
-        "execution": ["implementation", "operation"],
     }
     
     # List of additional words to add
@@ -278,7 +269,7 @@ def genetic_algorithm(population, generations):
         logging.debug(bestPrompts)
         logging.debug(newPopulation)
         
-        with open(f'geneticAlgoritm_{args.benchmark}_{args.model}_cpp.csv_V4', 'w', newline='') as csvfile:
+        with open(f'geneticAlgoritm_{args.benchmark}_{args.model}_py_V1.csv', 'w', newline='') as csvfile:
             fieldNames = ['generation', 'prompt', 'code', 'fitness']
             writer = csv.DictWriter(csvfile, fieldnames=fieldNames)
             writer.writeheader()
@@ -320,5 +311,5 @@ if __name__ == "__main__":
     logging.info(f"Best prompt: {bestPrompt}")
     
     logging.info(f"Operation took: {elapsedTime}")
-    sys.exit(0)
+    sys.exit(1)
  

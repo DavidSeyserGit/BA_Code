@@ -1,2 +1,4 @@
-ROS1 publisher cpp
-code ROS pub cpp with topic chatter
+make a ROS1 subscriber in python
+code ROS sub in python 
+create a subscriber for ROS in python
+generate a python subscriber node

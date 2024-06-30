@@ -20,7 +20,7 @@ def rosCleanUp():
 def rosEnviroment():
     try:
         subprocess.run("source /opt/ros/noetic/setup.bash", shell=True, check=True, executable='/bin/bash')
-        subprocess.run("source /home/david/catkin_ws/devel/setup.bash", cwd="/home/david", shell=True, check=True, executable='/bin/bash')
+        subprocess.run("source /mnt/d/test_ws/devel/setup.bash", cwd="/home/david", shell=True, check=True, executable='/bin/bash')
     except subprocess.CalledProcessError as e:
         logging.error(f"Error setting up environment: {e}")
      

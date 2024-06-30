@@ -1,0 +1,938 @@
+generation,prompt,code,fitness
+0,make a ROS1 subscriber in cpp,"#include <ros/ros.h>
+#include <string>
+
+int main(int argc, char** argv)
+{
+    // Initialize the node
+    ros::init(argc, argv, ""my_subscriber"");
+    ros::NodeHandle nh;
+
+    // Create a subscriber to topic ""chatter""
+    ros::Subscriber sub = nh.subscribe(""chatter"");
+
+    // Loop and listen for messages
+    while (ros::ok()) {
+        ros::spinOnce();
+        if (sub.getNumPublishedMessages() > 0) {
+            ROS_INFO(""Received message!"");
+        }
+    }
+
+    return 0;
+}",0
+0,code ROS sub in cpp,"#include <ros/ros.h>
+#include <sensor_msgs/Image.h>
+
+int main(int argc, char** argv)
+{
+    // Initialize the ROS node
+    ros::init(argc, argv, ""image_subscriber"");
+    ros::NodeHandle nh;
+
+    // Create a subscriber to the /camera/image topic
+    ros::Subscriber sub = nh.subscribe(""/camera/image"");
+
+    while(ros::ok())
+    {
+        // Read messages from the topic
+        sensor_msgs::ImagePtr msg = boost::shared_ptr<sensor_msgs::Image>(new sensor_msgs::Image);
+        sub.read(msg);
+
+        // Process the message
+        if (msg->header.stamp.toSec() < 1.0)
+        {
+            ROS_INFO(""Received image with timestamp: %f"", msg->header.stamp.toSec());
+        }
+    }
+
+    return 0;
+}",0
+0,create a subscriber for ROS in c++,"#include <ros/ros.h>
+#include <ros/node.h>
+
+class MySubscriber {
+public:
+  MySubscriber() : node_(new ros::NodeHandle()) {}
+
+  void spin() {
+    // Create a subscriber to the ""chatter"" topic
+    sub_ = node_->subscribe<ros::message_traits::SerializedMessage>(""chatter"");
+
+    while (node_->ok()) {
+      // Get the latest message from the topic
+      ros::MessageEvent<ros::message_traits::SerializedMessage> event(sub_.read());
+
+      if (!event.isEmpty()) {
+        // Do something with the message, e.g. print it out
+        std::cout << ""Received message: "" << event.message().data() << std::endl;
+      }
+    }
+
+    delete node_;
+  }
+
+private:
+  ros::NodeHandle* node_;
+  ros::Subscriber sub_;
+};
+
+int main(int argc, char** argv) {
+  // Initialize ROS
+  int argc = 0; // not used
+  char** argv = NULL; // not used
+  ros::init(argc, argv);
+  MySubscriber subscriber;
+  subscriber.spin();
+  return 0;
+}",0
+0,generate a c++ subscriber node,"#include <ros/ros.h>
+#include <std_msgs/String.h>
+
+class MySubscriber {
+public:
+  MySubscriber() {
+    // Create a ROS node handle
+    node_ = ros::NodeHandle(""my_subscriber"");
+
+    // Subscribe to the ""chatter"" topic, with a callback function
+    sub_ = node_.subscribe<std_msgs::String>(""chatter"", 10, &MySubscriber::callback);
+  }
+
+  ~MySubscriber() {
+    // Clean up
+    sub_.shutdown();
+  }
+
+private:
+  ros::NodeHandle node_;
+  ros::Subscriber sub_;
+
+  void callback(const std_msgs::String::ConstPtr& msg) {
+    // Process the message
+    ROS_INFO(""Received message: %s"", msg->data.c_str());
+  }
+};
+
+int main(int argc, char** argv) {
+  // Initialize the ROS system
+  int argc = boost::program_options::parse_command_line(argc, argv);
+
+  // Create a MySubscriber object
+  MySubscriber subscriber;
+
+  // Spin until Ctrl+C is pressed
+  ros::spin();
+
+  return 0;
+}",0
+1,make a sub in cpp,"#include <iostream>
+using namespace std;
+
+class Sub {
+public:
+    int x;
+    
+    // Constructor
+    Sub(int num) : x(num) {}
+    
+    // Method
+    void show() {
+        cout << ""Value of x is: "" << x << endl;
+    }
+};
+
+int main() {
+    // Create an object of Sub class
+    Sub obj1(10);
+    obj1.show();
+    
+    return 0;
+}",5.549134762193715
+3,make a sub cpp,"// sub.cpp
+
+#include <iostream>
+
+void printHello() {
+    std::cout << ""Hello from sub!"" << std::endl;
+}
+
+int main() {
+    printHello();
+    return 0;
+}",5.544683161323537
+5,make a sub for ROS in c++,"#ifndef SUBSCRIBER_H
+#define SUBSCRIBER_H
+
+#include <string>
+#include <functional>
+
+class Subscriber {
+public:
+    Subscriber(const std::string& topicName);
+    ~Subscriber();
+
+    void setCallback(std::function<void(const std::string& message)> callback);
+
+private:
+    // Internal implementation details...
+};
+
+#endif  // SUBSCRIBER_H",0
+9,make a sub,,0
+22,a cpp,,0
+23,make cpp,"#include <iostream>
+
+int main() {
+    std::cout << ""Hello, World!"" << std::endl;
+    return 0;
+}",5.5628139982724685
+27,make a spin sub in cpp,"#include <iostream>
+#include <random>
+
+class Spin {
+public:
+    Spin(int minSpeed, int maxSpeed) : speed(minSpeed + (rand() % (maxSpeed - minSpeed + 1))), direction(0), slowed(false) {}
+
+    void update();
+    void slowDown();
+    void speedUp();
+
+    bool isSlowed() const;
+    bool isSpinning() const;
+
+private:
+    int speed;
+    int direction; // 0 for clockwise, 1 for counterclockwise
+    bool slowed;
+};
+
+void Spin::update() {
+    if (slowed) {
+        if (speed > 0) {
+            speed--;
+        } else {
+            slowed = false;
+        }
+    } else {
+        switch (direction) {
+            case 0: // Clockwise
+                if (speed < 100) {
+                    speed++;
+                } else {
+                    direction = 1; // Switch to counterclockwise
+                }
+                break;
+            case 1: // Counterclockwise
+                if (speed > -100) {
+                    speed--;
+                } else {
+                    direction = 0; // Switch back to clockwise
+                }
+                break;
+        }
+    }
+}
+
+void Spin::slowDown() {
+    slowed = true;
+}
+
+void Spin::speedUp() {
+    if (!slowed && speed < 50) {
+        speed += 10;
+    }
+}
+
+bool Spin::isSlowed() const {
+    return slowed;
+}
+
+bool Spin::isSpinning() const {
+    return speed != 0;
+}
+
+int main() {
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> dis(1, 100);
+
+    Spin mySpin(dis(gen) % 50 + 20); // Initialize the spin with a random speed
+
+    while (true) {
+        mySpin.update();
+
+        if (!mySpin.isSpinning()) {
+            break;
+        }
+
+        if (mySpin.isSlowed()) {
+            std::cout << ""The top is slowing down.\n"";
+        } else {
+            std::cout << ""The top is spinning at a speed of "" << mySpin.speed << "".\n"";
+        }
+    }
+
+    return 0;
+}",0
+28,mapping make a sub in cpp,"#include <unordered_map>
+#include <string>
+
+class Mapping {
+public:
+    // Constructor to initialize the mapping
+    Mapping() : data_{} {}
+
+    // Insert a key-value pair into the mapping
+    void insert(const std::string& key, const std::string& value) {
+        data_[key] = value;
+    }
+
+    // Retrieve the value associated with a given key
+    std::string get(const std::string& key) {
+        auto it = data_.find(key);
+        if (it != data_.end()) {
+            return it->second;
+        } else {
+            return """"; // or throw an exception, depending on your needs
+        }
+    }
+
+private:
+    std::unordered_map<std::string, std::string> data_;
+};
+
+int main() {
+    Mapping my_mapping;
+
+    my_mapping.insert(""hello"", ""world"");
+    my_mapping.insert(""foo"", ""bar"");
+
+    std::cout << my_mapping.get(""hello"") << std::endl; // prints ""world""
+    std::cout << my_mapping.get(""foo"") << std::endl; // prints ""bar""
+
+    return 0;
+}",0
+35,make make a sub in cpp,"#include <iostream>
+#include <string>
+#include <vector>
+
+using namespace std;
+
+void encrypt(const string& input, const string& key) {
+    vector<char> output;
+    for (char c : input) {
+        if (isalpha(c)) {
+            char base = isupper(c) ? 'A' : 'a';
+            int index = toupper(c) - base;
+            index %= 26; // wrap around
+            if (c >='A' && c <= 'Z') {
+                output.push_back(base + index);
+            } else {
+                output.push_back(base + (index+1));
+            }
+        } else {
+            output.push_back(c);
+        }
+    }
+
+    cout << ""Encrypted message: "";
+    for (char c : output) {
+        cout << c;
+    }
+    cout << endl;
+}
+
+void decrypt(const string& input, const string& key) {
+    vector<char> output;
+    for (char c : input) {
+        if (isalpha(c)) {
+            char base = isupper(c) ? 'A' : 'a';
+            int index = toupper(c) - base;
+            index %= 26; // wrap around
+            index += 3; // decrypt
+            output.push_back(base + index);
+        } else {
+            output.push_back(c);
+        }
+    }
+
+    cout << ""Decrypted message: "";
+    for (char c : output) {
+        cout << c;
+    }
+    cout << endl;
+}
+
+int main() {
+    string input, key;
+
+    cout << ""Enter the message to encrypt or decrypt: "";
+    cin >> input;
+    cout << ""Enter the shift value: "";
+    cin >> key;
+
+    if (key.length() > 0) {
+        int shift = stoi(key);
+        // You can add more logic here based on the shift value
+        // For now, we'll just encrypt/decrypt without any shifting
+        encrypt(input, key);
+    } else {
+        decrypt(input, key);
+    }
+
+    return 0;
+}",0.1930159763506012
+48,make a sub control in cpp,"#include <iostream>
+#include <string>
+
+class SubControl {
+public:
+    void printMessage() {
+        std::cout << ""Sub-control message: This is a sub-control.\n"";
+    }
+};
+
+int main() {
+    // Create an instance of the SubControl class.
+    SubControl sc;
+
+    // Call the printMessage method on the sub-control.
+    sc.printMessage();
+
+    return 0;
+}",5.540379209976264
+56,launch make a sub in cpp,"#include <iostream>
+using namespace std;
+
+int main() {
+    system(""cd /path/to/project; make"");
+    return 0;
+}",5.5375343400495005
+59,make a c++ subscriber node,sudo apt-get update && sudo apt-get install ros-kinetic-ros-core,0
+67,make spin a sub in cpp,"#include <windows.h>
+
+// Spin wait (busy-wait) for a specified time, in milliseconds.
+void SpinWait(DWORD dwMilliseconds)
+{
+    DWORD startTick = GetTickCount();
+    while ((GetTickCount() - startTick) <= dwMilliseconds)
+    {
+        // Loop until the desired timeout is reached.
+    }
+}",0
+68,make a process sub in cpp,"#include <iostream>
+#include <process.h>
+
+class MyProcess : public PProcess {
+public:
+    MyProcess() {
+        // Initialize the process with your own constructor logic here.
+    }
+
+    ~MyProcess() {
+        // Clean up any resources allocated by this process here.
+    }
+
+    void Start() override {
+        // Replace the default start logic with your own custom logic here.
+    }
+
+    int Main(int argc, char* argv[]) override {
+        // This is where your main application code would go.
+        std::cout << ""Hello from MyProcess!"" << std::endl;
+        return 0; // Return code for the process.
+    }
+};
+
+int main() {
+    // Create a new instance of your custom process class.
+    auto myProcess = std::make_unique<MyProcess>();
+
+    // Start the process.
+    if (!myProcess->Start()) {
+        std::cerr << ""Failed to start the process."" << std::endl;
+        return 1; // Return error code from main.
+    }
+
+    // Wait for the process to finish before exiting.
+    myProcess->Wait();
+
+    return 0; // Return success code from main.
+}",0
+87,make a sub process in cpp,"#include <cstdlib>
+#include <iostream>
+
+int main() {
+    // Create a subprocess that runs the command ""ls -l""
+    system(""ls -l"");
+
+    return 0;
+}",5.5350674402290405
+93,make a sub in actuator cpp,"#include <ros/ros.h>
+#include <actionlib/client.h>
+
+int main(int argc, char** argv)
+{
+  // Initialize ROS node.
+  ros::init(argc, argv, ""my_node"");
+  ros::NodeHandle nh;
+
+  // Create a subscriber for the actuator topic.
+  ros::Subscriber sub = nh.subscribe(""actuator"");
+
+  // Define a callback function to handle incoming messages.
+  void callback(const std_msgs::String::ConstPtr& msg)
+  {
+    // Handle the message here.
+    ROS_INFO_STREAM(""Received message: "" << msg->data);
+  }
+
+  // Register the callback with the subscriber.
+  sub.registerCallback(&callback);
+
+  // Spin the node to handle incoming messages.
+  ros::spin();
+
+  return 0;
+}",0
+105,make a node sub in cpp,"#include <iostream>
+#include <string>
+
+class Node {
+public:
+    Node(std::string value) : value(value), next(nullptr) {}
+
+    std::string getValue() const { return value; }
+    void setNext(Node* next) { this->next = next; }
+
+    Node* getNext() const { return next; }
+
+private:
+    std::string value;
+    Node* next;
+};
+
+class SubstitutionNode : public Node {
+public:
+    SubstitutionNode(std::string original, std::string replacement) 
+        : Node(original), replacement(replacement) {}
+
+    void substitute(std::string& str) {
+        size_t pos = 0;
+        while ((pos = str.find(getValue())) != std::string::npos) {
+            str.replace(pos, getValue().size(), replacement);
+        }
+    }
+
+private:
+    std::string replacement;
+};
+
+int main() {
+    Node* head = new Node(""hello"");
+    head->setNext(new SubstitutionNode(""o"", ""a""));
+    head->getNext()->setNext(new SubstitutionNode(""l"", ""x""));
+
+    std::string str = ""hello world"";
+    head->getNext()->substitute(str);
+
+    std::cout << str << std::endl;
+
+    delete head;
+    delete head->getNext();
+    delete head->getNext()->getNext();
+
+    return 0;
+}",0
+107,make ROS sub in cpp,"#include <iostream>
+#include <string>
+#include <ros/ros.h>
+
+int main(int argc, char** argv) {
+    // Initialize the ROS node
+    ros::init(argc, argv, ""subscriber_node"");
+    ros::NodeHandle nh;
+
+    // Create a subscriber object to subscribe to the topic
+    ros::Subscriber sub = nh.subscribe(""my_topic"");
+
+    // Loop until the node is shut down
+    while (ros::ok()) {
+        // Spin once to handle any pending messages
+        ros::spinOnce();
+
+        // Check if there are any new messages available on the topic
+        if (!sub.getQueueSize()) {
+            continue;  // No new messages, so spin again
+        }
+
+        // Get the latest message from the topic
+        ros::MessageEvent<std_msgs::String>::ConstPtr msg = sub.read();
+
+        // Print the message
+        std::cout << ""Received message: "" << msg->data << std::endl;
+    }
+
+    return 0;
+}",0
+117,make a subscriber for ROS in c++,"#include <ros/ros.h>
+#include <std_msgs/String.h>",0
+120,make a sub in,,0
+137,make a in cpp,"#include <iostream>
+#include <string>
+
+class Person {
+public:
+    std::string name;
+    int age;
+
+    // Constructor
+    Person(std::string n, int a) : name(n), age(a) {}
+
+    // Overload the ""in"" operator to output the person's details
+    friend std::ostream& operator<<(std::ostream& os, const Person& p) {
+        os << ""Name: "" << p.name << "", Age: "" << p.age;
+        return os;
+    }
+};
+
+int main() {
+    // Create a new Person object
+    Person john(""John"", 30);
+
+    // Use the ""in"" operator to output the person's details
+    std::cout << john << std::endl;
+
+    return 0;
+}",4.6862303076853085
+142,make interface a sub in cpp,"// IAnimal.h (interface)
+class IAnimal {
+public:
+    virtual void makeSound() = 0; // pure virtual function
+};
+
+// Dog.cpp (subclass of IAnimal)
+#include ""IAnimal.h""
+
+class Dog : public IAnimal {
+public:
+    void makeSound() override { std::cout << ""Woof!"" << std::endl; }
+};",0
+143,a sub in cpp,"#include <string>
+
+int main() {
+    std::string str = ""Hello World!"";
+    std::string substr = str.substr(6, 5); // Get the substring from index 6 to 11
+    return 0;
+}",5.549561603265373
+145,make sub in cpp,"#include <iostream>
+
+void sub(int x, int y) {
+    // code to be executed when the sub is called
+    std::cout << ""Inside the sub: x = "" << x << "", y = "" << y << std::endl;
+}
+
+int main() {
+    int a = 5;
+    int b = 10;
+
+    // call the sub with arguments
+    sub(a, b);
+
+    return 0;
+}",5.544715452985722
+159,sensor make sub in cpp,"#include <iostream>
+#include <vector>
+
+class Sensor {
+public:
+    Sensor() : readings_(0) {}
+
+    void read(int value) {
+        readings_.push_back(value);
+    }
+
+    int averageReading() const {
+        if (readings_.empty()) {
+            return 0; // or some default value
+        }
+        int sum = 0;
+        for (int reading : readings_) {
+            sum += reading;
+        }
+        return sum / readings_.size();
+    }
+
+private:
+    std::vector<int> readings_;
+};",0
+187,make sub in parameter cpp,"#include <iostream>
+
+using namespace std;
+
+int calculate(int num, int sub) {
+    return num - sub;
+}
+
+int main() {
+    int num = 10; // initial value
+    int sub = 3; // subtraction value
+
+    cout << ""Original number: "" << num << endl;
+    cout << ""Subtraction value: "" << sub << endl;
+
+    int result = calculate(num, sub);
+
+    cout << ""Result: "" << result << endl;
+
+    return 0;
+}",4.70276778631459
+203,make process sub in cpp,"#include <cstdlib>
+int main() {
+    // Create a new process that runs the command ""ls -l""
+    system(""ls -l"");
+    return 0;
+}",5.537666828655899
+204,system make in cpp,"#include <iostream>
+#include <fstream>
+#include <cstdlib>
+
+int main() {
+    std::cout << ""Enter the name of the file you want to create: "";
+    std::string filename;
+    std::cin >> filename;
+
+    // Open the file for writing
+    FILE *fp = fopen(filename.c_str(), ""w"");
+    if (fp == NULL) {
+        std::cerr << ""Error creating file: "" << filename << std::endl;
+        return 1; // Exit with error code
+    }
+
+    // Write some sample data to the file
+    std::cout << ""Enter some text to write to the file: "";
+    std::string data;
+    std::getline(std::cin, data);
+    fwrite(data.c_str(), sizeof(char), data.size() + 1, fp);
+
+    // Close the file
+    fclose(fp);
+
+    std::cout << ""File created successfully!"" << std::endl;
+
+    return 0; // Exit with success code
+}",3.971170146363294
+212,make sub in,,0
+226,make a interface in cpp,"#include <iostream>
+#include <string>
+
+using namespace std;
+
+class Interface {
+public:
+    void start() {
+        bool running = true;
+        while (running) {
+            cout << ""Welcome to the main menu!"" << endl;
+            cout << ""Please choose an option:"" << endl;
+            cout << ""1. Option 1"" << endl;
+            cout << ""2. Option 2"" << endl;
+            cout << ""3. Quit"" << endl;
+            int choice;
+            cin >> choice;
+
+            switch (choice) {
+                case 1:
+                    // Code for option 1
+                    cout << ""You chose option 1."" << endl;
+                    break;
+                case 2:
+                    // Code for option 2
+                    cout << ""You chose option 2."" << endl;
+                    break;
+                case 3:
+                    running = false;
+                    cout << ""Goodbye!"" << endl;
+                    break;
+                default:
+                    cout << ""Invalid choice. Please try again."" << endl;
+            }
+        }
+    }
+};
+
+int main() {
+    Interface interface;
+    interface.start();
+    return 0;
+}",3.5400921183100684
+233,make localization sub in cpp,"std::string greeting = ""Hello"";  // Internationalized string",0
+236,planning make sub in cpp,"#include <string>
+
+std::string make_sub(const std::string& str, int start, int end) {
+    if (start >= 0 && start <= str.length() && end >= 0 && end <= str.length()) {
+        return str.substr(start, end - start + 1);
+    } else {
+        // handle error case
+        return """";
+    }
+}",0
+238,make make in cpp,"#include <iostream>
+#include <string>
+#include <vector>
+#include <map>
+
+using namespace std;
+
+// A simple implementation of the `make` function
+void make(const string& target, const map<string, string>& dependencies) {
+    // Check if the target is already up-to-date
+    bool needsUpdate = false;
+    for (const auto& dependency : dependencies) {
+        if (!filesystem::exists(dependency.second)) {
+            needsUpdate = true;
+            break;
+        }
+    }
+
+    if (!needsUpdate) {
+        cout << ""No need to update "" << target << endl;
+        return;
+    }
+
+    // Build the target
+    cout << ""Building "" << target << endl;
+
+    // Perform any necessary actions (e.g., compilation, linking)
+    // ...
+}
+
+int main() {
+    map<string, string> dependencies;
+
+    // Define some targets and their dependencies
+    dependencies[""hello.o""] = ""hello.c"";
+    dependencies[""world.o""] = ""world.c"";
+    dependencies[""hello_world""] = ""hello.o world.o"";
+
+    // Build the ""hello_world"" target
+    make(""hello_world"", dependencies);
+
+    return 0;
+}",0
+239,make sub navigation in cpp,"#include <iostream>
+#include <vector>
+using namespace std;
+
+class SubNavigation {
+public:
+    vector<string> parent;
+    map<string, map<string, string>> data; // key1: (key2: value)
+
+    void addParent(string p) { parent.push_back(p); }
+    void addChild(string parent, string child, string value) {
+        data[parent][child] = value;
+    }
+    void printNavigation() {
+        for (int i = 0; i < parent.size(); i++) {
+            cout << ""Parent: "" << parent[i] << endl;
+            map<string, string> temp = data[parent[i]];
+            for (auto x : temp) {
+                cout << ""\tChild: "" << x.first << "", Value: "" << x.second << endl;
+            }
+        }
+    }
+};
+
+int main() {
+    SubNavigation subNav;
+
+    // Adding parents
+    subNav.addParent(""A"");
+    subNav.addParent(""B"");
+
+    // Adding children to parents
+    subNav.addChild(""A"", ""C1"", ""Value 1"");
+    subNav.addChild(""A"", ""C2"", ""Value 2"");
+    subNav.addChild(""B"", ""D1"", ""Value 3"");
+    subNav.addChild(""B"", ""D2"", ""Value 4"");
+
+    // Printing the navigation
+    subNav.printNavigation();
+
+    return 0;
+}",0
+250,make mapping sub in cpp,"#include <map>
+#include <string>
+#include <iostream>
+
+int main() {
+    // Create a map (associative array) with string keys and integer values
+    std::map<std::string, int> mapping;
+
+    // Insert some key-value pairs into the map
+    mapping[""John""] = 25;
+    mapping[""Jane""] = 30;
+    mapping[""Bob""] = 35;
+
+    // Access a value using its key
+    auto it = mapping.find(""John"");
+    if (it != mapping.end()) {
+        std::cout << ""John's age is: "" << it->second << std::endl;
+    } else {
+        std::cout << ""No John in the map!"" << std::endl;
+    }
+
+    // Iterate over all key-value pairs in the map
+    for (const auto& pair : mapping) {
+        std::cout << pair.first << "": "" << pair.second << std::endl;
+    }
+
+    return 0;
+}",3.976193151364772
+270,make a control sub cpp,"// ControlSub.h
+#ifndef CONTROLSUB_H
+#define CONTROLSUB_H
+
+#include ""Control.h""
+
+class ControlSub : public Control {
+public:
+    ControlSub(int id, int x, int y, int w, int h);
+    ~ControlSub();
+
+    // Additional methods specific to ControlSub
+    void doSomethingSpecial();
+};
+
+#endif // CONTROLSUB_H",0
+281,rate make sub in cpp,"template <typename Arg, typename Ret>
+struct make_sub {
+  // ...
+};",0
+283,make sub cpp,"#include <iostream>
+#include ""sub.h""
+
+int main() {
+    Sub* mySub = new Sub();
+    mySub->doSomething();
+    delete mySub;
+    return 0;
+}",0
+284,node make sub in cpp,"{
+  ""name"": ""cpp-sub-node"",
+  ""version"": ""1.0.0"",
+  ""dependencies"": {
+    ""node-gyp"": ""^7.0.0""
+  }
+}",0
+296,make sub in execution cpp,"#include <iostream>
+#include <cstdlib>
+
+int main() {
+    // Execute a command (e.g. ""ls"" to list files)
+    system(""ls"");
+
+    return 0;
+}",5.533970048991735

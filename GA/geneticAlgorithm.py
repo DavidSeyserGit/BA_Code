@@ -83,27 +83,35 @@ def getFitness(code, prompt, benchmark):
     
     match benchmark:
         case "subscriber":
-            benchmarkScore = bt.subTest("test")
+            benchmarkScore = bt.subTest("test", "talker")
         case "publisher":
-            benchmarkScore = bt.pubTest("test")
+            benchmarkScore = bt.pubTest("test", "talker")
         case "tf":
             pass
+        case "motorcontroller":
+            benchmarkScore = bt.pubTest("test", "talker")
+        case "icr":
+            benchmarkScore = bt.pubTest("test", "talker")
         case _:
             benchmarkScore = 1
     
-    ka = 1
+    ka = 3
     kb = 3
-    kc = 0.3
+    kc = 0.01
     kd = 0.9
-    ke = 2
-    kf = 1
+    ke = 4
+    kf = 2
     
     halsteadVolume = fu.halsteadVolume(code)
     levenDist = fu.LevenshteinDistance(code, 100) # is currently used to determine how close the code is to the ideal code
     complexity = fu.Complexity(code) #cyclomatic complexity, halstead, LOC, Comments
     promptLenght, codeLength = fu.CodePromptLength(prompt, code)
-    logging.debug(f"Complexity: {complexity}, Levenshtein distance: {levenDist}, BenchmarkScore = {benchmarkScore}, Prompt/Code - Length = {promptLenght, codeLength}, Halstead Volume: {1/halsteadVolume}")
+    hasDoubleWords = fu.hasDoubleWords(prompt)
+
+    logging.debug(f"Complexity: {complexity}, Levenshtein distance: {levenDist}, BenchmarkScore = {benchmarkScore}, Prompt/Code - Length = {promptLenght, codeLength}, Halstead Volume: {1/halsteadVolume}, Double Words: {hasDoubleWords}")
     
+
+    doubleWords = -1 if hasDoubleWords else 0
     fitness = ka * complexity + kb * 1/codeLength + kc * 1/promptLenght + kd * levenDist + ke * benchmarkScore + kf * halsteadVolume
     
     logging.warning(f"Fitness: {fitness}")
@@ -133,36 +141,72 @@ def crossover(parent1, parent2):
     return child
 
 def mutate(child):
-    #mutation of the string child
+    # Check for an empty input
     if not child:
         logging.error("Child is empty.")
         return child
     
-    
-    #might not be the best way
+    # General substitution dictionary for robotics
     substitute = {
-        "Publisher": ["Subscriber", "ServiceServer", "ServiceClient", "ActionServer", "ActionClient"],
-        "Subscriber": ["Publisher", "ServiceServer", "ServiceClient", "ActionServer", "ActionClient"],
-        "generate": ["create", "build", "construct", "design", "develop", "fabricate"],
-        "callback": ["handler", "function", "routine", "method"],
-        "topic": ["service", "action", "parameter"],
-        "function": ["method", "routine", "procedure"],
-        "import": ["include", "use"],
-        "from": ["import from"],
+        "Publisher": ["Subscriber", "ServiceServer", "ServiceClient", "ActionServer", "ActionClient", "Node"],
+        "Subscriber": ["Publisher", "ServiceServer", "ServiceClient", "ActionServer", "ActionClient", "Node"],
+        "generate": ["create", "build", "construct", "design", "develop", "fabricate", "produce", "make"],
+        "callback": ["handler", "function", "routine", "method", "procedure"],
+        "topic": ["service", "action", "subject", "issue", "theme"],
+        "function": ["method", "routine", "procedure", "operation", "task"],
+        "import": ["include", "use", "bring in", "fetch"],
+        "from": ["import from", "taken from", "sourced from"],
+        "node": ["component", "unit", "module"],
+        "message": ["note", "communication", "report", "data"],
+        "rate": ["speed", "frequency", "pace"],
+        "spin": ["rotate", "turn", "revolve"],
+        "queue": ["line", "list", "sequence"],
+        "launch": ["start", "initiate", "begin"],
+        "parameter": ["variable", "factor", "component"],
+        "interface": [ "connection", "link", "interaction"],
+        "robot": ["machine", "automaton", "bot"],
+        "sensor": ["detector", "device"],
+        "actuator": ["motor", "driver", "mechanism"],
+        "control": ["regulate", "manage","command"],
+        "navigation": ["steering", "movement"],
+        "mapping": ["plotting", "surveying"],
+        "localization": ["positioning", "tracking", "location"],
+        "planning": ["scheduling", "strategy", "arrangement"],
+        "execution": ["implementation", "operation"],
     }
     
+    # List of additional words to add
+    additional_words = [
+        "node", "message", "rate", "spin", "queue", "launch", "parameter", "interface",
+        "system", "data", "process", "task", "robot", "sensor", "actuator", "control",
+        "navigation", "mapping", "localization", "planning", "execution"
+    ]
+
     words = child.split()
     
-    #could be usefull to have different ways to mutate the word (sub, delete, adding)
-    for i in range(len(words)):
-        if random.random() < 0.6 and words[i] in substitute:
+    i = 0
+    while i < len(words):
+        # Mutate by substitution
+        if random.random() < 0.05 and words[i] in substitute:
             alternative_words = substitute[words[i]]
             words[i] = random.choice(alternative_words)
-            
+        
+        # Randomly delete a word
+        if random.random() < 0.01:
+            words.pop(i)
+            continue
+        
+        # Randomly add a new word
+        if random.random() < 0.02:
+            new_word = random.choice(additional_words)
+            words.insert(i, new_word)
+            i += 1  # Move index to the next word after insertion
+        
+        i += 1
+    
     child = ' '.join(words)
-    logging.critical(f"Mutation result: {child}")
+    logging.info(f"Mutation result: {child}")
     return child
-
 
 def genetic_algorithm(population, generations):
     evaluatedPrompts = {}  # Cache for evaluated prompts and their fitness scores
@@ -216,7 +260,7 @@ def genetic_algorithm(population, generations):
         newPopulation = population.copy()  # Initialize with the entire current population
         
         # Use the best prompt as parent1 to create the next generation & for 90% of the time use the second best prompts as parent2 otherwise use a random prompt
-        if random.random() < 0.7:
+        if random.random() < 0.85:
             parent1, parent2 = bestPrompts[:2]
         else:
             parent1 = bestPrompts[0]
@@ -231,10 +275,10 @@ def genetic_algorithm(population, generations):
             newPopulation.append(mutated_child)
 
         population = newPopulation
-        logging.debug(population)
+        logging.debug(bestPrompts)
         logging.debug(newPopulation)
         
-        with open(f'geneticAlgoritm_{args.benchmark}_{args.model}_cpp.csv_V0', 'w', newline='') as csvfile:
+        with open(f'geneticAlgoritm_{args.benchmark}_{args.model}_cpp.csv_V4', 'w', newline='') as csvfile:
             fieldNames = ['generation', 'prompt', 'code', 'fitness']
             writer = csv.DictWriter(csvfile, fieldnames=fieldNames)
             writer.writeheader()

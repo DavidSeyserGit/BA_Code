@@ -52,7 +52,26 @@ def halsteadVolume(code):
 
 
 def Complexity(code):
-    return 1 #placeholder for cyclomatic_complexity
+    tokens = re.findall(r'\b\w+\b|[^\w\s]', code)
+
+    complexity_keywords = set(['if', 'else', 'while', 'for', 'case', '&&', '||', 'catch', 'throw', '?', 'return'])
+
+    nodes = 1
+    edges = 0
+
+    # Count the nodes and edges based on the tokens
+    for token in tokens:
+        if token in complexity_keywords:
+            nodes += 1
+            edges += 2
+        elif token == 'else':
+            edges += 1
+
+    P = 1  
+    cyclomatic_complexity = edges - nodes + 2 * P
+
+    return 1/cyclomatic_complexity
+
 
 def CodePromptLength(prompt, code):
     if not isinstance(code, str) or code is None:
@@ -94,7 +113,12 @@ def LevenshteinDistance(code, kc):
     # Return the Levenshtein distance
     return kc / ((dp[m][n])+1)
 
+def hasDoubleWords(prompt): #if any duplicate words are present the score gets SUBTRACTED from the current score
+    words = prompt.lower().split()
+    return (len(words) != len(set(words))) #set only allows one instance of every entry so when words == set(words), any word is not duplicate
 
+def grammarScore():
+    pass
 
 
 '''

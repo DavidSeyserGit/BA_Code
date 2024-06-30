@@ -14,7 +14,7 @@ def list_topics():
     return set(result.stdout.decode('utf-8').split())
 
 def rosCleanUp():
-    subprocess.run("rosnode cleanup", shell=True, check=True)
+    subprocess.run("yes | rosnode cleanup", shell=True)
     subprocess.run("rosnode kill -a", shell=True, executable='/bin/bash')
 
 def rosEnviroment():
@@ -31,7 +31,7 @@ def killProcess(proc):
         logging.error(f"Error killing process {proc.pid}: {str(e)}")
         
 
-def pubTest(pkgName):
+def pubTest(pkgName, fileName):
     logging.basicConfig(level=logging.INFO)
     rosEnviroment() #setting the enviroment variables for ROS
     rosCleanUp() #deleting the ROS nodes
@@ -39,7 +39,7 @@ def pubTest(pkgName):
     logging.info(f"Topics before running publisher: {topicsBefore}")
 
     logging.info("Running rosrun command")
-    publisher = subprocess.Popen(f"rosrun {pkgName} test_cpp.cpp", cwd="/home/david/", shell=True, executable='/bin/bash', preexec_fn=os.setsid)
+    publisher = subprocess.Popen(f"rosrun {pkgName} {fileName}", cwd="/home/david/", shell=True, executable='/bin/bash', preexec_fn=os.setsid)
 
     time.sleep(3)
 
@@ -76,7 +76,7 @@ def pubTest(pkgName):
     finally:
         os.killpg(os.getpgid(publisher.pid), signal.SIGTERM)
 
-def subTest(pkgName):
+def subTest(pkgName, fileName):
     logging.basicConfig(level=logging.INFO)
     rosEnviroment()  # Setting the environment variables for ROS
     rosCleanUp()  # Deleting the ROS nodes
@@ -85,7 +85,7 @@ def subTest(pkgName):
     logging.info(f"Topics before running subscriber: {topicsBefore}")
     
     subscriber = subprocess.Popen(
-        f"rosrun {pkgName} test.py",
+        f"rosrun {pkgName} {fileName}",
         cwd="/home/david/",
         shell=True,
         executable='/bin/bash',
@@ -129,12 +129,14 @@ def subTest(pkgName):
             if rosout.poll() is not None:
                 logging.info("rosout process ended unexpectedly")
                 break
+            
+            rlist, _, _ = select.select([rosout.stdout], [], [], 0.1)
+            if rlist:
+                line = rosout.stdout.readline()
+                if line:
+                    logging.info("Subscriber received a message")
+                    return 2
 
-            line = rosout.stdout.readline()
-            if line:
-                logging.info("Subscriber received a message")
-                return 2
-                    
     except Exception as e:
         logging.error(f"Exception occurred: {str(e)}")
         return False
@@ -143,16 +145,13 @@ def subTest(pkgName):
         killProcess(publisher)
         killProcess(subscriber)
 
-    logging.warning("Timeout: Subscriber did not receive a message in time")
+    logging.warning("Timeout reached without receiving any message")
     return 0.7
             
 def tfTest(pkgName):
     return 1
- 
-def motorcontrollerTest(pkgName):
-    return 1 #sends data of a topic, can be read through rostopic echo
       
 if __name__ == "__main__":
-    result = subTest("test")
+    result = pubTest("motorcontroller", "controller")
     print(result)
     

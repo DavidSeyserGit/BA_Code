@@ -1,2 +1,2 @@
-generate a ROS1 noetic subscriber in cpp
-code a ROS sub in cpp with the topic chatter
+ROS1 publisher cpp
+code ROS pub cpp with topic chatter

@@ -1,4 +1,4 @@
 make a ROS1 subscriber in python
 code ROS sub in python 
 create a subscriber for ROS in python
-generate a python subscriber node
+generate a python sub node

@@ -1,79 +1,12 @@
 generation,prompt,code,fitness
 0,make a ROS1 subscriber in cpp,"#include ""ros/ros.h""
-#include ""sensor_msgs/Imu.h""
-
-void imuCallback(const sensor_msgs::Imu::ConstPtr& msg)
-{
-    ROS_INFO(""Received IMU data\n"");
-    ROS_INFO(""Linear Acceleration: x=%f, y=%f, z=%f\n"", msg->linear_acceleration.x, msg->linear_acceleration.y, msg->linear_acceleration.z);
-    ROS_INFO(""Angular Velocity: x=%f, y=%f, z=%f\n"", msg->angular_velocity.x, msg->angular_velocity.y, msg->angular_velocity.z);
-}
-
-int main(int argc, char** argv)
-{
-    ros::init(argc, argv, ""imu_subscriber"");
-    ros::NodeHandle nh;
-
-    ros::Subscriber sub = nh.subscribe<sensor_msgs::Imu>(""imu_data"", 1000, imuCallback); // Subscribing to 'imu_data' topic
-
-    ros::spin();
-
-    return 0;
-}",5.475842606885699
-0,code ROS sub in cpp,"#include ""ros/ros.h""
 #include ""std_msgs/String.h""
 
-void sensorDataCallback(const std_msgs::String::ConstPtr& msg)
-{
-    ROS_INFO(""Received sensor data: %s"", msg->data.c_str());
+void callback(const std_msgs::String::ConstPtr& msg) {
+    ROS_INFO(""I heard: [%s]"", msg->data.c_str());
 }
 
-int main(int argc, char **argv)
-{
-    ros::init(argc, argv, ""sensor_subscriber_node"");
-    ros::NodeHandle nh;
-
-    ros::Subscriber sub = nh.subscribe(""/sensor_data"", 10, sensorDataCallback);
-
-    ros::spin();
-
-    return 0;
-}",10.734491531377767
-0,create a subscriber for ROS in c++,"#include ""ros/ros.h""
-#include ""sensor_msgs/Imu.h""
-
-// Callback function to process incoming messages
-void sensorCallback(const sensor_msgs::Imu::ConstPtr& msg)
-{
-    ROS_INFO(""Received Sensor Data:\nLinear Acceleration: x=%f, y=%f, z=%f\nAngular Velocity: x=%f, y=%f, z=%f"",
-             msg->linear_acceleration.x, msg->linear_acceleration.y, msg->linear_acceleration.z,
-             msg->angular_velocity.x, msg->angular_velocity.y, msg->angular_velocity.z);
-}
-
-int main(int argc, char **argv)
-{
-    // Initialize the ROS node
-    ros::init(argc, argv, ""sensor_subscriber"");
-    
-    // Create a NodeHandle object
-    ros::NodeHandle nh;
-    
-    // Create a subscriber for the ""/sensor_data"" topic
-    ros::Subscriber sub = nh.subscribe<sensor_msgs::Imu>(""/sensor_data"", 10, sensorCallback);
-    
-    // Spin to listen for incoming messages
-    ros::spin();
-    
-    return 0;
-}",4.193475522639594
-0,generate a c++ subscriber node,"#include ""ros/ros.h""
-#include ""std_msgs/String.h""
-
-void callback(const std_msgs::String::ConstPtr& msg){
-    ROS_INFO(""Received message: %s"", msg->data.c_str());
-}
-
-int main(int argc, char **argv){
+int main(int argc, char **argv) {
     ros::init(argc, argv, ""subscriber_node"");
     ros::NodeHandle nh;
 
@@ -82,220 +15,80 @@ int main(int argc, char **argv){
     ros::spin();
 
     return 0;
-}",10.732237020946279
-1,code ROS sub subscriber node,"#!/usr/bin/env python
+}",13.960502304220455
+0,code ROS sub in cpp,"#include ""ros/ros.h""
+#include ""sensor_msgs/Imu.h""
 
-import rospy
-from std_msgs.msg import String
-
-def callback(data):
-    rospy.loginfo(""I heard %s"", data.data)
-
-def listener():
-    rospy.init_node('listener', anonymous=True)
-    rospy.Subscriber(""chatter"", String, callback)
-    rospy.spin()
-
-if __name__ == '__main__':
-    try:
-        listener()
-    except rospy.ROSInterruptException:
-        pass",0
-3,code ROS sub in node,"#!/usr/bin/env python
-
-import rospy
-from std_msgs.msg import String
-
-def callback(data):
-    rospy.loginfo(""Received message: %s"", data.data)
-
-def listener():
-    rospy.init_node('listener', anonymous=True)
-
-    rospy.Subscriber('chatter', String, callback)
-
-    rospy.spin()
-
-if __name__ == '__main__':
-    try:
-        listener()
-    except rospy.ROSInterruptException:
-        pass",0
-4,code a c++ subscriber node,"#include ""ros/ros.h""
-#include ""std_msgs/String.h""
-
-void messageCallback(const std_msgs::String::ConstPtr& msg) {
-    ROS_INFO(""Received message: %s"", msg->data.c_str());
+void imuCallback(const sensor_msgs::Imu::ConstPtr& msg)
+{
+    // Callback function to handle incoming IMU messages
+    ROS_INFO(""Received IMU Data: Linear Acceleration x=%f, y=%f, z=%f"", msg->linear_acceleration.x, msg->linear_acceleration.y, msg->linear_acceleration.z);
+    ROS_INFO(""Angular Velocity x=%f, y=%f, z=%f"", msg->angular_velocity.x, msg->angular_velocity.y, msg->angular_velocity.z);
 }
 
-int main(int argc, char** argv) {
-    ros::init(argc, argv, ""subscriber_node"");
+int main(int argc, char **argv)
+{
+    // Initialize the ROS node
+    ros::init(argc, argv, ""imu_subscriber_node"");
+
+    // Create a NodeHandle
     ros::NodeHandle nh;
 
-    ros::Subscriber sub = nh.subscribe(""topic_name"", 10, messageCallback);
+    // Define the subscriber with a callback function
+    ros::Subscriber sub = nh.subscribe<sensor_msgs::Imu>(""sensor_data"", 1000, imuCallback);
 
+    // Spin to receive messages
     ros::spin();
 
     return 0;
-}",10.7330314558255
-5,code ROS sub node,"#!/usr/bin/env python
-
-import rospy
-from std_msgs.msg import String
-
-def callback(data):
-    rospy.loginfo(""Received: %s"", data.data) # Log received data
-    # Add your processing logic here
-
-def listener():
-    rospy.init_node('listener', anonymous=True) # Initialize node
-    rospy.Subscriber('chatter', String, callback) # Subscribe to topic 'chatter'
-    rospy.spin() # Keep node running
-
-if __name__ == '__main__':
-    try:
-        listener()
-    except rospy.ROSInterruptException:
-        pass",0
-7,code ROS sub queue in node,"#!/usr/bin/env python
-
-import rospy
-from std_msgs.msg import String
-
-def callback(data):
-    rospy.loginfo(""Received message: %s"", data.data)
-
-def listener():
-    rospy.init_node('listener', anonymous=True)
-    rospy.Subscriber(""chatter"", String, callback, queue_size=10)
-
-    rospy.spin()
-
-if __name__ == '__main__':
-    listener()",0
-8,code a c++ queue subscriber node,"#include <ros/ros.h>
-#include <std_msgs/String.h>
-
-class QueueSubscriberNode {
-public:
-    QueueSubscriberNode() {
-        subscriber_ = node_handle_.subscribe(""queue_topic"", 10, &QueueSubscriberNode::queueCallback, this);
-    }
-
-    void queueCallback(const std_msgs::String::ConstPtr& msg) {
-        ROS_INFO(""Queue Subscriber Node Received: %s"", msg->data.c_str());
-    }
-
-private:
-    ros::NodeHandle node_handle_;
-    ros::Subscriber subscriber_;
-};
-
-int main(int argc, char** argv) {
-    ros::init(argc, argv, ""queue_subscriber_node"");
-    
-    QueueSubscriberNode queue_subscriber_node;
-
-    ros::spin();
-
-    return 0;
-}",10.695680389565473
-17,code ROS c++ subscriber node,"#include ""ros/ros.h""
+}",4.688767682688067
+0,create a subscriber for ROS in c++,"#include ""ros/ros.h""
 #include ""std_msgs/String.h""
 
 void messageCallback(const std_msgs::String::ConstPtr& msg)
 {
-    ROS_INFO(""Received message: %s"", msg->data.c_str());
-}
-
-int main(int argc, char** argv)
-{
-    ros::init(argc, argv, ""subscriber_node"");
-    ros::NodeHandle nh;
-
-    ros::Subscriber sub = nh.subscribe(""chatter"", 10, messageCallback);
-
-    ros::spin();
-
-    return 0;
-}",10.730742218380586
-19,code ROS sub subscriber process node,"#!/usr/bin/env python
-
-import rospy
-from std_msgs.msg import String
-
-def callback(data):
-    # Process the received message
-    rospy.loginfo(""Received message: %s"", data.data)
-
-def listener():
-    rospy.init_node('listener', anonymous=True)
-
-    # Subscriber to the topic 'chatter' with message type String
-    rospy.Subscriber('chatter', String, callback)
-
-    # Spin() keeps the node running until the node is stopped
-    rospy.spin()
-
-if __name__ == '__main__':
-    listener()",0
-24,code a c++ subscriber,"#include ""ros/ros.h""
-#include ""std_msgs/String.h""
-
-void messageCallback(const std_msgs::String::ConstPtr& msg) {
-    ROS_INFO(""Received message: %s"", msg->data.c_str());
-}
-
-int main(int argc, char** argv) {
-    ros::init(argc, argv, ""subscriber_node"");
-    ros::NodeHandle nh;
-
-    ros::Subscriber sub = nh.subscribe(""my_topic"", 10, messageCallback);
-
-    ros::spin();
-
-    return 0;
-}",10.734799563874528
-27,code a sub in control cpp,"#include ""ros/ros.h""
-#include ""std_msgs/String.h""
-
-void chatterCallback(const std_msgs::String::ConstPtr& msg) {
     ROS_INFO(""I heard: [%s]"", msg->data.c_str());
 }
 
-int main(int argc, char **argv) {
-    ros::init(argc, argv, ""listener"");
+int main(int argc, char **argv)
+{
+    // Initialize the ROS node
+    ros::init(argc, argv, ""subscriber_node"");
+
+    // Create a node handle
     ros::NodeHandle nh;
 
-    ros::Subscriber sub = nh.subscribe(""chatter"", 1000, chatterCallback);
+    // Create a subscriber to receive messages on the ""chatter"" topic
+    ros::Subscriber sub = nh.subscribe(""chatter"", 1000, messageCallback);
 
+    // Spin to listen for messages
     ros::spin();
 
     return 0;
-}",10.732114356130781
-28,code a data sub node,"#!/usr/bin/env python
+}",9.98371133985487
+0,generate a c++ sub node,"#include ""ros/ros.h""
+#include ""std_msgs/String.h""
 
-import rospy
-from std_msgs.msg import String
+void subCallback(const std_msgs::String::ConstPtr& msg)
+{
+    ROS_INFO(""Received message: %s"", msg->data.c_str());
+}
 
-class DataSubNode:
-    def __init__(self):
-        rospy.init_node('data_sub_node', anonymous=True)
-        self.data_subscriber = rospy.Subscriber('data_topic', String, self.data_callback)
+int main(int argc, char **argv)
+{
+    // Initialize the ROS node
+    ros::init(argc, argv, ""subscriber_node"");
+    ros::NodeHandle nh;
 
-    def data_callback(self, data):
-        rospy.loginfo(""Received data: %s"", data.data)
+    // Create a subscriber that listens to the ""chatter"" topic
+    ros::Subscriber sub = nh.subscribe(""chatter"", 1000, subCallback);
 
-    def run(self):
-        rospy.spin()
+    // Spin to receive messages
+    ros::spin();
 
-if __name__ == '__main__':
-    try:
-        data_sub_node = DataSubNode()
-        data_sub_node.run()
-    except rospy.ROSInterruptException:
-        pass",0
-29,code a sub in cpp,"#include ""ros/ros.h""
+    return 0;
+}",10.610287846302239
+1,make a c++ sub node,"#include ""ros/ros.h""
 #include ""std_msgs/String.h""
 
 void messageCallback(const std_msgs::String::ConstPtr& msg)
@@ -306,6 +99,661 @@ void messageCallback(const std_msgs::String::ConstPtr& msg)
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, ""subscriber_node"");
+    ros::NodeHandle node;
+
+    ros::Subscriber sub = node.subscribe(""chatter"", 10, messageCallback);
+
+    ros::spin();
+
+    return 0;
+}",12.646421686722453
+3,make a ROS1 sub node,"#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import String
+
+def callback(data):
+    rospy.loginfo(""I heard: %s"", data.data)
+
+def listener():
+    rospy.init_node('listener', anonymous=True)
+    rospy.Subscriber(""chatter"", String, callback)
+    rospy.spin()
+
+if __name__ == '__main__':
+    listener()",0
+4,make a ROS1 subscriber actuator node,"#include ""ros/ros.h""
+#include ""actuator_control/ActuatorControl.h""
+
+// Callback function to process messages from the topic
+void actuatorCallback(const actuator_control::ActuatorControl::ConstPtr& msg) {
+    // Process the received actuator value
+    float actuator_value = msg->actuator_value;
+
+    // Control the actuator based on the received value (This is just an example)
+    ROS_INFO(""Received Actuator Value: %f"", actuator_value);
+    // Add your actuator control logic here
+}
+
+int main(int argc, char **argv) {
+    // Initialize the ROS node
+    ros::init(argc, argv, ""actuator_subscriber_node"");
+    ros::NodeHandle nh;
+
+    // Subscribe to the 'actuator_topic' topic with a queue size of 10
+    ros::Subscriber sub = nh.subscribe(""actuator_topic"", 10, actuatorCallback);
+
+    // Spin to listen for messages
+    ros::spin();
+
+    return 0;
+}",0
+5,make a ROS1 subscriber node,"#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import String
+
+def chatter_callback(msg):
+    rospy.loginfo(""I heard: %s"", msg.data)
+
+def subscriber_node():
+    rospy.init_node('subscriber_node', anonymous=True)
+    rospy.Subscriber(""/chatter"", String, chatter_callback)
+    rospy.spin()
+
+if __name__ == '__main__':
+    try:
+        subscriber_node()
+    except rospy.ROSInterruptException:
+        pass",0
+11,make a c++ node,"#include <ros/ros.h>
+#include <std_msgs/Float32.h>
+
+class MyNode {
+public:
+    MyNode() {
+        // Initialize node handle
+        nh = ros::NodeHandle(""~"");
+
+        // Subscribe to input topic
+        sub = nh.subscribe(""input_topic"", 10, &MyNode::inputCallback, this);
+
+        // Advertise output topic
+        pub = nh.advertise<std_msgs::Float32>(""output_topic"", 10);
+    }
+
+    void inputCallback(const std_msgs::Float32::ConstPtr& input_msg) {
+        // Perform computation on input data
+        float result = doComputation(input_msg->data);
+
+        // Publish the result
+        std_msgs::Float32 output_msg;
+        output_msg.data = result;
+        pub.publish(output_msg);
+    }
+
+private:
+    ros::NodeHandle nh;
+    ros::Subscriber sub;
+    ros::Publisher pub;
+
+    // Perform computation on input data
+    float doComputation(float input) {
+        // Add your computation logic here
+        return input * 2; // Sample computation (multiply input by 2)
+    }
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""my_node"");
+    MyNode node;
+
+    ros::spin();
+
+    return 0;
+}",4.05309528447289
+13,make a launch ROS1 subscriber node,"#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import String
+
+def callback(data):
+    rospy.loginfo(""Received: %s"", data.data)
+
+def subscriber_node():
+    rospy.init_node('subscriber_node', anonymous=True)
+    rospy.Subscriber(""chatter_topic"", String, callback)
+    rospy.spin()
+
+if __name__ == '__main__':
+    try:
+        subscriber_node()
+    except rospy.ROSInterruptException:
+        pass",0
+18,make c++ sub node,"#include ""ros/ros.h""
+#include ""std_msgs/String.h""
+
+// Callback function to receive and print messages
+void messageCallback(const std_msgs::String::ConstPtr& msg)
+{
+    ROS_INFO(""Received message: %s"", msg->data.c_str());
+}
+
+int main(int argc, char **argv)
+{
+    // Initialize the ROS node
+    ros::init(argc, argv, ""subscriber_node"");
+    ros::NodeHandle nh;
+
+    // Create a subscriber object
+    ros::Subscriber sub = nh.subscribe(""chatter"", 1000, messageCallback);
+
+    // Spin and process callbacks
+    ros::spin();
+
+    return 0;
+}",10.49741999775116
+21,make a ROS1 robot subscriber node,"#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import String
+
+def status_callback(msg):
+    rospy.loginfo(""Received status: %s"", msg.data)
+
+def subscriber_node():
+    rospy.init_node('robot_subscriber', anonymous=True)
+    rospy.Subscriber('/robot_status', String, status_callback)
+    rospy.spin()
+
+if __name__ == '__main__':
+    try:
+        subscriber_node()
+    except rospy.ROSInterruptException:
+        pass",0
+24,process make a c++ sub node,"#include ""ros/ros.h""
+#include ""std_msgs/Int32.h""
+
+void messageCallback(const std_msgs::Int32::ConstPtr& msg) {
+    // Process the received message
+    int processed_data = msg->data * 2;
+
+    // Publish the processed data
+    ros::NodeHandle nh;
+    ros::Publisher processed_data_pub = nh.advertise<std_msgs::Int32>(""processed_data_topic"", 10);
+    
+    std_msgs::Int32 processed_msg;
+    processed_msg.data = processed_data;
+    processed_data_pub.publish(processed_msg);
+}
+
+int main(int argc, char **argv) {
+    ros::init(argc, argv, ""my_sub_node"");
+    ros::NodeHandle nh;
+
+    // Subscribe to the topic
+    ros::Subscriber sub = nh.subscribe(""original_data_topic"", 10, messageCallback);
+
+    ros::spin();
+
+    return 0;
+}",4.777406277197472
+31,make a ROS1 node,"#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import String
+
+class SimpleNode:
+    def __init__(self):
+        rospy.init_node('simple_node', anonymous=True)
+        self.input_sub = rospy.Subscriber('input_topic', String, self.input_callback)
+        self.output_pub = rospy.Publisher('output_topic', String, queue_size=10)
+
+    def input_callback(self, msg):
+        rospy.loginfo('Received: %s', msg.data)
+        self.publish_message(msg.data)
+
+    def publish_message(self, data):
+        self.output_pub.publish(String(data))
+
+if __name__ == '__main__':
+    try:
+        node = SimpleNode()
+        rospy.spin()
+    except rospy.ROSInterruptException:
+        pass",0
+35,make a subscriber for ROS in c++,"#include ""ros/ros.h""
+#include ""std_msgs/String.h""
+
+// Subscriber callback function
+void chatterCallback(const std_msgs::String::ConstPtr& msg) {
+    ROS_INFO(""I heard: [%s]"", msg->data.c_str());
+}
+
+int main(int argc, char **argv) {
+    // Initialize the ROS node
+    ros::init(argc, argv, ""simple_subscriber"");
+    
+    // Create a node handle
+    ros::NodeHandle nh;
+    
+    // Create a subscriber to the ""/chatter"" topic with a queue size of 1000
+    ros::Subscriber sub = nh.subscribe(""/chatter"", 1000, chatterCallback);
+
+    // Spin to keep the node running and callback triggered
+    ros::spin();
+
+    return 0;
+}",10.264828456223638
+50,planning make a c++ sub node,"#include ""ros/ros.h""
+#include ""std_msgs/String.h""
+
+// Callback function to process messages received on chatter topic
+void chatterCallback(const std_msgs::String::ConstPtr& msg)
+{
+    ROS_INFO(""I heard: [%s]"", msg->data.c_str());
+}
+
+int main(int argc, char **argv)
+{
+    // Initialize the ROS node
+    ros::init(argc, argv, ""simple_subscriber_node"");
+
+    // Create a NodeHandle object
+    ros::NodeHandle n;
+
+    // Subscribe to the chatter topic with a queue size of 10 and specify the callback function
+    ros::Subscriber sub = n.subscribe(""chatter"", 10, chatterCallback);
+
+    // Spin to process callbacks
+    ros::spin();
+
+    return 0;
+}",10.19679513637845
+62,make a sub node,"#!/usr/bin/env python
+
+import rospy
+
+def sub_node():
+    rospy.init_node('sub_node', anonymous=True)
+    
+    # Add your code logic here
+
+    rospy.spin()
+
+if __name__ == '__main__':
+    try:
+        sub_node()
+    except rospy.ROSInterruptException:
+        pass",0
+68,make a c++ task sub node,"#include ""ros/ros.h""
+#include ""std_msgs/String.h""
+
+void taskCallback(const std_msgs::String::ConstPtr& msg)
+{
+  ROS_INFO(""Received task: %s"", msg->data.c_str());
+  // Add your task processing logic here
+}
+
+int main(int argc, char **argv)
+{
+  ros::init(argc, argv, ""task_subscriber_node"");
+  ros::NodeHandle nh;
+
+  ros::Subscriber sub = nh.subscribe(""task_topic"", 10, taskCallback);
+
+  ROS_INFO(""Task subscriber node started"");
+
+  ros::spin();
+
+  return 0;
+}",10.896535716937818
+69,make a ROS1 c++ sub node,"#include <ros/ros.h>
+#include <std_msgs/String.h>
+
+void sensorCallback(const std_msgs::String::ConstPtr& msg) {
+    ROS_INFO(""Received sensor data: %s"", msg->data.c_str());
+}
+
+int main(int argc, char **argv) {
+    // Initialize the ROS node
+    ros::init(argc, argv, ""subscriber_node"");
+
+    // Create a node handle
+    ros::NodeHandle nh;
+
+    // Subscribe to the ""/sensor_data"" topic
+    ros::Subscriber sub = nh.subscribe(""/sensor_data"", 10, sensorCallback);
+
+    // Spin and wait for messages
+    ros::spin();
+
+    return 0;
+}",9.946870269693305
+70,make a ROS1 for ROS in c++,"#include ""ros/ros.h""
+#include ""std_msgs/String.h""
+#include <sstream>
+
+// Callback function to process received messages
+void messageCallback(const std_msgs::String::ConstPtr& msg)
+{
+    // Convert received message to uppercase
+    std::string upperCaseMsg = msg->data;
+    std::transform(upperCaseMsg.begin(), upperCaseMsg.end(), upperCaseMsg.begin(), ::toupper);
+
+    // Publish the processed message
+    ros::NodeHandle n;
+    ros::Publisher pub = n.advertise<std_msgs::String>(""/output_topic"", 1000);
+    std_msgs::String outputMsg;
+    outputMsg.data = upperCaseMsg;
+    pub.publish(outputMsg);
+    ROS_INFO(""Published message: %s"", outputMsg.data.c_str());
+}
+
+int main(int argc, char **argv)
+{
+    ros::init(argc, argv, ""uppercase_converter_node"");
+    ros::NodeHandle nh;
+
+    // Subscribe to the input topic
+    ros::Subscriber sub = nh.subscribe(""/input_topic"", 1000, messageCallback);
+
+    ros::spin();
+
+    return 0;
+}",9.844529409010743
+71,make a ROS1 subscriber in node,"#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import String
+
+def callback(data):
+    rospy.loginfo(""I heard: %s"", data.data)
+
+def listener():
+    rospy.init_node('listener', anonymous=True)
+    rospy.Subscriber(""chatter"", String, callback)
+    rospy.spin()
+
+if __name__ == '__main__':
+    listener()",0
+87,make a sub in cpp,"#include ""ros/ros.h""
+#include ""std_msgs/String.h""
+
+void messageCallback(const std_msgs::String::ConstPtr& msg) {
+    ROS_INFO(""I heard: [%s]"", msg->data.c_str());
+}
+
+int main(int argc, char **argv) {
+    ros::init(argc, argv, ""subscriber_node"");
+    ros::NodeHandle nh;
+
+    ros::Subscriber sub = nh.subscribe(""chatter"", 1000, messageCallback);
+
+    ros::spin(); // Keeps the node running until Ctrl-C is pressed
+
+    return 0;
+}",11.627835266721414
+96,make a execution ROS1 sub node,"#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import String
+
+def chatter_callback(data):
+    rospy.loginfo(rospy.get_caller_id() + ""I heard %s"", data.data)
+    # Add your desired logic here based on the received message
+
+def execution_subscriber():
+    rospy.init_node('execution_subscriber', anonymous=True)
+    rospy.Subscriber(""chatter"", String, chatter_callback)
+    rospy.spin()
+
+if __name__ == '__main__':
+    try:
+        execution_subscriber()
+    except rospy.ROSInterruptException:
+        pass",0
+103,make a queue c++ sub node,"#include <ros/ros.h>
+#include <std_msgs/Int32.h>
+#include <queue>
+#include ""queue_node/Enqueue.h"" // Custom service message for enqueue
+#include ""queue_node/Dequeue.h"" // Custom service message for dequeue
+
+std::queue<int> q;
+
+bool enqueueCallback(queue_node::Enqueue::Request &req, queue_node::Enqueue::Response &res) {
+    q.push(req.data);
+    res.success = true;
+    return true;
+}
+
+bool dequeueCallback(queue_node::Dequeue::Request &req, queue_node::Dequeue::Response &res) {
+    if (!q.empty()) {
+        res.data = q.front();
+        q.pop();
+        res.success = true;
+    } else {
+        res.success = false;
+    }
+    return true;
+}
+
+void topicCallback(const std_msgs::Int32::ConstPtr& msg) {
+    ROS_INFO(""Received: [%d]"", msg->data);
+    q.push(msg->data);
+}
+
+int main(int argc, char **argv) {
+    ros::init(argc, argv, ""queue_node"");
+    ros::NodeHandle nh;
+
+    ros::Subscriber sub = nh.subscribe(""input_topic"", 1000, topicCallback);
+    ros::ServiceServer enqueueService = nh.advertiseService(""enqueue"", enqueueCallback);
+    ros::ServiceServer dequeueService = nh.advertiseService(""dequeue"", dequeueCallback);
+
+    ros::spin();
+
+    return 0;
+}",0
+104,make a ROS1 subscriber sub node,"#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import String
+
+def callback(data):
+    rospy.loginfo(""Received message: %s"", data.data)
+
+def sub_node():
+    rospy.init_node('sub_node', anonymous=True)
+    rospy.Subscriber(""/chatter"", String, callback)
+    rospy.spin()
+
+if __name__ == '__main__':
+    try:
+        sub_node()
+    except rospy.ROSInterruptException:
+        pass",0
+113,make c++ sub execution node,"#include ""ros/ros.h""
+#include ""std_msgs/String.h""
+
+class ExecutionNode
+{
+public:
+    ExecutionNode()
+    {
+        sub = n.subscribe(""input_topic"", 1000, &ExecutionNode::callback, this);
+        pub = n.advertise<std_msgs::String>(""output_topic"", 1000);
+    }
+
+    void callback(const std_msgs::String::ConstPtr& msg)
+    {
+        // Perform execution logic here
+        std_msgs::String output_msg;
+        output_msg.data = ""Processed: "" + msg->data;
+
+        // Publish the processed message
+        pub.publish(output_msg);
+    }
+
+private:
+    ros::NodeHandle n;
+    ros::Subscriber sub;
+    ros::Publisher pub;
+};
+
+int main(int argc, char **argv)
+{
+    ros::init(argc, argv, ""execution_node"");
+    ExecutionNode en;
+
+    ros::spin();
+
+    return 0;
+}",4.704841033857885
+124,make a c++ execution sub node,"#include <ros/ros.h>
+#include <std_msgs/String.h>
+
+class ExecutionNode {
+public:
+    ExecutionNode() {
+        // Initialize ROS node handle
+        nh = ros::NodeHandle();
+
+        // Subscribe to the input topic
+        sub = nh.subscribe(""input_topic"", 10, &ExecutionNode::inputCallback, this);
+
+        // Advertise the output topic
+        pub = nh.advertise<std_msgs::String>(""output_topic"", 10);
+    }
+
+    // Callback function for the input topic
+    void inputCallback(const std_msgs::String::ConstPtr& msg) {
+        // Process the received message
+        std_msgs::String output_msg;
+        output_msg.data = ""Processed: "" + msg->data;
+
+        // Publish the processed message
+        pub.publish(output_msg);
+    }
+
+private:
+    ros::NodeHandle nh;
+    ros::Subscriber sub;
+    ros::Publisher pub;
+};
+
+int main(int argc, char** argv) {
+    // Initialize the ROS node
+    ros::init(argc, argv, ""execution_node"");
+
+    // Create an object of ExecutionNode class
+    ExecutionNode exec_node;
+
+    // Spin the node to process callbacks
+    ros::spin();
+
+    return 0;
+}",4.055863879937175
+126,a c++ sub node,"#include <ros/ros.h>
+#include <your_custom_msg_package/CustomMsg.h> // Include the custom message header
+
+void customMsgCallback(const your_custom_msg_package::CustomMsg::ConstPtr& msg)
+{
+    // Callback function to handle incoming custom messages
+    ROS_INFO(""Received custom message: %s"", msg->data.c_str());
+}
+
+int main(int argc, char** argv)
+{
+    ros::init(argc, argv, ""subscriber_node""); // Initialize the ROS node
+    ros::NodeHandle nh; // Create a NodeHandle
+
+    // Subscribe to the custom topic
+    ros::Subscriber sub = nh.subscribe(""/custom_topic"", 10, customMsgCallback);
+
+    // Spin to receive and process messages
+    ros::spin();
+
+    return 0;
+}",0
+137,make a ROS1 in cpp,"#include ""ros/ros.h""
+#include ""std_msgs/String.h""
+
+void messageCallback(const std_msgs::String::ConstPtr& msg) {
+    ROS_INFO(""Received message: %s"", msg->data.c_str());
+}
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""listener_node"");
+    ros::NodeHandle node_handle;
+
+    ros::Subscriber sub = node_handle.subscribe(""chatter"", 1000, messageCallback);
+
+    ros::spin();
+
+    return 0;
+}",12.261935149703595
+150,a ROS1 subscriber node,"#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import String
+
+def callback(data):
+    rospy.loginfo(""Received: %s"", data.data)
+
+def listener():
+    rospy.init_node('listener', anonymous=True)
+    rospy.Subscriber('chatter', String, callback)
+    rospy.spin()
+
+if __name__ == '__main__':
+    listener()",0
+151,make a ROS1 execution robot subscriber node,"#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import String
+
+def callback(data):
+    rospy.loginfo(""Received command: %s"", data.data)
+    # Add execution logic here
+
+def robot_subscriber():
+    rospy.init_node('robot_subscriber', anonymous=True)
+    rospy.Subscriber(""/robot_execution"", String, callback)
+    rospy.spin()
+
+if __name__ == '__main__':
+    try:
+        robot_subscriber()
+    except rospy.ROSInterruptException:
+        pass",0
+160,make a ROS1 subscriber ROS in c++,"#include ""ros/ros.h""
+#include ""std_msgs/String.h""
+
+void messageCallback(const std_msgs::String::ConstPtr& msg)
+{
+  ROS_INFO(""Received message: %s"", msg->data.c_str());
+}
+
+int main(int argc, char **argv)
+{
+  ros::init(argc, argv, ""subscriber_node"");
+  ros::NodeHandle nh;
+
+  ros::Subscriber sub = nh.subscribe(""topic_name"", 10, messageCallback);
+
+  ros::spin(); // Enter a loop, pumping callbacks
+  return 0;
+}",11.64198530505091
+167,make a ROS1 subscriber cpp,"#include <ros/ros.h>
+#include <std_msgs/String.h>
+
+void messageCallback(const std_msgs::String::ConstPtr& msg) {
+    ROS_INFO(""Received message: %s"", msg->data.c_str());
+}
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""example_subscriber_node"");
     ros::NodeHandle nh;
 
     ros::Subscriber sub = nh.subscribe(""/example_topic"", 10, messageCallback);
@@ -313,727 +761,42 @@ int main(int argc, char **argv)
     ros::spin();
 
     return 0;
-}",10.738055082531172
-33,code a ROS1 subscriber in cpp,"#include ""ros/ros.h""
+}",11.815908830708238
+173,make a a c++ sub node,"#include ""ros/ros.h""
 #include ""std_msgs/String.h""
 
-void messageCallback(const std_msgs::String::ConstPtr& msg) {
-    ROS_INFO(""Received message: %s"", msg->data.c_str());
-}
-
-int main(int argc, char **argv) {
-    ros::init(argc, argv, ""subscriber_node"");
-    ros::NodeHandle nh;
-
-    ros::Subscriber sub = nh.subscribe(""topic_name"", 10, messageCallback);
-
-    ros::spin();
-
-    return 0;
-}",10.731837821873246
-34,code a subscriber for ROS in c++,"#include ""ros/ros.h""
-#include ""std_msgs/String.h""
-
-// Callback function to handle incoming messages
 void messageCallback(const std_msgs::String::ConstPtr& msg) {
     ROS_INFO(""Received message: %s"", msg->data.c_str());
 }
 
 int main(int argc, char **argv) {
     // Initialize the ROS node
-    ros::init(argc, argv, ""subscriber_node"");
+    ros::init(argc, argv, ""simple_subscriber_node"");
     ros::NodeHandle nh;
 
-    // Create a subscriber object
-    ros::Subscriber sub = nh.subscribe(""topic_name"", 1000, messageCallback);
+    // Create a Subscriber that listens to the ""chatter"" topic
+    ros::Subscriber sub = nh.subscribe(""chatter"", 1000, messageCallback);
 
-    // Spin to receive callback function
+    // Spin to handle incoming messages
     ros::spin();
 
     return 0;
-}",10.710162271781153
-37,navigation code a sub subscriber,"#!/usr/bin/env python
+}",7.523555790961062
+184,make a sensor ROS1 subscriber node,"#!/usr/bin/env python
 
 import rospy
-from geometry_msgs.msg import PoseStamped
+from std_msgs.msg import Float32
 
-class NavigationNode:
-    def __init__(self):
-        rospy.init_node('navigation_node', anonymous=True)
-        rospy.Subscriber('/goal_pose', PoseStamped, self.goal_pose_callback)
-
-    def goal_pose_callback(self, data):
-        # Process goal pose data here
-        rospy.loginfo(""Received goal pose: x={}, y={}, z={}"".format(data.pose.position.x, 
-                                                                   data.pose.position.y, 
-                                                                   data.pose.position.z))
-
-    def run(self):
-        rospy.spin()
-
-if __name__ == '__main__':
-    try:
-        nav_node = NavigationNode()
-        nav_node.run()
-    except rospy.ROSInterruptException:
-        pass",0
-39,code a sub subscriber,"#!/usr/bin/env python
-
-import rospy
-from std_msgs.msg import String
-
-def sensor_data_callback(data):
-    rospy.loginfo(""Received sensor data: %s"", data.data)
-
-def listener():
-    rospy.init_node('sensor_subscriber', anonymous=True)
-    rospy.Subscriber(""/sensor_data"", String, sensor_data_callback)
-    rospy.spin()
-
-if __name__ == '__main__':
-    listener()",0
-43,a c++ subscriber,"#include ""ros/ros.h""
-#include ""std_msgs/String.h""
-
-void chatterCallback(const std_msgs::String::ConstPtr& msg)
-{
-  ROS_INFO(""I heard: [%s]"", msg->data.c_str());
-}
-
-int main(int argc, char **argv)
-{
-  ros::init(argc, argv, ""listener"");
-  ros::NodeHandle nh;
-
-  ros::Subscriber sub = nh.subscribe(""chatter"", 1000, chatterCallback);
-
-  ros::spin();
-
-  return 0;
-}",10.736095567054388
-44,code a subscriber,"#!/usr/bin/env python
-
-import rospy
-from std_msgs.msg import String
-
-def callback(data):
-    rospy.loginfo(rospy.get_caller_id() + 'I heard %s', data.data)
-
-def listener():
-    rospy.init_node('listener', anonymous=True)
-    rospy.Subscriber('chatter', String, callback)
-    rospy.spin()
-
-if __name__ == '__main__':
-    try:
-        listener()
-    except rospy.ROSInterruptException:
-        pass",0
-50,code node a subscriber,"#!/usr/bin/env python
-
-import rospy
-from std_msgs.msg import String
-
-def callback(data):
-    rospy.loginfo(rospy.get_caller_id() + ""I heard %s"", data.data)
-
-def listener():
-    rospy.init_node('listener', anonymous=True)
-    rospy.Subscriber(""chatter"", String, callback)
-    rospy.spin()
-
-if __name__ == '__main__':
-    listener()",0
-55,code c++ subscriber,"#include ""ros/ros.h""
-#include ""std_msgs/String.h""
-
-void messageCallback(const std_msgs::String::ConstPtr& msg)
-{
-    ROS_INFO(""Received message: %s"", msg->data.c_str());
-}
-
-int main(int argc, char** argv)
-{
-    ros::init(argc, argv, ""subscriber_node"");
-    ros::NodeHandle nh;
-
-    ros::Subscriber sub = nh.subscribe(""chatter"", 10, messageCallback); // Subscribing to 'chatter' topic
-
-    ros::spin(); // Keeps the node running
-
-    return 0;
-}",10.735686201476504
-60,code a sub node,"#!/usr/bin/env python
-
-import rospy
-
-# Import any necessary message types
-from std_msgs.msg import String
-
-class SubNode:
-    def __init__(self):
-        rospy.init_node('sub_node', anonymous=True)
-
-        # Subscribe to a topic
-        rospy.Subscriber('topic_name', String, self.callback)
-
-        rospy.spin()
-
-    def callback(self, data):
-        # Callback function to process incoming messages
-        rospy.loginfo(rospy.get_caller_id() + 'I heard %s', data.data)
-
-if __name__ == '__main__':
-    try:
-        SubNode()
-    except rospy.ROSInterruptException:
-        pass",0
-61,code a sub in,"#!/usr/bin/env python
-
-import rospy
-from std_msgs.msg import String
-
-def sensor_data_callback(data):
-    rospy.loginfo(""Received sensor data: %s"", data.data)
+def sensor_callback(data):
+    rospy.loginfo(""Received sensor data: %f"", data.data)
 
 def sensor_subscriber():
     rospy.init_node('sensor_subscriber', anonymous=True)
-    rospy.Subscriber('/sensor_data', String, sensor_data_callback)
-    rospy.spin()
-
-if __name__ == '__main__':
-    sensor_subscriber()",0
-65,a subscriber,"#!/usr/bin/env python
-
-import rospy
-from std_msgs.msg import String
-
-def callback(data):
-    rospy.loginfo(""I heard: %s"", data.data)
-
-def listener():
-    rospy.init_node('listener', anonymous=True)
-
-    rospy.Subscriber(""topic_name"", String, callback)
-
-    rospy.spin()
-
-if __name__ == '__main__':
-    listener()",0
-76,sensor code a sub,"#!/usr/bin/env python
-
-import rospy
-from std_msgs.msg import Int32
-import random
-
-class SensorNode:
-    def __init__(self):
-        # Initialize ROS node
-        rospy.init_node('sensor_node', anonymous=True)
-
-        # Define the publisher to publish sensor data
-        self.sensor_pub = rospy.Publisher('sensor_data', Int32, queue_size=10)
-
-    def publish_sensor_data(self):
-        # Publishing loop
-        rate = rospy.Rate(1)  # 1 Hz
-        while not rospy.is_shutdown():
-            sensor_value = random.randint(1, 100)  # Generate random sensor data
-            rospy.loginfo(""Publishing sensor data: {}"".format(sensor_value))
-            self.sensor_pub.publish(sensor_value)
-            rate.sleep()
-
-if __name__ == '__main__':
-    try:
-        sensor_node = SensorNode()
-        sensor_node.publish_sensor_data()
-    except rospy.ROSInterruptException:
-        pass",0
-90,code a execution sub subscriber process node,"#!/usr/bin/env python
-
-# Import necessary libraries
-import rospy
-from std_msgs.msg import String
-
-# Callback function to execute the received process
-def execute_process(data):
-    rospy.loginfo(""Received process to execute: %s"", data.data)
-    
-    # Add code here to execute the process
-
-# Main function
-def process_subscriber():
-    rospy.init_node('process_subscriber', anonymous=True)
-    
-    # Subscribe to the 'process_topic' topic
-    rospy.Subscriber('process_topic', String, execute_process)
-    
-    rospy.loginfo(""Process subscriber node running..."")
-
-    # Keep the program running until interrupted
+    rospy.Subscriber('sensor_topic', Float32, sensor_callback)
     rospy.spin()
 
 if __name__ == '__main__':
     try:
-        process_subscriber()
+        sensor_subscriber()
     except rospy.ROSInterruptException:
         pass",0
-97,code a sub subscriber node,"#!/usr/bin/env python
-
-import rospy
-from std_msgs.msg import String
-
-def callback(data):
-    rospy.loginfo(""I heard: %s"", data.data)
-
-def listener():
-    rospy.init_node('listener', anonymous=True)
-    rospy.Subscriber(""chatter"", String, callback)
-    rospy.spin()
-
-if __name__ == '__main__':
-    listener()",0
-98,code spin c++ subscriber,"#include ""ros/ros.h""
-#include ""std_msgs/String.h""
-
-// Callback function to process the received messages
-void messageCallback(const std_msgs::String::ConstPtr& msg)
-{
-    ROS_INFO(""Received message: %s"", msg->data.c_str());
-}
-
-int main(int argc, char **argv)
-{
-    // Initialize the ROS node
-    ros::init(argc, argv, ""listener_node"");
-    
-    // Create a NodeHandle for this node
-    ros::NodeHandle nh;
-    
-    // Subscribe to the ""chatter"" topic with a queue size of 10 and specify the callback function
-    ros::Subscriber sub = nh.subscribe(""chatter"", 10, messageCallback);
-    
-    // Spin function to listen for messages and execute the callback function
-    ros::spin();
-    
-    return 0;
-}",9.43419003055582
-103,code a sub queue subscriber node,"#!/usr/bin/env python
-
-import rospy
-from std_msgs.msg import String
-
-class SubQueueSubscriberNode:
-    def __init__(self):
-        self.subscriber = rospy.Subscriber('chatter', String, self.callback, queue_size=10)
-
-    def callback(self, msg):
-        rospy.loginfo('Received message: %s', msg.data)
-
-def main():
-    rospy.init_node('sub_queue_subscriber_node', anonymous=True)
-    sub_node = SubQueueSubscriberNode()
-    rospy.spin()
-
-if __name__ == '__main__':
-    main()",0
-130,code c++ localization subscriber,"#include ""ros/ros.h""
-#include ""geometry_msgs/PoseStamped.h""
-
-void localizationCallback(const geometry_msgs::PoseStamped::ConstPtr& msg)
-{
-    // Callback function to process the received localization data
-    double x = msg->pose.position.x;
-    double y = msg->pose.position.y;
-    double z = msg->pose.position.z;
-
-    ROS_INFO(""Received robot pose - x: %f, y: %f, z: %f"", x, y, z);
-}
-
-int main(int argc, char **argv)
-{
-    // Initialize the ROS node
-    ros::init(argc, argv, ""LocalizationSubscriber"");
-    ros::NodeHandle nh;
-
-    // Create a subscriber for the localization data
-    ros::Subscriber sub = nh.subscribe(""robot_pose"", 10, localizationCallback);
-
-    ROS_INFO(""Localization subscriber node started."");
-
-    // Spin to process callbacks
-    ros::spin();
-
-    return 0;
-}",4.628437021078562
-143,execution code a subscriber,"#!/usr/bin/env python
-
-import rospy
-from std_msgs.msg import Int32
-
-def counter_callback(msg):
-    rospy.loginfo(""Received: %d"", msg.data)
-
-def subscriber_node():
-    rospy.init_node('subscriber_node', anonymous=True)
-    rospy.Subscriber('/counter', Int32, counter_callback)
-    rospy.spin()
-
-if __name__ == '__main__':
-    try:
-        subscriber_node()
-    except rospy.ROSInterruptException:
-        pass",0
-158,code subscriber,"#!/usr/bin/env python
-
-import rospy
-from std_msgs.msg import String
-
-def callback(data):
-    rospy.loginfo(""I heard: %s"", data.data)
-
-def listener():
-    rospy.init_node(""listener"", anonymous=True)
-    rospy.Subscriber(""chatter"", String, callback)
-    rospy.spin()
-
-if __name__ == '__main__':
-    listener()",0
-165,code a in control cpp,"// Include necessary ROS libraries
-#include <ros/ros.h>
-#include <std_msgs/String.h>
-
-class InControlNode {
-public:
-    InControlNode() {
-        // Initialize ROS node handle
-        nh = ros::NodeHandle();
-
-        // Subscribe to the input topic
-        input_sub = nh.subscribe(""input_topic"", 10, &InControlNode::inputCallback, this);
-
-        // Publish to the output topic
-        output_pub = nh.advertise<std_msgs::String>(""output_topic"", 10);
-    }
-
-    // Input topic callback function
-    void inputCallback(const std_msgs::String::ConstPtr& msg) {
-        // Process the received message (you can perform any operations here)
-        
-        // Publish the received message to the output topic
-        output_pub.publish(msg);
-    }
-
-private:
-    ros::NodeHandle nh;
-    ros::Subscriber input_sub;
-    ros::Publisher output_pub;
-};
-
-int main(int argc, char** argv) {
-    // Initialize the ROS node
-    ros::init(argc, argv, ""in_control_node"");
-
-    // Create an instance of InControlNode
-    InControlNode inControlNode;
-
-    // Spin to process callbacks
-    ros::spin();
-
-    return 0;
-}",5.4213381186113025
-170,code a sub sub subscriber process node,"#!/usr/bin/env python
-
-# ROS Sub Sub Subscriber Node
-
-import rospy
-from std_msgs.msg import String
-
-def sub_sub_callback(data):
-    rospy.loginfo(""Sub Sub Subscriber Received: %s"", data.data)
-
-def sub_sub_subscriber_node():
-    # Initialize the node
-    rospy.init_node('sub_sub_subscriber_node', anonymous=True)
-    
-    # Subscribe to the sub_sub_topic
-    rospy.Subscriber('sub_sub_topic', String, sub_sub_callback)
-    
-    # Spin to listen for incoming messages
-    rospy.spin()
-
-if __name__ == '__main__':
-    try:
-        sub_sub_subscriber_node()
-    except rospy.ROSInterruptException:
-        pass",0
-172,code,"#!/usr/bin/env python
-
-import rospy
-from std_msgs.msg import String
-
-class MyROSNode():
-    def __init__(self):
-        rospy.init_node('my_ros_node', anonymous=True)
-        self.pub = rospy.Publisher('my_topic', String, queue_size=10)
-        rospy.Subscriber('my_topic', String, self.callback)
-
-    def callback(self, data):
-        rospy.loginfo('Received: %s', data.data)
-
-    def run(self):
-        rate = rospy.Rate(1)  # 1 Hz
-        while not rospy.is_shutdown():
-            msg = ""Hello, ROS!""
-            self.pub.publish(msg)
-            rate.sleep()
-
-if __name__ == '__main__':
-    node = MyROSNode()
-    try:
-        node.run()
-    except rospy.ROSInterruptException:
-        pass",0
-174,code robot a subscriber,"#!/usr/bin/env python
-
-import rospy
-from geometry_msgs.msg import Point
-
-def robot_position_callback(data):
-    rospy.loginfo(""Robot position - x: %f, y: %f, z: %f"", data.x, data.y, data.z)
-
-def robot_position_subscriber():
-    rospy.init_node('robot_position_subscriber', anonymous=True)
-    rospy.Subscriber(""/robot_position"", Point, robot_position_callback)
-    rospy.spin()
-
-if __name__ == '__main__':
-    robot_position_subscriber()",0
-198,code interface a subscriber,"#!/usr/bin/env python
-
-import rospy
-from std_msgs.msg import String
-
-def callback(data):
-    rospy.loginfo(""Received data: %s"", data.data)
-
-def listener():
-    rospy.init_node('listener', anonymous=True)
-    rospy.Subscriber(""chatter"", String, callback)
-    rospy.spin()
-
-if __name__ == '__main__':
-    try:
-        listener()
-    except rospy.ROSInterruptException:
-        pass",0
-203,code navigation c++ subscriber,"#include <ros/ros.h>
-#include <geometry_msgs/Twist.h>
-
-void twistCallback(const geometry_msgs::Twist::ConstPtr& msg) {
-    // Do something with the received Twist message
-    ROS_INFO(""Received linear velocity: %f, angular velocity: %f"",
-             msg->linear.x, msg->angular.z);
-    // Add your navigation logic here
-}
-
-int main(int argc, char **argv) {
-    ros::init(argc, argv, ""navigation_subscriber_node"");
-    ros::NodeHandle nh;
-
-    // Create a subscriber to receive Twist messages
-    ros::Subscriber sub = nh.subscribe<geometry_msgs::Twist>(""cmd_vel"", 1000, twistCallback);
-
-    // Spin to wait for incoming messages
-    ros::spin();
-
-    return 0;
-}",4.6507848701506544
-204,code a sub sub subscriber,"#!/usr/bin/env python
-
-import rospy
-from std_msgs.msg import String
-
-def sub_subscriber_callback(data):
-    rospy.loginfo(""Received data: %s"", data.data)
-
-def sub_subscriber():
-    rospy.init_node('sub_subscriber', anonymous=True)
-    rospy.Subscriber(""sub_topic"", String, sub_subscriber_callback)
-    rospy.spin()
-
-if __name__ == '__main__':
-    try:
-        sub_subscriber()
-    except rospy.ROSInterruptException:
-        pass",0
-227,code interface subscriber,"#!/usr/bin/env python
-
-import rospy
-from std_msgs.msg import String
-
-# Callback function to process received messages
-def message_callback(data):
-    rospy.loginfo(""Received message: %s"", data.data)
-
-def subscriber_node():
-    # Initialize ROS node
-    rospy.init_node('subscriber_node', anonymous=True)
-
-    # Subscribe to a topic named 'chatter' with message type 'String'
-    rospy.Subscriber('chatter', String, message_callback)
-
-    rospy.loginfo(""Subscriber node initialized and listening for messages."")
-
-    # Keep node running until interrupted
-    rospy.spin()
-
-if __name__ == '__main__':
-    try:
-        subscriber_node()
-    except rospy.ROSInterruptException:
-        pass",0
-228,code a a subscriber,"#!/usr/bin/env python
-
-import rospy
-from std_msgs.msg import String
-
-def callback(data):
-    rospy.loginfo(""Received sensor data: %s"", data.data)
-
-def listener():
-    rospy.init_node('sensor_subscriber', anonymous=True)
-    rospy.Subscriber('/sensor_data', String, callback)
-    rospy.spin()
-
-if __name__ == '__main__':
-    listener()",0
-242,code a sub in ROS in c++,"#include <ros/ros.h>
-#include <sensor_msgs/Imu.h>
-
-void imuCallback(const sensor_msgs::Imu::ConstPtr& msg)
-{
-    // Print out the received orientation data
-    ROS_INFO(""Received Orientation: [x=%f, y=%f, z=%f, w=%f]"", 
-             msg->orientation.x, msg->orientation.y, msg->orientation.z, msg->orientation.w);
-}
-
-int main(int argc, char** argv)
-{
-    // Initialize the ROS node
-    ros::init(argc, argv, ""imu_subscriber_node"");
-    ros::NodeHandle nh;
-
-    // Subscribe to the ""/sensor_data"" topic with a queue size of 10
-    ros::Subscriber sub = nh.subscribe<sensor_msgs::Imu>(""/sensor_data"", 10, imuCallback);
-
-    // Spin to keep the node running
-    ros::spin();
-
-    return 0;
-}",2.482158099819407
-249,code a sensor subscriber,"#!/usr/bin/env python
-
-import rospy
-from sensor_msgs.msg import LaserScan
-
-class SensorSubscriber:
-    def __init__(self):
-        rospy.init_node('sensor_subscriber', anonymous=True)
-        rospy.Subscriber(""/scan"", LaserScan, self.sensor_callback)
-        rospy.spin()
-
-    def sensor_callback(self, data):
-        # Process sensor data
-        ranges = data.ranges
-        intensities = data.intensities
-
-        # Example: Print the first range value
-        rospy.loginfo(""First range value: {}"".format(ranges[0]))
-
-if __name__ == '__main__':
-    try:
-        SensorSubscriber()
-    except rospy.ROSInterruptException:
-        pass",0
-259,task code a subscriber,"#!/usr/bin/env python
-
-import rospy
-from std_msgs.msg import String
-
-def callback(data):
-    rospy.loginfo(""Received sensor data: %s"", data.data)
-
-def subscriber_node():
-    rospy.init_node('subscriber_node', anonymous=True)
-    rospy.Subscriber('/sensor_data', String, callback)
-    rospy.spin()
-
-if __name__ == '__main__':
-    try:
-        subscriber_node()
-    except rospy.ROSInterruptException:
-        pass",0
-265,code rate a subscriber,"#!/usr/bin/env python
-
-import rospy
-from std_msgs.msg import Int32
-
-def callback(data):
-    rospy.loginfo(""Received: %s"", data.data)
-
-def listener():
-    rospy.init_node('listener', anonymous=True)
-    rospy.Subscriber(""chatter"", Int32, callback)
-    rospy.spin()
-
-if __name__ == '__main__':
-    listener()",0
-272,code mapping a subscriber,"#!/usr/bin/env python
-
-import rospy
-from std_msgs.msg import String
-
-def callback(data):
-    # Callback function to handle incoming messages
-    rospy.loginfo(""Received data: %s"", data.data)
-
-def subscriber_node():
-    # Initialize ROS node
-    rospy.init_node('subscriber_node', anonymous=True)
-
-    # Subscribe to the 'topic_name' topic using the message type 'String'
-    rospy.Subscriber('topic_name', String, callback)
-
-    # Spin to keep the node running
-    rospy.spin()
-
-if __name__ == '__main__':
-    subscriber_node()",0
-295,code navigation a subscriber,"#!/usr/bin/env python
-
-import rospy
-from nav_msgs.msg import Odometry
-
-class NavigationSubscriber:
-    def __init__(self):
-        rospy.init_node('navigation_subscriber', anonymous=True)
-        rospy.Subscriber('/odom', Odometry, self.odometry_callback)
-
-    def odometry_callback(self, msg):
-        # Process the received odometry data
-        position_x = msg.pose.pose.position.x
-        position_y = msg.pose.pose.position.y
-        orientation_z = msg.pose.pose.orientation.z
-        orientation_w = msg.pose.pose.orientation.w
-
-        # Print the received data
-        rospy.loginfo(""Position (x,y): ({},{})"".format(position_x, position_y))
-        rospy.loginfo(""Orientation (z,w): ({},{})"".format(orientation_z, orientation_w))
-
-    def run(self):
-        rospy.spin()
-
-if __name__ == '__main__':
-    navigation_subscriber = NavigationSubscriber()
-    navigation_subscriber.run()",0

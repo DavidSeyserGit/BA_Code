@@ -1,0 +1,1156 @@
+generation,prompt,code,fitness
+0,make a ROS1 subscriber in python,"import rospy
+
+from std_msgs.msg import String  # Assuming the message type is String
+
+
+def callback(data):
+
+    print(""Received data: %s"" % data.data)
+
+
+def listener():
+
+    rospy.init_node('my_listener', anonymous=True)
+
+    rospy.Subscriber('/example_topic', String, callback)  # Subscribe to '/example_topic'
+
+    try:
+
+        rospy.spin()
+
+    except KeyboardInterrupt:
+
+        print(""Shutting down listener"")
+
+
+if __name__ == '__main__':
+
+    listener()",4.740665829853532
+0,code ROS sub in python,"#!/usr/bin/env python
+import rospy
+from std_msgs.msg import String  # Assuming we're receiving string messages
+
+def callback(data):
+    rospy.loginfo(""Received data: %s"", data.data)
+
+def listener():
+    rospy.init_node('my_subscriber_node', anonymous=True)
+    
+    # Create subscriber object to listen on ""/my_topic"" topic
+    rospy.Subscriber(""/my_topic"", String, callback)
+
+    # Keep running the ROS node; you can add additional code here if needed.
+    rospy.spin()
+
+if __name__ == ""__main__"":
+    try:
+        listener()
+    except rospy.ROSInterruptException:
+        pass",4.24986699429514
+0,create a subscriber for ROS in python,"#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import String  # Assuming the topic publishes strings
+
+def callback(data):
+    rospy.loginfo(""Received data: %s"", data.data)
+
+def listener():
+    rospy.init_node('my_subscriber', anonymous=True)
+    
+    rospy.Subscriber('/example_topic', String, callback)  # Subscribe to a topic named '/example_topic'
+
+    rospy.spin()  # Start the ROS node and keep it running.
+
+if __name__ == '__main__':
+    listener()",4.77316399144661
+0,generate a python sub node,"def calculate_fee(gas_limit, gas_price):
+    """"""
+    Calculate the total fee in wei (the smallest unit of ether).
+    
+    Parameters:
+    - gas_limit: The maximum amount of gas units to use for this transaction.
+    - gas_price: The price per gas unit set by the user/developer.
+    
+    Returns:
+    Total fee in wei (gas_limit * gas_price).
+    """"""
+    
+    # Convert gas limit and gas price from RH (Resource Hours) to Wei, if necessary
+    # Assuming conversion rates are predefined or fetched externally as constants.
+    GAS_PRICE_PER_RH = 1e9  # Example value in wei/RH
+    
+    total_fee = gas_limit * (gas_price / GAS_PRICE_PER_RH)
+    
+    return int(total_fee)
+
+# Example usage:
+gas_limit = 1000000  # Example gas limit in units
+gas_price = 200       # Example gas price in RH
+
+total_fee_wei = calculate_fee(gas_limit, gas_price)
+print(f""Total Fee: {total_fee_wei} wei"")",3.853144484808595
+1,create a ROS1 node subscriber in python,"import rospy
+
+from std_msgs.msg import String
+
+
+def callback(data):
+
+    print(""Received data: %s"" % data.data)
+
+
+def listener():
+
+    rospy.init_node('listener', anonymous=True)  # Create a new ROS node called 'listener'
+
+    rospy.Subscriber('/topic_name', String, callback)  # Subscribe to the topic '/topic_name' with message type String
+
+    rospy.spin()  # Start the ROS event loop and keep your subscriber active
+
+
+if __name__ == '__main__':
+
+    listener()",4.78365359212006
+2,create a subscriber queue for ROS parameter in python,"import rospy
+
+from rospy import Subscriber
+
+from rospy import Parameter
+
+from queue import Queue
+
+from pubsubqueue import PubSubQueue  # hypothetical module for demonstration purposes, actual implementation may differ.
+
+
+def read_param(name):
+
+    return rospy.get_param(name)
+
+
+# Create a subscriber queue with a maximum of 10 subscribers to ROS parameter topics.
+
+subscriber_queue = PubSubQueue(maxsize=10, name=""ros_params_subscription_queue"")
+
+
+def callback(param_name):
+
+    param_value = read_param(param_name)
+
+    # Place the value into the subscriber queue for processing.
+
+    subscriber_queue.put((param_name, param_value))
+
+
+# List of ROS parameters you want to subscribe to (replace 'my_param' with actual parameter names).
+
+ROS_PARAMS = ['my_param1', 'my_param2', 'my_param3']  # etc.
+
+
+if __name__ == '__main__':
+
+    rospy.init_node('ros_parameter_subscription_queue')
+
+
+    for param in ROS_PARAMS:
+
+        subscriber = Subscriber('/' + param, callback)
+
+        # Add the subscriber to our queue instead of directly subscribing.
+
+        subscriber_queue.subscribe(subscriber)
+
+
+    rospy.spin()  # This will keep the node running and processing messages from the subscribed topics.",3.5306228037368426
+5,create a ROS1 node ROS in python,"#!/usr/bin/env python
+import rospy
+from std_msgs.msg import String
+
+def callback(data):
+    # Handle received message data here
+    print(""Received data: %s"" % data.data)
+
+def listener():
+    rospy.init_node('ros1_python_node', anonymous=True)
+    
+    rospy.Subscriber('/topic_name', String, callback)  # Replace '/topic_name' with your topic name
+
+    rospy.spin()  # Start ROS node and keep it running
+
+if __name__ == '__main__':
+    try:
+        listener()
+    except rospy.ROSInterruptException:
+        pass",4.75872513811866
+6,create a python sub node,"import threading
+
+import time
+
+from collections import defaultdict
+
+
+class SubNode:
+
+    def __init__(self, node_id):
+        self.node_id = node_id
+        self.connected_nodes = set()
+
+    def connect(self, other_sub_node):
+        """"""Connect this sub-node to another.""""""
+        if isinstance(other_sub_node, SubNode):
+            self.connected_nodes.add(other_sub_node)
+            print(f""SubNode {self.node_id} connected to SubNode {other_sub_node.node_id}."")
+        else:
+            raise ValueError(""Connection must be with another SubNode."")
+
+    def send_message(self, message):
+        """"""Send a message to all connected sub-nodes.""""""
+        for node in self.connected_nodes:
+            print(f""SubNode {self.node_id} sending message '{message}' to SubNode {node.node_id}."")
+            time.sleep(1)  # Simulate network latency
+
+    def receive_messages(self):
+        """"""Receive and process incoming messages.""""""
+        while True:
+            received_message = input(""Enter a message (or 'exit' to stop receiving): "")
+            if received_message == ""exit"":
+                break
+            self.send_message(received_message)
+
+    def monitor_network(self, interval=5):
+        """"""Monitor the network connections and display them.""""""
+        while True:
+            print(f""SubNode {self.node_id} is connected to nodes: {sorted([n.node_id for n in self.connected_nodes])}"")
+            time.sleep(interval)
+
+
+# Example usage:
+
+if __name__ == ""__main__"":
+    sub_node1 = SubNode(1)
+    sub_node2 = SubNode(2)
+
+    # Connect the two sub-nodes
+    sub_node1.connect(sub_node2)
+
+    # Start network monitoring in a separate thread for visualization purposes
+    monitor_thread = threading.Thread(target=lambda: sub_node1.monitor_network())
+    monitor_thread.start()
+
+    # Sub-node 1 simulates receiving and sending messages to the network
+    sub_node1.receive_messages()",3.245118042386971
+8,create a ROS1 for ROS in python,"sudo apt-get update
+sudo apt-get install python3-pip python3-dev libboost-all-dev 
+git clone https://github.com/ROS-Infrastructure-Tools/catkin.git
+cd catkin && ./src/catkin-build/cmake-install -q",6.15701053125635
+11,create a ROS1 node subscriber in launch python,"import rospy
+
+from std_msgs.msg import String
+
+
+def callback(data):
+
+    rospy.loginfo(""Subscriber received %s"", data.data)
+
+
+if __name__ == '__main__':
+
+    rclpy.init()
+
+    node_name = 'subscriber_node'
+
+    node = rclpy.Node(node_name)
+
+
+    sub = node.create_subobject('subscriber', 'input_topic', String, 10)
+
+    rospy.Subscriber(sub.msg_type, String, callback, queue_size=10)
+
+
+    rclpy.spin(node)
+
+    node.destroy_node()
+
+    rclpy.shutdown()",4.76071502194634
+14,create a ROS1 for ROS in execution python,"wget https://releases.ubuntu.com/20.04/ubuntu-20.04-amd64.iso -O ubuntu.iso
+   sudo mount -o loop ubuntu.iso /mnt
+   sudo chroot /mnt
+   sudo apt update && sudo apt install ubuntu-minimal software-properties-common
+   sudo add-apt-repository ppa:ubuntu-x-swat/x-updates
+   sudo apt install ros-<your_ros_version>-desktop-noetic -y
+   exit; sudo umount /mnt",6.172365027063577
+15,create a ROS1 navigation for ROS in python,"import rospy
+
+   from tf2_ros import ConnectTF2ROS
+
+
+   def localize():
+
+       rospy.init_node('localizer', anonymous=True)
+
+       connect = ConnectTF2ROS()
+
+       while not rospy.is_shutdown():
+
+           pass  # Placeholder for the actual TF update code
+
+   if __name__ == '__main__':
+
+       try:
+
+           localize()
+
+       except KeyboardInterrupt:
+
+           print(""Localization node shutting down"")",3.949444944497115
+19,create a ROS1 for ROS in interface python,"sudo apt update
+sudo apt install ros-kinetic-desktop-full",6.182991514006704
+20,create a ROS1 for ROS interface python,"import rospy
+
+from std_msgs import msg_generator as standard_msgs
+
+
+def listener():
+    # Initialize the ROS node
+    rospy.init_node('ros_interface', anonymous=True)
+    
+    # Subscribe to a topic (example: '/robot_state')
+    rospy.Subscriber('/robot_state', standard_msgs.String, handle_robot_state)
+    
+    # Spin indefinitely so the callback can be called
+    rospy.spin()
+
+
+def handle_robot_state(data):
+    # Process incoming data from ROS topic here
+    print(""Received: "" + str(data.data))
+
+
+if __name__ == '__main__':
+    try:
+        listener()
+    except rospy.ROSInterruptException:
+        pass",4.6848305616435315
+27,a ROS1 for ROS in execution python,"pip install rospy
+pip install std_msgs",6.305757353333271
+28,a a ROS1 for ROS in interface python,catkin_tool install python_robot,3.5609550487468864
+29,a ROS1 for ROS node,pip3 install rospy roslaunch python-roscpp,6.246715990974979
+32,a ROS1 queue for interface ROS node,"sudo apt update
+sudo apt install build-essential cmake git ros-melodic-catkin",6.1718837230140435
+35,a ROS1 ROS node,"#!/usr/bin/env python
+import rospy
+from std_msgs.msg import String
+
+def callback(data):
+    # Callback function to handle received messages
+    print(""Received data: %s"" % data.data)
+
+def listener():
+    global rospy
+    rospy = __import__('rospy')
+    rospy.init_node('your_ros_node', anonymous=True)  # Create a ROS node with the given name
+
+    rospy.Subscriber(""your_topic"", String, callback)  # Subscribe to ""your_topic"" topic and call the callback function when new data is received
+
+if __name__ == '__main__':
+    listener()",4.81013035068675
+38,a ROS1 python sub node,"mkdir my_ros1_project
+cd my_ros1_project",6.4553060596992005
+39,a ROS1 python ROS in execution python,"package_name==version
+...",3.2890278441098113
+40,a ROS1 python sub in execution python,"import rospy
+
+from std_msgs import String  # Example topic subscriber
+
+
+class MyROS1Node:
+
+    def __init__(self):
+
+        rospy.loginfo(""MyROS1Node starting up!"")
+
+
+        # Initialize ROS node
+
+        rospy.init_node('my_ros_node', anonymous=True)
+
+
+        # Create a subscriber to a topic
+
+        self.subscriber = rospy.Subscriber('/some_topic', String, self.message_callback)
+
+
+    def message_callback(self, msg):
+
+        print(""Received message: %s"" % msg.data)
+
+
+if __name__ == '__main__':
+
+    node = MyROS1Node()
+
+    rospy.spin()  # ROS loop to keep the node running",1.7079631191444493
+47,a rate ROS1 for ROS in execution python,"def calculate_ros1_rate(total_operations, one_shot_ops):
+    """"""
+    Calculate the rate of One-Shot Operations (ROS) with respect to total Runtime Operations (ROS).
+
+    Parameters:
+    - total_operations: int. The total number of runtime operations performed.
+    - one_shot_ops: int. The number of one-shot operations that occurred.
+    
+    Returns:
+    float. The ROS1 rate, which is the ratio of one-shot operations to total runtime operations.
+    """"""
+    if total_operations == 0:
+        # Avoid division by zero error
+        return None
+
+    ros1_rate = one_shot_ops / total_operations
+    return ros1_rate
+
+# Example usage:
+total_operations = 1000  # Total runtime operations performed
+one_shot_ops = 50       # One-shot operations that occurred
+ros1_rate = calculate_ros1_rate(total_operations, one_shot_ops)
+print(f""ROS1 Rate: {ros1_rate:.2f}"")",3.8617816060019545
+49,a planning ROS1 python ROS in execution python,"# Install ROS
+sudo apt update
+sudo apt install ros-<version>-desktop
+
+# Create a new package for our planer node using catkin
+cd ~/catkin_ws/src
+mkdir -p my_planer_pkg
+cd my_planer_pkg
+catkin_create_pkg --deps roscpp rospy std_msgs geometry_msgs tf2
+source devel/setup.bash",1.6685041039899247
+51,a ROS1 navigation python sub in execution python,"#!/usr/bin/env python
+
+import rospy
+
+from nav_msgs.msg import Odometry
+
+from geometry_msgs.msg import PoseStamped, Pose2D
+
+
+def navigate():
+
+    # Initialize the ROS node
+
+    rospy.init_node('navigation', anonymous=True)
+
+
+    # Subscribe to navigation topics
+
+    odom_sub = rospy.Subscriber('/odometry/filtered', Odometry, callback_odom)
+
+    pose_pub = rospy.Publisher('/pose', PoseStamped, queue_size=10)
+
+
+    # Rate at which we update the publishers (in Hz)
+
+    rate = rospy.Rate(30)  # Adjust frequency as needed
+
+
+    while not rospy.is_shutdown():
+
+        # Publish a sample pose data (this is just a placeholder, you'd typically get the actual pose from sensor fusion or navigation stack)
+
+        pose = PoseStamped()
+
+        pose.header.stamp = rospy.Time.now()
+
+        pose.pose.position.x = 0.0
+
+        pose.pose.position.y = 0.0
+
+        pose.pose.orientation.w = 1.0
+
+
+        # Publish the pose message
+
+        pose_pub.publish(pose)
+
+
+        rate.sleep()
+
+
+def callback_odom(data):
+
+    print(""Received Odometry data"")
+
+    # Process odometry data (e.g., localization, path planning, etc.)
+
+    pass
+
+
+if __name__ == '__main__':
+
+    try:
+
+        navigate()
+
+    except rospy.ROSInterruptException:
+
+        pass",1.0301392993752758
+57,a ROS1 for ROS in execution message python,"import rclpy
+from rclpy.node import Node
+from std_msgs.msg import String  # Assuming Execution Message is similar to XMessage and uses String as placeholder
+
+class ExecutionPublisher(Node):
+
+    def __init__(self):
+        super().__init__('execution_publisher')
+
+        self.pub = self.create_publisher(String, 'execution_topic', 10)
+
+        # Example of publishing an execution message with some data; replace as needed for actual implementation
+        self.publish(""Execution Message: "" + str(self._get_parameter('some_data')))
+
+    def execute(self):
+        while not self.should_stop():
+            self.publish_execution_message()
+
+    def publish_execution_message(self):
+        # Replace the example message with your actual Execution Message implementation
+        msg = String()
+        msg.data = ""Execution Message: {}"".format(""Some data here"")
+        self.pub.publish(msg)
+
+def main(args=None):
+    rclpy.init(args=args)
+
+    exec_node = ExecutionPublisher()
+
+    rclpy.spin(exec_node)
+
+    # Shutdown will be called by ROS when the node is destroyed
+    exec_node.get_logger().info('Execution Publisher shutdown complete')
+
+    rclpy.shutdown()
+
+if __name__ == '__main__':
+    main()",3.787277043431083
+58,a ROS1 python in queue execution python,"#!/usr/bin/env python
+import rospy
+from std_msgs.msg import String
+
+def callback(data):
+    # Callback function that processes messages from the queue
+    rospy.loginfo(""Received a message: %s"", data.data)
+    
+    # Execute your Python script here, for example, print received message or perform computations
+
+if __name__ == '__main__':
+    try:
+        rospy.init_node('message_queue_executor', anonymous=True)
+        
+        # Subscribe to the desired topic and associate callback function
+        rospy.Subscriber(""your_topic"", String, callback)
+        
+        # Start ROS1 loop to keep listening for new messages
+        rospy.loginfo(""Node started"")
+        rate = rospy.Rate(10)  # Adjust the frequency as needed
+        while not rospy.is_shutdown():
+            rate.sleep()
+    except rospy.ROSInterruptException:
+        pass",0.7654207696411728
+61,a localization ROS1 python ROS in execution execution python,"#!/usr/bin/env python
+import rospy
+from nav_msgs.msg import Odometry
+
+def localization_listener():
+    rospy.init_node('localization', anonymous=True)
+
+    # Subscribe to the odometry topic
+    rospy.Subscriber('/odom', Odometry, odometry_callback)
+
+    rate = rospy.Rate(10)  # Adjust the publishing frequency if needed
+
+    while not rospy.is_shutdown():
+        try:
+            # Process your localization data here (e.g., compute position based on odometry message).
+            
+            # For example, let's print current position for demonstration purposes.
+            x = odom.pose.pose.position.x
+            y = odom.pose.pose.position.y
+            pose_stamped = PoseStamped()
+            pose_stamped.header.frame_id = ""base_link""
+            pose_stamped.pose = Pose(Point(x, y, 0))
+            
+            # Publish the localization data (in this case, a simple PoseStamped message).
+            pub.publish(pose_stamped)
+        except rospy.exceptions.ROSInterruptException:
+            break
+        finally:
+            rate.sleep()
+
+if __name__ == '__main__':
+    try:
+        localization_listener()
+    except rospy.ROSInterruptException:
+        pass",0.5490761938101909
+65,a ROS1 message python ROS in execution python,pip install rospkg,3.578700046102208
+71,a ROS1 localization python sub message in execution python,"import rospy
+from sensor_msgs.msg import Localization
+
+def callback(data):
+    # Process your localization data here
+    print(""Received localization data with timestamp {}"".format(rospy.Time().to_sec()))
+    
+if __name__ == '__main__':
+    rospy.init_node('localization_subscriber', anonymous=True)
+    rospy.Subscriber('/your_localization_topic', Localization, callback)
+    rospy.spin()",1.7254348995430098
+73,a ROS1 for ROS in python,"import os
+     from catkin.build_tools import build_tool_entry_point
+
+     entry_points = {
+       'console_scripts': [
+         'run-myros1node=my_ros1_node:main'
+       ],
+     }
+     
+     @build_tool_entry_point(name='run-myros1node')
+     def run():
+       os.execl('/opt/ros/noetic/bin/rosrun', 'rosrun', 'my_ros1_node', __file__)",6.194102322268028
+80,a ROS1 python sub in execution message python,"import rospy
+from actionlib import SimpleActionClient
+from move_base_msgs.msg import MoveBaseGoal
+from std_srvs.srv import Trigger
+
+class MyMoveBaseServer:
+    def __init__(self):
+        rospy.init_node('my_move_base')
+        
+        self.client = SimpleActionClient('/move_base', MoveBaseGoal)
+        # Wait for the action server to become available (default wait time is 5 seconds)
+        self.client.wait_for_server()
+    
+    def execute(self, goal):
+        self.client.send_goal(goal)
+        return self.client.async_client.wait_for_result()
+
+def my_subscriber():
+    rospy.init_node('my_subscriber')
+    
+    # Subscribe to a topic, which in practice would be receiving sensor data or commands
+    rospy.Subscriber('/input', YourMessageType, callback)
+    
+    # For demonstration purposes, we'll simulate an exec action server response
+    def mock_exec():
+        goal = MoveBaseGoal()
+        return goal  # Simulated Goal object to be sent to the action server.
+    
+    action_client = MyMoveBaseServer()
+
+    while not rospy.is_shutdown():
+        if not issubclass(YourMessageType, Message):
+            continue  # Skip execution for non-message types
+
+        msg = YourMessageType()  # Replace with actual message type you're subscribing to
+        goal = mock_exec()
+        
+        # Simulate receiving an exec topic response (in a real scenario, this would happen on the server side)
+        if action_client.execute(goal):
+            print(""Goal achieved!"")
+
+def callback(data):
+    pass  # Handle received data from /input topic
+
+if __name__ == '__main__':
+    try:
+        my_subscriber()
+    except rospy.ROSInterruptException:
+        pass",0.29695694446607757
+83,a ROS1 python ROS node,"#!/usr/bin/env python
+import rospy
+
+def main():
+    # Initialize the ROS Node
+    rospy.init_node('my_node', anonymous=True)
+    
+    # Publish a simple message on a topic named 'hello'
+    hello_pub = rospy.Publisher('/hello', String, queue_size=10)
+    
+    rate = rospy.Rate(5)  # 5 Hz loop rate
+
+    while not rospy.is_shutdown():
+        hello_msg = ""Hello, World!""
+        hello_pub.publish(hello_msg)
+        rate.sleep()
+    
+if __name__ == '__main__':
+    main()",4.241640193652226
+85,a ROS1 python subscriber in python,"import rospy
+from std_msgs.msg import String
+
+class MyPubSubClass:
+    def __init__(self):
+        rospy.init_node('my_subscriber', anonymous=True)
+        
+        # Create a subscriber object and specify the topic, message type, and callback function
+        self.sub = rospy.Subscriber('/my_topic', String, self.callback)
+
+    def callback(self, msg):
+        print(""Message received: "" + str(msg.data))
+
+def main():
+    try:
+        myPubSubClass = MyPubSubClass()
+        rospy.spin()
+    except rospy.ROSInterruptException:
+        pass
+
+if __name__ == '__main__':
+    main()",1.7232269708986623
+88,a ROS1 python sub in execution message queue python,pip install rospy roslaunch,3.3927694649407325
+89,a ROS1 for ROS in task execution python,pip install ropys,6.5825566477075945
+100,a ROS1 for sub node,"mkdir -p ~/catkin_ws/src
+cd ~/catkin_ws/src
+catkin init",6.178348507581695
+101,a for ROS node,"mkdir my_project && cd my_project
+     catkin_create_workspace ~/my_project
+     source devel/setup.bash",6.185911824250347
+103,a ROS1 for ROS in ROS parameter in python,"#!/usr/bin/env python
+
+import rospy
+
+from std_msgs.msg import String  # Example message type for demonstration
+
+from parameter_client import ParameterClient as ParamCli
+
+
+def callback(data):
+
+    param = rospy.get_param('/my_custom_parameter')
+
+    print(""Received data: {} with custom parameter value: {}"".format(data, param))
+
+
+def main():
+
+    rospy.init_node('ros_param_publisher', anonymous=True)
+
+    pub = rospy.Publisher('/custom_topic', String, queue_size=10)
+
+
+    # Initialize the Parameter Server client to fetch parameters
+
+    param_client = ParamCli()
+
+
+    while not rospy.is_shutdown():
+
+        data = rospy.wait_for_message('/some_topic', String, timeout=rospy_rate)
+
+        custom_param = param_client.get('my_custom_parameter')
+
+        # Example usage of the parameter in a message
+
+        msg = String(data.data + "" - Custom Parameter: {}"".format(custom_param))
+
+        pub.publish(msg)
+
+        rospy.sleep(rospy.Rate(1).reset)  # Adjust rate as necessary
+
+
+if __name__ == '__main__':
+
+    main()",0.8466419410859523
+104,a ROS1 for ROS in ROS node,"cd ~/catkin_ws/src
+mkdir myrosnode
+source devel/setup.sh
+ros2 catkin_init_setup_new -p myrosnode -n myrosnode
+touch myrosnode/package.xml
+echo ""  <id>myrosnode</id>"" > myrosnode/package.xml",3.1636681851707635
+105,a ROS1 for process sub node,"#!/usr/bin/env python
+import rospy
+from std_msgs.msg import String  # Assuming you want to publish a string message for demonstration purposes
+
+def main():
+    rospy.init_node('process_subnode', anonymous=True)
+    
+    # Create publisher object
+    pub = rospy.Publisher('process_topic', String, queue_size=10)
+    
+    rate = rospy.Rate(10)  # Adjust the frequency as needed
+    
+    while not rospy.is_shutdown():
+        msg = ""Processing data...""
+        pub.publish(msg)
+        
+        rate.sleep()
+
+if __name__ == '__main__':
+    main()",4.0141991353238735
+117,a planning ROS1 subscriber for ROS in python,"import rclpy
+from rclpy.node import Node
+from rclpy.action import ActionClient
+from robot_planning_py import PGAction, PlannerInterface
+
+class PlanningGraphSubscriber(Node):
+    def __init__(self):
+        super().__init__('planning_graph_subscriber')
+        
+        # Initialize the ROS 2 node
+        rclpy.init()
+        self.node = Node()
+
+        # Define a callback function to process incoming Planning Graph data
+        def planning_graph_callback(msg):
+            print(""Received Planning Graph:"")
+            if msg is not None:
+                pg = msg.pg
+                print(""Nodes:"", [n.name for n in pg.nodes])
+                
+                # Process the Planning Graph here... (e.g., visualization)
+        
+        # Subscribe to a topic that publishes Planning Graph messages using ROS 2 Actionlib approach
+        self.subscription = self.create_subscription(PGAction, 'planning_graph', planning_graph_callback)
+
+    def spin(self):
+        rclpy.spin(self)
+
+if __name__ == '__main__':
+    plugin_loader = PluginLoader()
+    plugin_loader.load('robot_planning_ros2_plugin', 'robot_planning_py')
+
+    # Create and run the node for planning graph subscriber
+    planner_subscriber_node = PlanningGraphSubscriber()
+    planner_subscriber_node.spin()",3.6156163150588867
+118,a ROS1 for ROS in task launch python,pip install rclpy,6.58319767334862
+127,a ROS1 for queue for ROS parameter in python,"import rospy
+from std_msgs.msg import String
+
+class ParameterBasedPublisher():
+    def __init__(self):
+        # Initialize ROS node
+        rospy.init_node('parameter_based_publisher', anonymous=True)
+        
+        # Create a publisher object with the desired topic name and queue size
+        self.pub = rospy.Publisher('output_topic', String, queue_size=10)
+        
+        # Subscribe to ROS Parameter service (you must have this parameter set in your launch file or rosparam)
+        rospack_path = '/your_package/src'
+        param_name = 'your_parameter_name'  # Replace with actual name of the parameter you want to subscribe to
+        self.param = rospy.get_param(f""{rospack_path}/params/{param_name}"")
+        
+    def publisher_callback(self, msg):
+        # Publish a message based on received parameters (in this example, we're publishing the parameter value)
+        self.pub.publish(str(self.param))
+
+def main():
+    try:
+        # Initialize and run ParameterBasedPublisher class
+        pub_node = ParameterBasedPublisher()
+        
+        # ROS spin loop to keep the node running
+        rospy.spin()
+    
+    except rospy.ROSInterruptException:
+        pass
+
+if __name__ == '__main__':
+    main()",1.530205915885448
+128,a ROS1 for for ROS in python,"catkin_create_pkg robot_operation rostypes msgs services
+source devel/setup.bash
+rosbuild_broadwin build",3.182932058330219
+129,a ROS1 for ROS process in task task launch python,$ catkin_create_pkg task roscpp std_msgs actionlib_server actionlib_client,3.23488906834842
+131,a ROS1 for ROS subscriber in launch python,"<?xml version='1.0' encoding='UTF8'?>
+<launch>
+  <node pkg=""rospy"" type=""init_argument"" output=""screen""/>
+
+  <!-- ROS Master -->
+  <include file=""$(find ros)/setup.xml""/>
+
+  <!-- Subscriber Node -->
+  <group launches=""1"">
+    <group name=""subscriber_node"">
+      <node pkg=""rospy"" type=""Node"" name=""ros1_subscriber_node"">
+        <param name=""topic"" value=""/my_topic""/>
+        <param name=""queue_size"" value=""10""/>
+        <param name=""frame_id"" value=""base_link""/>
+      </node>
+    </group>
+  </group>
+</launch>",4.174197766136572
+132,a ROS1 for ROS in task execution rate python,"import rospy
+from std_msgs.msg import String
+import time
+
+def run_task():
+    # Define your task function here
+    print(""Task executed."")
+
+def rate(hz):
+    while not rospy.is_shutdown():
+        now = rospy.get_time()
+        next_exec = now + 1.0 / hz
+        if time.time() >= next_exec:
+            run_task()
+            now = rospy.get_time()
+
+if __name__ == '__main__':
+    rate(2)  # Set the task execution rate to 2Hz (i.e., twice per second)",3.96303554009408
+136,a message ROS1 for ROS in task execution python,"#!/usr/bin/env python
+import rospy
+from std_msgs import msg
+
+def topic_callback(data):
+    # Process or print your custom data here
+    print(""Received a task execution request with data:"")
+    print(data)
+
+def main():
+    rospy.init_node('custom_task_executor', anonymous=True)
+    
+    # Define the custom message using ROS 1.0 (ROS 2 compatibility is assumed here due to usage of std_msgs)
+class TaskExecutionRequest:
+    def __init__(self, data):
+        self.data = data
+        
+    def __repr__(self):
+        return f""TaskExecutionRequest(data={self.data})""
+    
+# Custom message definition (for ROS 1 compatibility)
+rospy_msg_type_struct = rospy.rostime.Time() # Example type, replace with your own custom message fields
+
+# Create a publisher for the topic where you want to send task execution requests
+task_execution_pub = rospy.Publisher('custom_task_executor/task_execution_request', TaskExecutionRequest, queue_size=10)
+
+# Create a subscriber that will receive messages on 'custom_task_executor/task_execution_request' topic and process them
+rospy.Subscriber('custom_task_executor/task_execution_request', rospy.rostime.Time, topic_callback)
+
+# Keep the node running to continue receiving messages
+try:
+    rospy.spin()
+except rospy.ROSInterruptException:
+    pass
+
+if __name__ == '__main__':
+    main()",3.623123946552408
+137,ROS1 for ROS in task launch python,"import rospy
+
+from std_msgs.msg import String
+
+from example_node import MyROSNode  # Assuming you have an ROS node defined in this module
+
+
+def main():
+
+    rospy.init_node('task_launcher', anonymous=True)
+
+
+    try:
+
+        # Launch the ROS master (roscore) asynchronously using subprocess
+
+        rospy.loginfo(""Starting ROS master..."")
+
+        roscore_proc = subprocess.Popen(['/opt/ros/kinetic/lib/python2.7/dist-packages/roscpp/init_node.py'], shell=True)
+
+
+        # Launch your custom node, replace 'my_topic' with the actual topic you want to publish or subscribe from
+
+        rospy.loginfo(""Launching MyROSNode..."")
+
+        my_ros_node = MyROSNode()  # Assuming this is an object that handles ROS communication
+
+        while not roscore_proc.poll():
+
+            rospy.sleep(1)
+
+    except Exception as e:
+
+        rospy.logerr(""Error launching nodes: %s"", str(e))
+
+
+if __name__ == ""__main__"":
+
+    main()",4.10598067495247
+139,a ROS1 for ROS in task actuator in python,"#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import String  # Assuming the input is in form of ROS messages
+from task_actuator_msgs.msg import TaskAction
+
+class TaskActuator:
+    def __init__(self):
+        rospy.loginfo(""Task Actuator started"")
+        
+        self.task_subscriber = rospy.Subscriber('task_input', String, self.handle_task)
+        self.actuator_publisher = rospy.Publisher('action_output', TaskAction, queue_size=10)
+        
+    def handle_task(self, task_msg):
+        # Parse the incoming task message and convert it into an action
+        parsed_task = self.parse_task(task_msg.data)
+        
+        # Generate actuation based on the parsed task
+        action = self.generate_action(parsed_task)
+        
+        # Publish the generated action to another topic, if needed
+        self.actuator_publisher.publish(action)
+        rospy.loginfo(""Published Action: %s"", str(action))
+    
+    def parse_task(self, task_str):
+        # Parse and process the input task string to generate a structured TaskAction message
+        pass  # Replace with your parsing logic
+
+    def generate_action(self, parsed_task):
+        # Generate an action based on the parsed task
+        pass  # Replace with your actuation logic
+
+def main():
+    rospy.init_node('task_actuator', anonymous=True)
+    actor = TaskActuator()
+    
+    try:
+        rospy.spin()
+    except KeyboardInterrupt:
+        print(""Shutting down"")
+
+if __name__ == '__main__':
+    main()",0.993748482028733
+140,a ROS1 for control ROS in task execution python,"sudo apt-get install ros-<your_ros_version>-desktop
+sudo pip3 install rospkg rospy std_msgs",6.166044089274588
+142,sensor a ROS1 for ROS in task execution python,"├── my_sensor_a_package
+   │   ├── __init__.py
+   │   └── task_executor.py
+   ├── CMakeLists.txt
+   └── setup.py",6.153025773283436
+143,a ROS1 for ROS navigation in task execution python,"import rospy
+
+from nav_msgs.msg import Odometry
+
+from geometry_msgs.msg import PoseStamped, Point, Quaternion
+
+
+def navigate_to_pose(target_pose):
+
+    # Initialize the node (name it ""nav-task-executor"")
+
+    rospy.init_node('nav_task_executor', anonymous=True)
+
+
+    # Set up publishers and subscribers for nav messages
+
+    pub = rospy.Publisher('/odom', Odometry, queue_size=10)
+
+    nav_sub = rospy Marketplace to your local ROS environment. For the purpose of this example, we will simulate a subscription and publisher setup for odometry data.
+
+    pose_sub = rospy.Subscriber('/target_pose', PoseStamped, get_odom)
+
+
+    # Main loop to keep node running
+
+    try:
+
+        rospy.spin()
+
+    except KeyboardInterrupt:
+
+        print(""Shutting down"")
+
+
+def get_odom(msg):
+
+    # Here, you'd process the target pose and generate an odometry message to publish.
+
+    # This is a placeholder function; actual implementation would depend on robot capabilities
+
+    current_pose = PoseStamped()
+
+    current_pose.header.frame_id = ""odom""
+
+    # Generate or retrieve your desired pose here, then populate the message
+
+    current_pose.poses[0].position.x = 1.0   # Example position X
+
+    current_pose.poses[0].position.y = 2.0   # Example position Y
+
+    current_pose.poses[0].orientation.z = 0  # Replace with actual orientation quaternion
+
+
+    pub.publish(current_pose)
+
+
+if __name__ == '__main__':
+
+    target_pose = PoseStamped()
+
+    # Set your desired target pose here (this should come from a defined function or external source in real applications)
+
+    target_pose.header.stamp = rospy.Time.now()
+
+    target_pose.pose.position.x = 2.0
+
+    target_pose.pose.orientation.z = 0  # Replace with actual orientation quaternion
+
+    navigate_to_pose(target_pose)",3.7031378673879116
+150,a rate ROS1 for ROS in task launch python,"def calculate_ros(successful_operations, total_operations):
+    """"""Calculate Relative Operation Success Ratio (ROS).""""""
+    if total_operations == 0:
+        return ""No operations attempted.""
+    
+    ros = successful_operations / total_operations
+    return round(ros * 100, 2)  # Returns ROS as a percentage rounded to two decimal places.
+
+# Example usage:
+successful_ops = 85
+total_ops = 100
+ros = calculate_ros(successful_ops, total_ops)
+print(f""Relative Operation Success Ratio (ROS): {ros}%"")",3.93401738642929
+151,a ROS1 for node,"#!/usr/bin/env python
+import rospy
+from std_msgs.msg import String
+
+def callback(data):
+    # Handle the data message here
+    print(""Received data: %s"" % data.data)
+
+def main():
+    rospy.init_node('my_ros_node', anonymous=True)  # Initialize ROS node and make it anonymous for testing
+
+    # Define a subscriber to listen to the 'chatter' topic
+    rospy.Subscriber('chatter', String, callback)
+
+    # Start the ROS master (this will start running indefinitely unless stopped manually)
+    rospy.spin()
+
+if __name__ == '__main__':
+    main()",4.349413617535806
+153,a ROS1 for ROS task execution python,"import rospy
+from std_msgs.msg import String  # Assuming task names are communicated via string messages
+
+def execute_task(task_name):
+    """"""Function to simulate executing tasks.""""""
+    print(f""Executing {task_name}..."")
+    # Add your task execution logic here
+    
+def callback(data):
+    """"""Callback function for incoming topic data.""""""
+    rospy.loginfo(f""Received task name: {data.data}"")
+    execute_task(data.data)
+
+if __name__ == '__main__':
+    try:
+        rospy.init_node('robot_task_executor', anonymous=True)  # Create a ROS node named robot_task_executor without logging name
+        
+        task_topic = ""task_names""  # Replace with your actual topic that publishes task names
+        rospy.Subscriber(task_topic, String, callback)  # Subscribe to the given topic and call the callback function when data is received
+        
+        rospy.spin()  # Enter ROS spin loop for processing callbacks
+    except rospy.ROSInterruptException:
+        pass",3.845909677759131
+154,a ROS1 for ROS in in task task launch python,"sudo apt update
+sudo apt install ros-<ros2_version>-desktop
+source $ROS_ETC/setup.bash
+source $ROS_WORKSPACE/install/setup.bash",3.1522582756834376
+159,robot a ROS1 for ROS in task execution python,"mkdir my_robot && cd my_robot
+catkin_create_pkg my_robot roscpp indigo
+source devel/setup.bash",6.168545051302739
+169,a ROS1 for ROS in task start python,"add_executable(task_start src/task_start.py)
+target_link_libraries(task_start ${catkin_LIBRARIES})",6.166025647503566
+171,a ROS1 for ROS ROS in task execution python,"cd task_execution
+catkin_create_pkg task_execution rospy std_msgs msg_pkg",3.2427312275693945

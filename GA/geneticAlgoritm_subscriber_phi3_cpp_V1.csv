@@ -1,2589 +1,1481 @@
 generation,prompt,code,fitness
 0,make a ROS1 subscriber in cpp,"#include <ros/ros.h>
 
-#include <std_msgs/String.h> // Replace with your specific message type if needed
+#include <std_msgs/String.h> // Example message type for demonstration purposes
 
 
-// Callback function that will be called when new messages are received
+// Callback function called when new messages are received on the specified topic
 
 void messageCallback(const std_msgs::String::ConstPtr& msg) {
 
-    ROS_INFO(""Received message: [%s]"", msg->data.c_str());
+    ROS_INFO(""Received: [%s]"", msg->data.c_str()); // Print the content of the incoming message
 
 }
 
 
 int main(int argc, char **argv) {
 
-    ros::init(argc, argv, ""my_subscriber""); // Initialize the ROS node
+    ros::init(argc, argv, ""my_subscriber""); // Initialize ROS with a node name
 
-    ros::NodeHandle nh; // NodeHandle is the main access point to communications in ROS
-
-
-    ros::Subscriber sub = nh.subscribe(""your_topic"", 1000, messageCallback); // Subscribe with a queue size of 1000 and callback function
+    ros::NodeHandle nh;                         // Create a NodeHandle object to interact with the ROS system
 
 
-    ros::spin(); // Enter the ROS event loop, which will keep calling the callback as needed
+    ros::Subscriber sub = nh.subscribe(""example_topic"", 1000, messageCallback); // Subscribe to ""example_topic"" at queue size of 1000 and use 'messageCallback' as callback function
 
 
-    return 0;
+    ros::spin();                               // Enter ROS spin loop, processing messages in the subscriber
 
-}",9.830793593423007
+
+    return  Written by assistant.
+
+}",0
 0,code ROS sub in cpp,"#include <ros/ros.h>
 #include <std_msgs/String.h>
 #include <iostream>
 
-// Callback function for handling received messages
-void chatterCallback(const std_msgs::String::ConstPtr& msg) {
-  ROS_INFO(""I heard: [%s]"", msg->data.c_str());
-}
-
-int main(int argc, char **argv) {
-  // Initialize the ROS node
-  ros::init(argc, argv, ""my_subscriber"");
-  ros::NodeHandle nh;
-
-  // Create a subscriber object and specify the topic name and message type
-  ros::Subscriber sub = nh.subscribe(""chatter"", 1000, chatterCallback);
-
-  // Spin to keep this node alive and wait for callbacks
-  ros::spin();
-
-  return 0;
-}",9.449990180541949
-0,create a subscriber for ROS in c++,"#include <ros/ros.h>
-#include <std_msgs/String.h>
-
-// Define a callback function for incoming messages
-void messageCallback(const std_msgs::String::ConstPtr& msg) {
-    ROS_INFO(""Received message: '%s'"", msg->data.c_str());
-}
-
-int main(int argc, char** argv) {
-    // Initialize the ROS system
-    ros::init(argc, argv, ""subscriber_node"");
-    
-    // Create a NodeHandle to interact with ROS
-    ros::NodeHandle nh;
-
-    // Declare your subscriber and specify the message type and callback function
-    ros::Subscriber sub = nh.subscribe(""chatter"", 10, messageCallback);
-
-    // Spin the node to listen for incoming messages
-    ros::spin();
-    
-    return 0;
-}",9.434558146530025
-0,generate a c++ subscriber node,"#include <boost/asio.hpp>
-
-#include <boost/system/error_code.hpp>
-
-#include <zmq.h>
-
-
-void subscribe(const std::string& subscriberEndpoint) {
-
-    // Initialize ZeroMQ context and socket
-
-    void* context = zmq::context_t::default_context();
-
-    zmq::socket_t subscriptionSocket(context, ZMQ_SUB);
-
-
-    try {
-
-        subscriptionSocket.connect(subscriberEndpoint);
-
-
-        // Set the filter options for receiving messages only and not blocking on new messages
-
-        subscriptionSocket.setsockopt(ZMQ_SUBSCRIBE, """", 0);
-
-
-        boost::asio::io_context ioc;
-
-        zmq::poller poller = zmq::poller(1, &ioc);
-
-        poller.register((&subscriptionSocket), ZMQ_POLLIN);
-
-
-        // The main loop for receiving messages
-
-        while (true) {
-
-            boost::system::error_code error;
-
-            int events = poller.poll(1000, &error);
-
-            if (error == boost::asio::error::operation_aborted) break;
-
-
-            zmq::message_t message;
-
-            // Check for new messages and receive them
-
-            if (events == ZMQ_POLLIN && subscriptionSocket.recv(&message)) {
-
-                std::cout << ""Received: "" << message.to_string() << std::endl;
-
-            }
-
-        }
-
-    } catch(const zmq::error_t& e) {
-
-        std::cerr << ""ZeroMQ error: "" << e.what() << std::endl;
-
-    }
-
-}
-
-
-int main() {
-
-    const std::string subscriberEndpoint = ""tcp://localhost:5555""; // Subscriber endpoint
-
-    subscribe(subscriberEndpoint);
-
-
-    return 0;
-
-}",0
-1,make robot ROS node sub task in cpp,"// main_subscriber.cpp
-
-#include <ros/ros.h>
-#include <std_msgs/String.h>
-#include ""task_subscriber.h"" // Assume task messages are defined in this header file
-
-int main(int argc, char** argv) {
-    ros::init(argc, argv, ""task_subscriber"");
-    ros::NodeHandle n;
-
-    TaskSubscriber subscriber;
-    ros::Subscriber task_sub = n.subscribe(""task_topic"", 1000, &TaskSubscriber::taskCallback);
-
-    ros::spin(); // Start ROS event loop
-
-    return 0;
-}",0
-2,make a ROS1 for ROS in,"git clone https://github.com/ros-infrastructure/roseos.git ~/roses/kinetic_kame
-    cd ~/roses/kinetic_kame
-    sudo apt-get build-dep ros-kinetic
-    source devel/setup.sh
-    sudo cmake -DCMAKE_BUILD_TYPE=Release ..
-    sudo make",0
-3,make a ROS1 subscriber cpp,"#include <ros/ros.h>
-#include <std_msgs/String>.
-
-// Callback function that will be called whenever a new message is received
-void callback(const std_msgs::String::ConstPtr& msg) {
-    ROS_INFO(""Received message: '%s'"", msg->data.c_str());
-}
-
-int main(int argc, char **argv) {
-    // Initialize the ROS node named ""listener""
-    ros::init(argc, argv, ""listener"");
-    
-    // Create a new NodeHandle for communicating with the ROS system
-    ros::NodeHandle nh;
-
-    // Subscribe to the ""chatter"" topic and invoke the callback function whenever a message is received
-    ros::Subscriber sub = nh.subscribe(""chatter"", 10, callback);
-
-    // Spin the node to keep running and process incoming messages in a separate thread
-    ros::spin();
-
-    return 0;
-}",0
-4,make a sub in cpp,"#include <iostream>
-
-// Function declaration
-int calculateSum(int num1, int num2);
-
-int main() {
-    // Example usage of 'calculateSum' function
-    int a = 5;
-    int b = 7;
-    std::cout << ""The sum of "" << a << "" and "" << b << "" is: "" << calculateSum(a, b) << std::endl;
-
-    return 0;
-}
-
-// Function definition
-int calculateSum(int num1, int num2) {
-    // Calculates the sum of two integers
-    return num1 + num2;
-}",4.70847899175007
-6,make a ROS1 in cpp,"// hello_world.cpp
-#include <ros/ros.h>
-#include <std_msgs/String.h>
-
-int main(int argc, char **argv) {
-  ros::init(argc, argv, ""hello_world"");
-  ros::NodeHandle nh;
-
-  // Subscribe to a topic called ""chatter"" with String messages
-  ros::Subscriber sub = nh.subscribe(""chatter"", 1000, chatCallback);
-
-  // Spin the node to process callbacks and listen for new messages on the subscribed topics
-  ros::spin();
-
-  return 0;
-}
-
-void chatCallback(const std_msgs::String::ConstPtr& msg) {
-  ROS_INFO(""I heard: [%s]"", msg->data.c_str());
-}",0
-8,make a sub localization in cpp,"#include <iostream>
-#include <map>
-#include <string>
-
-class LocalizationManager {
-public:
-    enum Language { ENGLISH, FRENCH };
-    enum Region { USA, CANADA };
-
-private:
-    struct Translation {
-        std::map<std::string, std::string> translations;
-    };
-
-    void loadTranslations(Language language, Region region) {
-        // Load the translation file based on the given language and region.
-        // For demonstration purposes, we'll define them directly in this example:
-        switch (language) {
-            case ENGLISH:
-                switch (region) {
-                    case USA:
-                        translations[USA] = Translation{
-                            {""Hello"", ""Hello""},
-                            {""Goodbye"", ""Goodbye""}
-                        };
-                        break;
-                    case CANADA:
-                        translations[CANADA] = Translation{
-                            {""Hello"", ""Bonjour""},
-occlusion, and region. Make sure to replace these values with your actual translation files or database queries.
-
-public:
-    LocalizationManager() {
-        loadTranslations(ENGLISH, USA);
-        loadTranslations(FRENCH, CANADA);
-    }
-
-    void setLanguage(Language language) {
-        currentLanguage = language;
-    }
-
-    std::string translate(const std::string& key) const {
-        return translations[currentRegion][key];
-    }
-
-private:
-    Language currentLanguage{ENGLISH};
-    Region currentRegion{USA};
-    std::map<std::string, Translation> translations;
-};
-
-int main() {
-    LocalizationManager localizer;
-
-    // Example usage of the LocalizationManager class
-    std::cout << ""Hello World (English - USA): ""
-              << localizer.translate(""Hello"") 
-              << ""\n"";
-
-    localizer.setLanguage(FRENCH);
-    localizer.setRegion(CANADA);
-
-    std::cout << ""Hello World (French - Canada): ""
-              << localizer.translate(""Hello"")
-              << ""\n"";
-
-    return 0;
-}",0
-17,make a subscriber for ROS c++,"#include <ros/ros.h>
-
-#include <std_msgs/String.h> // Assuming we're subscribing to messages of type std_msgs::String
-
-
-// Callback function that will be called whenever a new message is received
-
-void messageCallback(const std_msgs::String::ConstPtr& msg) {
-
-    ROS_INFO(""Received: %s"", msg->data.c_str()); // Log the received data
-
-}
-
-
-int main(int argc, char **argv) {
-
-    ros::init(argc, argv, ""subscriber_node"");
-
-    ros::NodeHandle nh;
-
-
-    // Create a Subscriber object which listens on the 'chatter' topic for String messages
-
-    ros::Subscriber sub = nh.subscribe(""chatter"", 1000, messageCallback);
-
-
-    // Spin the node to process incoming messages
-
-    ros::spin();
-
-
-    return 0;
-
-}",9.843222155720271
-18,control make a ROS1 subscriber in cpp,"ros_subscriber/
-    src/
-        main.cpp
-    CMakeLists.txt
-    package.xml",0
-19,make a subscriber subscriber in cpp,"#include <iostream>
-#include <vector>
-#include <functional> // For std::function
-
-// Observer interface declaration
-class Subject;
-class Observer {
-public:
-    virtual void update(const Subject&) = 0;
-};
-
-// Subscriber class implementing the Observer pattern
-class Subscriber : public Observer {
-private:
-    std::vector<Observer*> observers_; // List of subscribers
-
-public:
-    // Method to add a new observer
-    void subscribe(Observer* obs) {
-        if (obs != nullptr) {
-            observers_.push_back(obs);
-        }
-    }
-
-    // Method for Subscriber to notify all its subscribers about an update
-    void notified() {
-        std::cout << ""Subscriber received an update!"" << std::endl;
-
-        // Notify all observers by calling their 'update' method
-        for (Observer* obs : observers_) {
-            if (obs != this) { // Avoid self-notification
-                obs->update(*this);
-            }
-        }
-    }
-};
-
-// Example Observer class to demonstrate usage
-class PrintUpdate : public Observer {
-public:
-    void update(const Subscriber& subscriber) override {
-        std::cout << ""Observer received an update from a subscriber!"" << std::endl;
-        // Handle the update here (e.g., process data, etc.)
-    }
-};
-
-// Example usage of Subscriber and Observers in main function
-int main() {
-    Subject* subject = new Subject(); // Placeholder for a real source of updates
-    
-    // Creating an instance of the Subscriber class
-    Subscriber subscriber;
-
-    // Creating observers
-    PrintUpdate printUpdateObserver1, printUpdateObserver2;
-
-    // Adding observers to the subscriber
-    subscriber.subscribe(printUpdateObserver1);
-    subscriber.subscribe(printUpdateObserver2);
-
-    // Simulating an update event
-    subject->notify_update(); // Assuming Subject has a method 'notify_update()' for this example
-
-    return 0;
-}",0
-20,make a subscriber for ROS cpp,"#include <ros/ros.h>
-#include <iostream>
-#include <string>
-
-// Define a simple message type for demonstration purposes
-struct MyMessage {
-  std::string data;
-};
-
-class Subscriber {
-public:
-    Subscriber(const ros::NodeHandle& nh, const std::string& msg_type) :
-        _nh(nh), _subscription(nullptr), _msgType(msg_type) {
-        
-        // Create a subscription callback function that processes incoming messages
-        this->subscribe();
-    }
-    
-    void subscribe() {
-        try{
-            auto subscriber = _nh.create_publisher<MyMessage>(10, ""my_topic"");
-            
-            _subscription = std::make_unique<rclcpp::Subscription<MyMessage>>(
-                ""my_topic"",
-                rclcpp::QoS(rclcpp::QoSOptions()), // Quality of Service settings
-                this,
-                [this](const MyMessage::SharedPtr msg) {
-                    std::cout << ""Received message: "" << msg->data << std::endl;
-                }
-            );
-        } catch (const std::exception& e){
-            RCLCPP_ERROR(rclcpp::get_logger(""Subscriber""), ""Failed to create subscription: %s"", e.what());
-        transform this into an exception handling routine for your use case.
-        }
-    }
-    
-private:
-    ros::NodeHandle _nh; // Handle to the ROS node
-    rclcpp::Subscription<MyMessage> _subscription; // Subscriber object
-    std::string _msgType; // The message type we're subscribing to
-};
-
-int main(int argc, char **argv) {
-  rclcpp::init(argc, argv);
-
-  auto nh = rclcpp::NodeOptions().node_name(""subscriber_node"");
-  Subscriber sub(nh, ""my_topic""); // Create a subscriber object with ROS node handle and topic type.
-
-  rclcpp::spin(/*rosnodehandle=*/nullptr); // Spin to process callbacks
-  
-  return rclcpp::rclcpp::ok();
-}",0
-25,make a subscriber for in cpp,"#include <iostream>
-#include <vector>
-#include <functional>
-
-class Subscriber {
-public:
-    // Function to subscribe a callback function (callback type is std::function)
-    void subscribe(std::function<void()> callback) {
-        subscribers.push_back(callback);
-    }
-    
-    // Function to notify all subscribed callbacks with the message
-    void notifySubscribers(const std::string& message) {
-        for (auto& subscriber : subscribers) {
-            subscriber(); // Calling each subscriber's function
-            std::cout << ""Notification: "" << message << std::endl;
-        }
-    }
-    
-private:
-    std::vector<std::function<void()>> subscribers;
-};
-
-// Example callback function type
-using SubscriptionCallback = void (*)(); // Note that in modern C++, you'd likely use std::function instead.
-
-int main() {
-    Subscriber newsSubscriber;
-    
-    // Creating a simple notification message
-    const std::string newNewsUpdate = ""New news update!"";
-    
-    // Example callback function to be called when notified (could represent an action like logging or updating UI)
-    void onNewNews() {
-        std::cout << ""Callback received: "" << newNewsUpdate << std::endl;
-    }
-    
-    // Subscribing the callback
-    newsSubscriber.subscribe(onNewNews);
-    
-    // Simulating a notification event
-    newsSubscriber.notifySubscribers(newNewsUpdate);
-
-    return 0;
-}",0
-26,make a subscriber for node,"npm init -y  # Initialize your project
-
-npm install express body-parser",0
-29,make a subscriber for cpp,"#include <iostream>
-#include <vector>
-#include <functional> // For std::function
-
-// Event type
-enum class SubscriptionEvent { Connected, Disconnected };
-
-class Subscriber {
-public:
-    void registerSubscription(const std::string& eventType) {
-        subscriptions.emplace_back([this, &eventType](void (*callback)(SubscriptionEvent)) {
-            if (eventType == ""Connected"") {
-                callback(SubscriptionEvent::Connected);
-            } else if (eventType == ""Disconnected"") {
-                callback(SubscriptionEvent::Disconnected);
-            }
-        });
-    }
-    
-    void unregisterSubscription() {
-        subscriptions.clear(); // Remove all registered event types and callbacks
-    }
-    
-    template<typename F>
-    void subscribe(const std::string& eventType, F&& callback) {
-        for (auto& subscription : subscriptions) {
-            if (eventType == ""Connected"" || eventType == ""Disconnected"") {
-                // Call the existing callback that matches this event type.
-                (*subscription)(SubscriptionEvent::*)(static_cast<SubscriptionEvent>(eventType));
-            }
-        }
-        
-        // Add new subscription to subscriptions vector
-        subscriptions.emplace_back([callback](SubscriptionEvent e) {
-            callback(e);
-        });
-    }
-    
-private:
-    std::vector<std::function<void(SubscriptionEvent)>> subscriptions;
-};
-
-// Example usage
-int main() {
-    Subscriber subscriber;
-
-    // Subscribe to Connected event
-    subscriber.subscribe(""Connected"", [](SubscriptionEvent e) {
-        std::cout << ""Subscriber connected."" << std::endl;
-    });
-
-    // Subscribe to Disconnected event
-    subscriber.subscribe(""Disconnected"", [](SubscriptionEvent e) {
-        std::cout << ""Subscriber disconnected."" << std::endl;
-    });
-
-    return 0;
-}",0
-33,make queue a subscriber for in cpp,"#include <queue>
-
-#include <functional> // For std::function
-
-#include <iostream>
-
-
-// Subscription interface
-
-class ISubscriber {
-
-public:
-
-    virtual void on_enqueued(int value) = 0;
-
-};
-
-
-// Queue class with subscription support
-
-template<typename T>
-
-class SubscribedQueue : public std::queue<T> {
-
-private:
-
-    using ISubscriberInterface = ISubscriber*;
-
-    std::queue<T> queue_; // Original queue data structure
-
-    ISubscriberInterface subscribers_[10]; // Example to hold up to 10 subscribers
-
-    size_t subscriber_count_ = 0;
-
-
-public:
-
-    SubscribedQueue() {}
-
-
-    void subscribe(ISubscriberInterface subscriber) {
-
-        if (subscriber_count_ < 10) { // Limit to prevent overflow
-
-            subscribers_[subscriber_count_++] = subscriber;
-
-            // Notify each existing subscriber that a new item has been enqueued.
-
-            queue_.push(T()); // Push dummy value for illustration purposes only
-
-            notifySubscribers();
-        }
-
-    }
-
-
-private:
-
-    void notifySubscribers() {
-
-        for (auto subscriber : subscribers_) {
-
-            if (subscriber) { // Check that the pointer is not null
-
-                subscriber->on_enqueued(queue_.front()); // Assuming T has an accessible operator bool() const
-
-            }
-
-        }
-
-    }
-
-};
-
-
-// Example usage:
-
-class SubscriptionExample : public ISubscriber {
-
-public:
-
-    void on_enqueued(int value) override {
-
-        std::cout << ""New item enqueued with value: "" << value << std::endl;
-
-    }
-
-};
-
-
-int main() {
-
-    SubscribedQueue<int> myQueue;
-
-    SubscriptionExample exampleSubscriber;
-
-    myQueue.subscribe(&exampleSubscriber); // Add a subscriber
-
-
-    return 0;
-
-}",3.70901858022377
-50,make a ROS1 subscriber in mapping cpp,"#include <ros/ros.h>
-
-#include <nav_msgs/OccupancyGrid.h> // Replace with actual message type for your mapping data
-
-
-// Callback function that will be called each time a new message is received
-
-void mapCallback(const nav_msgs::OccupancyGridConstPtr& msg) {
-
-    ROS_INFO(""Received occupancy grid update"");
-
-    // Process the occupancy grid here, for example: print or visualize it.
-}
-
-
-int main(int argc, char **argv) {
-
-    ros::init(argc, argv, ""mapping_subscriber"");
-
-    ros::NodeHandle nh;
-
-
-    // Create a subscriber object that listens for messages of type OccupancyGrid
-
-    ros::Subscriber sub = nh.subscribe(""map"", 10, mapCallback);
-
-
-    // Start the ROS spin loop to keep listening for new messages
-
-    ros::spin();
-
-
-    return 0;
-
-}",3.7966644391464195
-57,make a for robot ROS cpp,,0
-62,make a subscriber in cpp,"#include <iostream>
-#include <vector>
-#include <functional> // For std::function
-
-// Define a callback type alias for the subscription function
-using SubscriptionCallback = std::function<void(const std::string&)>;
-
-class Subscriber {
-public:
-    // Constructor to register callbacks with given update messages
-    void subscribe(SubscriptionCallback callback) {
-        subscriptions.push_back(callback);
-    }
-    
-    // Method to notify all subscribers of a new message
-    void notifyUpdate(const std::string& updateMessage) {
-        for (auto& callback : subscriptions) {
-            callback(updateMessage); // Invoke each registered callback with the update message
-        }
-    }
-    
-private:
-    std::vector<SubscriptionCallback> subscriptions;
-};
-
-// Example usage of Subscriber class
-int main() {
-    Subscriber newsFeed;
-
-    // Define a simple function to print updates
-    auto updateFunction = [](const std::string& message) {
-        std::cout << ""New update: "" << message << std::endl;
-    };
-
-    // Subscribe the `updateFunction` as a callback for new updates
-    newsFeed.subscribe(updateFunction);
-
-    // Simulate receiving an update and notifying subscribers
-    std::string newUpdate = ""There is breaking news!"";
-    newsFeed.notifyUpdate(newUpdate);
-    
-    return 0;
-}",3.901841741338639
-70,make a ROS1 process subscriber in cpp,"#include <ros/ros.h>
-#include <std_msgs/String.h> // Example message type; change as needed
-
-// Callback function that will be executed every time there is new data on the subscribed topic
-void callback(const std_msgs::String::ConstPtr& msg) {
-    ROS_INFO(""Received: [%s]"", msg->data.c_str()); // Printing received message
-}
-
-int main(int argc, char **argv) {
-    ros::init(argc, argv, ""subscriber_node""); // Initializing the node with its name
-    ros::NodeHandle nh;                         // Creating a ROS NodeHandle instance
-
-    // Subscribe to ""chatter"" topic and pass callback function
-    ros::Subscriber sub = nh.subscribe(""chatter"", 1000, callback);
-
-    // Spin the node to keep it running and processing incoming messages
-    ros::spin();
-
-    return 0;
-}",10.659615711206758
-71,make a ROS1 process ROS c++,"mkdir my_ros_ws
-   cd my_ros_ws
-   roscc install -A",0
-76,make a ROS1 for ROS c++,catkin_init_workspace,0
-84,make a ROS1 process subscriber c++,"#include <ros/ros.h>
-#include <std_msgs/String.h> // Replace this with your specific message type if needed
-
-// Function callback for handling incoming messages
-void processReceivedMessage(const std_msgs::String::ConstPtr& msg) {
-    ROS_INFO(""Received message: [%s]"", msg->data.c_str());
-}
-
-int main(int argc, char **argv) {
-    ros::init(argc, argv, ""process_subscriber""); // Initialize ROS and give the node a name
-    ros::NodeHandle nh;                            // Create a handle to interact with the ROS system
-
-    // Subscribe to a topic of your choice. Replace 'your_topic' with actual topic name
-    ros::Subscriber sub = nh.subscribe(""your_topic"", 1000);
-    
-    // Setup the message callback function
-    subscriber = new ros::Callback(processReceivedMessage);
-    sub->registerCallback(subscriber);
-
-    // Spin to keep the program running and process incoming messages
-    ros::spin();
-
-    return 0;
-}",0
-85,node make a subscriber for ROS c++,"#include <ros/ros.h>
-#include <std_msgs/String>.  // The message type, adjust this as needed
-
-// Callback function for handling messages received by subscriber
-void callback(const std_msgs::String::ConstPtr& msg) {
-    ROS_INFO(""I heard: [%s]"", msg->data.c_str());
-}
-
-int main(int argc, char **argv) {
-    ros::init(argc, argv, ""subscriber"");  // Initialize the ROS node named ""subscriber""
-
-    ros::NodeHandle nh;  // Create a NodeHandle object for handling resources within this node
-
-    // Create a subscriber that listens to the specified topic and message type with a callback function.
-    ros::Subscriber sub = nh.subscribe(""your_topic"", 10, callback);
-
-    // Spin the ROS event loop, which will handle incoming messages in the subscriber's callback function.
-    ros::spin();
-
-    return 0;
-}",0
-86,a subscriber for ROS c++,"c++
-#include <ros/ros.h>
-
-int main(int argc, char **argv) {
-  ros::init(argc, argv, ""subscriber_node"");
-  ros::NodeHandle n;
-}",0
-96,make a sub localization in process cpp,"{
-  ""languages"": [
-    {
-      ""code"": ""en-US"",
-      ""name"": ""English - United States""
-    },
-    {
-      ""code"": ""es-MX"",
-      ""name"": ""Spanish - Mexico""
-    }
-  ]
-}",0
-97,make a ROS1 ROS c++,$ catkin_create_pkg my_node roscpp,0
-98,make a for ROS c++,"#include <ros/ros.h>
-#include <vector>
-
-// Example function to fill this vector with dummy sensor data
-std::vector<double> generate_sensor_data(size_t count) {
-    std::vector<double> data;
-    for (size_t i = 0; i < count; ++i) {
-        // Simulate random sensor readings between -1.0 and 1.0
-        double reading = static_cast<double>(rand()) / RAND_MAX * 2.0 - 1.0;
-        data.push_back(reading);
-    }
-    return data;
-}
-
-int main(int argc, char **argv) {
-    // Initialize the ROS system
-    ros::init(argc, argv, ""sensor_data_loop"");
-    ros::NodeHandle nh;
-
-    // Assume we have a publisher and subscriber set up already
-    ros::Publisher sensor_pub = nh.advertise<std_msgs::FloatArray>(""sensor_topic"", 10);
-    ros::Subscriber data_sub = nh.subscribe<std_msgs::FloatArray>(""data_topic"", 10, &SensorDataCallback);
-
-    ros::Rate loop_rate(10); // Loop at 10 Hz
-
-    while (ros::ok()) {
-        std::vector<double> sensor_data = generate_sensor_data(100); // Generate some dummy data
-
-        // Create a message to hold our sensor data
-        std_msgs::FloatArray msg;
-        for (size_t i = 0; i < sensor_data.size(); ++i) {
-            msg.data.push_back(sensor_data[i]);
-        }
-
-        // Publish the message to a topic
-        sensor_pub.publish(msg);
-
-        // Spin once to process callbacks and keep running
-        ros::spin();
-
-        // Loop at specified rate (10 Hz in this example)
-        loop_rate.sleep();
-    }
-
-    return 0;
-}",0
-99,make a ROS1 process ROS cpp,"// my_ros_node.cpp
-#include <ros/ros.h>
-#include <std_msgs/String.h> // Include the message type you want to subscribe to (e.g., std_msgs::String)
-
-int main(int argc, char **argv) {
-  // Initialize ROS node system
-  ros::init(argc, argv, ""my_ros_node"");
-  ros::NodeHandle nh;
-  
-  // Subscribe to the ""chatter"" topic and callback function for incoming messages
-  ros::Subscriber sub = nh.subscribe(""chatter"", 1000, chatterCallback);
-  
-  // Spin ROS event loop until shutdown or Ctrl+C pressed
-  ros::spin();
-  
-  return 0;
-}
-
-// Callback function that processes received messages from the ""chatter"" topic
-void chatterCallback(const std_msgs::String& msg) {
-  ROS_INFO(""Received: [%s]"", msg.data.c_str()); // Print out the received message to standard output (ROS console)
-}",0
-100,make a subscriber for ROS actuator c++,"#include <ros/ros.h>
-#include <std_msgs/String.h> // Assuming we are sending simple string messages for demonstration purposes
-#include <actionlib/client/simple_action_client.h> // Example using actionlib if the actuator requires complex actions
-
-// Define a message type, this depends on your actual requirements (e.g., custom msg types)
-struct ActuatorRequest {
-    int value;
-};
-
-// Callback function for handling incoming messages from the subscriber
-void handleSubscriberCallback(const ros::MessageConstPtr& msg) {
-    // Convert the received message to an ActuatorRequest object, if needed
-    // For this example, we'll assume it is already of type ActuatorRequest
-    
-    int actuation_value = msg->value;  // Example: Get value from a custom Request message for demonstration purposes
-
-    ROS_INFO(""Received actuation request with value: %d"", actuation_value);
-
-    // Here you can include logic to send an appropriate action to the actuator (e.g., using actionlib)
-}
-
-int main(int argc, char** argv) {
-    ros::init(argc, argv, ""actuator_subscriber"");
-    
-    ros::NodeHandle nh;
-
-    // Subscribe to a topic (replace 'your_topic' with the actual actuator ROS message topic name)
-    ros::Subscriber sub = nh.subscribe(""your_topic"", 10, handleSubscriberCallback);
-
-    ros::spin(); // Enter ROS event loop
-
-    return 0;
-}",0
-105,make a subscriber for mapping ROS c++,"#include <iostream>
-
-#include <memory>
-
-#include <string>
-
-#include <rclcpp/node.hpp>
-
-#include <rclcpp/subscription.hpp>
-
-
-class MapSubscriberNode : public rclcpp::Node {
-
-public:
-
-    MapSubscriberNode()
-
-        : Node(""map_subscriber_node""), subscription_(this->create_subscription<geometry_msgs::msg::NavSatFix>(
-
-                ""map_data"", 10, this->onMapDataReceived)) {
-
-    }
-
-
-private:
-
-    rclcpp::Subscription<geometry_msgs::msg::NavSatFix>::SharedPtr subscription_;
-
-
-    void onMapDataReceived(const geometry_msgs::msg::NavSatFix::SharedPtr msg)
-
-    {
-
-        std::cout << ""Received map data: "";
-
-        // Process the message (example processing)
-
-        std::cout << ""[Latitude: "" << msg->latitude.d /* Access and process other fields as needed */ << "", Longitude: ""
-
-                  << msg->longitude.d << ""]"" << std::endl;
-
-    }
-
-};
-
-
-int main(int argc, char **argv)
-
-{
-
-    rclcpp::init(argc, argv);
-
-    auto node = std::make_shared<MapSubscriberNode>();
-
-    rclcpp::spin(node);
-
-    return 0;
-
-}",0
-109,make a ROS1 process data subscriber in c++,"#include <ros/ros.h>
-
-#include <std_msgs/String.h> // Assuming we are subscribing to a String message type for demonstration purposes
-
-
-// Callback function that will be called each time data is received by the subscriber
-
-void dataCallback(const std_msgs::String::ConstPtr& msg) {
-
-  ROS_INFO(""Received data: [%s]"", msg->data.c_str());
-
-}
-
-
-int main(int argc, char **argv) {
-
-  ros::init(argc, argv, ""data_subscriber""); // Initialize the ROS system and node
-
-  ros::NodeHandle nh;                         // Create a NodeHandle instance to interact with ROS system
-
-
-  // Subscribe to topic ""/example"" (you need to replace this with your actual topic name)
-
-  ros::Subscriber sub = nh.subscribe(""example"", 10, dataCallback); // Subscribe with a queue size of 10 and callback function
-
-
-  // Spin loop to process messages as they come in
-
-  ros::spin();                               // Keep the node running and process incoming callbacks
-
-
-  return 0;
-
-}",9.79691693234039
-117,make a ROS1 node sub task in cpp,"#include <ros/ros.h>
-#include <std_msgs/String.h> // Replace with the actual message type you want to subscribe to
-
-// Callback function for when new messages are received on the subscribed topic
-void callback(const std_msgs::String::ConstPtr& msg) {
-    ROS_INFO(""Received: [%s]"", msg->data.c_str()); // Print out the message data
-}
-
-int main(int argc, char **argv) {
-    ros::init(argc, argv, ""subscriber_node""); // Initialize the ROS node
-    ros::NodeHandle nh; // NodeHandle is a handle to interact with ROS
-
-    ros::Subscriber sub = nh.subscribe(""your_topic"", 1000, callback); // Subscribe to 'your_topic' at a queue size of 1000 and use the provided callback function
-
-    ros::spin(); // Enter ROS spin loop, which keeps your node up and running
-
-    return 0;
-}",9.827450380914838
-118,make a ROS1 process cpp,"#include <ros/ros.h>
-#include <std_msgs/String.h> // This is a standard message type in ROS
-
-// Define the callback function for incoming messages
+// Callback function for the subscriber to handle incoming messages
 void messageCallback(const std_msgs::String::ConstPtr& msg) {
     ROS_INFO(""Received: [%s]"", msg->data.c_str());
 }
 
-int main(int argc, char **argv) {
-    // Initialize the ROS system
-    ros::init(argc, argv, ""simple_listener"");
-    
-    // Create a node handle to perform actions in this node
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""my_subscriber"");
     ros::NodeHandle nh;
 
-    // Subscribe to the desired topic with the message callback function
-    ros::Subscriber sub = nh.subscribe(""chatter"", 10, messageCallback);
+    // Create a subscriber object with the specified topic name and callback function
+    ros::Subscriber sub = nh.subscribe<std_msgs::String>(""input"", 10, messageCallback);
 
-    // Spin the node to keep it running and processing messages
+    // Spin the ROS event loop to keep receiving messages
     ros::spin();
 
     return 0;
-}",9.845569784579297
-120,make a ROS1 process localization cpp,"#include <ros/ros.h>
+}",9.66658722159931
+0,create a subscriber for ROS in c++,"#include <ros/ros.h>
 
-#include <tf/transform_broadcaster.h>
-
-#include <geometry_msgs/PointStamped.h>
+#include <std_msgs/String.h> // Example message type, replace with your specific one
 
 
-// Localization Node class definition
-
-class LocalizationNode : public ros::NodeHandle {
-
-private:
-
-    tf::TransformBroadcacher broadcaster_;
-
-
-public:
-
-    // Constructor that initializes the node and subscribers/publishers.
-
-    LocalizationNode() : n(""localization_node"", nullptr) {
-
-        // Subscribe to a localization topic (e.g., /raw_localization).
-
-        ros::Subscriber sub = n.subscribe(""raw_localization"", 1000, &LocalizationNode::processSensorData, this);
-
-
-        // Publish the transformed localized position on ""/transformed_location"".
-
-        ros::Publisher pub = n.advertise<geometry_msgs::PointStamped>(""/transformed_location"", 1000);
-
-    }
-
-
-protected:
-
-    void processSensorData(const geometry_msgs::NavSatFix& msg) {
-
-        // Implement your localization algorithm here. This is a placeholder for the actual logic.
-
-        geometry_msgs::PointStamped transformed_point;
-
-
-        // For demonstration purposes, just use the raw position from NavSatFix message.
-
-        transformed_point.header.stamp = ros::Time();
-
-        transformed_point.point.x = msg.latitude;
-
-        transformed_point.point.y = msg.longitude;
-
-
-        // Broadcast the transformed point to other nodes in the ROS ecosystem.
-
-        broadcaster_.sendTransform(tf::StampedTransform((const tf::transform<>(msg)), ros::Time(), ""world"", transformed_point.header.frame_id), transformed_point);
-
-
-        // Publish the localized position. In a real application, you would transform this data from sensor coordinates to world frame here.
-
-        pub.publish(transformed_point);
-
-    cv::Mat img;
-
-cv::resizeWindow(""Image"", 400, 300);
-
-cv::imshow(""Image"",img);
-
-waitKey(1);
-
-}
-
-};
-
-
-int main(int argc, char **argv) {
-
-    ros::init(argc, argv, ""localization_node"");
-
-    LocalizationNode localization_node;
-
-    ros::spin();
-
-    return 0;
-
-}",0
-125,make a ROS1 process subscriber in c++,"#include <ros/ros.h>
-
-#include <std_msgs/String.h> // Assuming we want to subscribe to String messages
-
-
-// Callback function that gets called when a message arrives on the topic
+// Your callback function that gets called every time a new message is received
 
 void callback(const std_msgs::String::ConstPtr& msg) {
 
-    ROS_INFO(""I heard: [%s]"", msg->data.c_str());
+    ROS_INFO(""I heard: [%s]"", msg->data.c_str()); // Print the content of the received message
 
 }
 
 
 int main(int argc, char **argv) {
 
-    ros::init(argc, argv, ""message_subscriber""); // Initialize the ROS node
+    ros::init(argc, argv, ""my_subscriber""); // Initialize ROS system and set up a node named ""my_subscriber""
 
-    ros::NodeHandle nh;                            // Create a NodeHandle object to interact with ROS
-
-
-    ros::Subscriber sub = nh.subscribe(""chatter"", 1000, callback); // Subscribe to 'chatter' topic and set the message type
+    ros::NodeHandle nh; // Create a NodeHandle object for communication with the ROS system
 
 
-    ros::spin();                                   // Enter ROS spin loop to process messages
+    // Create a subscriber object that listens to the ""/some_topic"" topic,
 
-    return 0;
+    // this is just an example. Replace it with your actual topic name
 
-}",10.667435183168482
-135,make a ROS1 process robot subscriber navigation in cpp,"#include ""ros/ros.h""
-#include ""process_robot_subscriber/navigation_info.hpp""
+    ros::Subscriber sub = nh.subscribe(""your_topic"", 1000, callback);
 
-int main(int argc, char **argv) {
-  ros::init(argc, argv, ""process_robot_subscriber"");
-  
-  ros::NodeHandle nh;
 
-  // Create a publisher to send navigation data (e.g., pose and map)
-  ros::Publisher nav_pub = nh.advertise<process_robot_subscriber::NavigationInfo>(""navigation"", 10);
+    // Spin the node handles and wait for events to happen
 
-  ProcessRobotSubscriber robot_sub;
-  
-  // Subscribe to navigation topics
-  try {
-    robot_sub.subscribe(""/odom"", 10, &ProcessRobotSubscriber::callback);
-    robot_sub.subscribe(""/map"", 10, &ProcessRobotSubscriber::callback2);
-  } catch (std::exception& e) {
-    ROSERANGE_HANDLER(e.what(), __FILE__, __LINE__);
-    return -1;
-  }
-  
-  ros::spin();
-  return 0;
-}",0
-142,make a ROS1 process subscriber queue in cpp,"#include <ros/ros.h>
-#include <std_msgs/String>.
-
-int main(int argc, char **argv) {
-    // Initialize the ROS node named ""process_subscriber_queue""
-    ros::init(argc, argv, ""process_subscriber_queue"");
-    ros::NodeHandle nh;
-
-    // Create a Subscriber object for receiving messages of type std_msgs::String
-    ros::Subscriber sub = nh.subscribe(""input_topic"", 10, processMessage);
-
-    // Enter the ROS event loop to keep processing incoming messages
     ros::spin();
 
+
     return 0;
+
+}",9.113386364665446
+0,generate a c++ sub node,"#include <string>
+#include <vector>
+
+// Forward declaration for Node, assuming there's a parent class or interface
+class Node;
+
+/**
+ * SubNode class representing a child node in a hierarchical structure.
+ */
+class SubNode {
+public:
+    // Constructor that initializes the sub-node with its name and an optional reference to its parent node.
+    SubNode(const std::string& name, Node* parent = nullptr) : m_name(name), m_parent(parent) {}
+
+    /**
+     * Retrieves the name of the sub-node.
+     */
+    const std::string& getName() const { return m_name; }
+
+    /**
+     * Sets the name of the sub-node.
+     */
+    void setName(const std::string& newName) { m_name = newName; }
+
+    /**
+     * Retrieves a reference to its parent node, or nullptr if it doesn't have one.
+     */
+    Node* getParent() const { return m_parent; }
+
+    /**
+     * Sets the parent node of the sub-node.
+     */
+    void setParent(Node* newParent) { m_parent = newParent; }
+
+private:
+    std::string m_name; // Name of the sub-node
+    Node* m_parent;    // Pointer to the parent node (or nullptr if none)
+};",0
+1,code ROS sub for ROS in c++,"#include <ros/ros.h>
+#include <std_msgs/String.h>
+
+// Callback function that will be executed whenever new message arrives on the topic
+void callback(const std_msgs::String::ConstPtr& msg) {
+    ROS_INFO(""Received: %s"", msg->data.c_str()); // Print out received string data
 }
+
+int main(int argc, char **argv) {
+    ros::init(argc, argv, ""robot_subscriber""); // Initialize the ROS system
+    ros::NodeHandle nh;                          // Create a NodeHandle to interact with ROS
+
+    // Subscribe to the topic and specify the callback function
+    ros::Subscriber sub = nh.subscribe(""robot_topic"", 10, callback);
+
+    ros::spin(); // Enter the main ROS loop - process incoming messages in callback
+
+    return 0;
+}",7.005687906050454
+3,code message ROS sub for ROS in c++,"#include <ros/ros.h>
+#include <std_msgs/String.h> // Example message type, replace with your actual one
 
 // Callback function for handling incoming messages
-void processMessage(const std_msgs::String::ConstPtr& msg) {
-    // Here you can implement your logic to handle the received message
-    ROS_INFO(""Received message: [%s]"", msg->data.c_str());
-}",0
-155,make a system ROS1 process subscriber in cpp,"#include <ros/ros.h>
-
-#include <std_msgs/String.h> // Example message type; replace with your specific message type
-
-
-// Callback function that will be called when a new message is received
-
 void messageCallback(const std_msgs::String::ConstPtr& msg) {
-
-    ROS_INFO(""Received message: %s"", msg->data.c_str()); // Print the content of the received message
-
-}
-
-
-int main(int argc, char **argv) {
-
-    ros::init(argc, argv, ""message_subscriber""); // Initialize ROS and create a node named 'message_subscriber'
-
-    ros::NodeHandle nh; // Create NodeHandle for communication with the master
-
-
-    // Subscribe to a topic called ""/example_topic"" with the specified message type (change as needed)
-
-    ros::Subscriber sub = nh.subscribe<std_msgs::String>(""/example_topic"", 10, messageCallback);
-
-
-    // Spin and wait for callbacks to be executed
-
-    ros::spin();
-
-
-    return 0;
-
-}",9.389856838268917
-158,make a ROS1 ROS cpp,"mkdir ros_cpp_hello_world
-cd ros_cpp_hello_world
-roscpp init",0
-167,make a node ROS1 process subscriber in cpp,"#include <ros/ros.h>
-
-#include <std_msgs/String.h> // Replace String with your specific message type
-
-
-// Callback function to process incoming messages
-
-void callback(const std_msgs::String::ConstPtr& msg) {
-
     ROS_INFO(""Received: [%s]"", msg->data.c_str());
-
 }
 
-
-int main(int argc, char **argv) {
-
-    ros::init(argc, argv, ""message_subscriber""); // Initializes the node and names it ""message_subscriber""
-
+int main(int argc, char** argv) {
+    // Initialize the ROS system and node
+    ros::init(argc, argv, ""my_subscriber"");
     ros::NodeHandle nh;
 
+    // Create a subscriber object, specifying the topic to subscribe to and the message type
+    ros::Subscriber sub = nh.subscribe(""your_topic"", 10, messageCallback);
 
-    // Subscribe to a topic with your message type (e.g., std_msgs/String)
-
-    ros::Subscriber sub = nh.subscribe(""your_topic"", 10, callback);
-
-
-    // Spin the node, processing incoming messages in callbacks
-
+    // Spin the ROS event loop, which waits for callbacks
     ros::spin();
 
-
     return 0;
+}",6.317405622115032
+4,code ROS ROS1 subscriber in cpp,"#include <ros/ros.h>
+#include <std_msgs/String.h> // Include standard ROS message type for string data
 
-}",10.675221767633053
-168,make a node ROS1 process subscriber c++,"#include <ros/ros.h>
-#include <std_msgs/String.h> // Assuming the message type is std::string
-
-// Define a callback function that will be called when a new message arrives
-void callback(const std_msgs::String::ConstPtr& msg) {
-    ROS_INFO(""Received: %s"", msg->data.c_str());
+// Callback function that will be called when a new message arrives on the topic
+void callback(const std_msgs::String& msg) {
+  ROS_INFO(""Received: [%s]"", msg.data.c_str()); // Print out the received message data
 }
 
 int main(int argc, char **argv) {
-    ros::init(argc, argv, ""my_subscriber_node""); // Initialize the ROS node
-    
-    ros::NodeHandle nh; // Node handle to interact with the ROS system
+  ros::init(argc, argv, ""robot_subscriber""); // Initialize ROS and create a node named 'robot_subscriber'
+  
+  ros::NodeHandle nh; // Create a handle to access resources within the ROS system
 
-    // Create a subscriber object that listens for messages on '/my_topic'
-    ros::Subscriber sub = nh.subscribe<std_msgs::String>(""/my_topic"", 10, callback);
+  ros::Subscriber sub = nh.subscribe(""my_topic"", 10, callback); // Subscribe to ""my_topic"" topic with a queue size of 10 and pass messages to the `callback` function
 
-    // Spin to keep processing new messages and handling events
-    ros::spin();
-
-    return 0;
-}",9.83526460992289
-169,make a node process ROS c++,"//!/usr/bin/env c++
-
-#include <ros/ros.h>
-
-#include ""std_msgs/String.h""
-
-
-int main(int argc, char **argv) {
-
-  ros::init(argc, argv, ""robot_node"");
-
-  ros::NodeHandle nh;
-
-
-  // Create a publisher for the String message type
-
-  ros::Publisher chatter_pub = nh.advertise<std_msgs::String>(""chatter"", 10);
-
-
-  // Spin to process callbacks, like receiving messages and publishing them
-
-  ros::spinner spinner(4, &nh);
-
-  ros::Rate loop_rate(10);
-
-
-  while (ros::ok()) {
-
-    std_msgs::String msg;
-
-    msg.data = ""Hello, ROS! This is a test message."";
-
-    chatter_pub.publish(msg);
-
-    ros::spinner.sleep();
-
-    loop_rate.sleep();
-
-  }
-
+  ros::spin(); // Enter ROS spin loop and process incoming messages
 
   return 0;
+}",9.417274139679778
+5,sensor code ROS sub subscriber in cpp,"//!/usr/bin/env c++
+#include <ros/ros.h>
+#include <std_msgs/String.h>
+#include <sensor_msgs/LaserScan.h> // Replace with your sensor message type
 
+int main(int argc, char** argv) {
+  // Initialize the ROS node system
+  ros::init(argc, argv, ""sensor_subscriber"");
+  ros::NodeHandle nh;
+
+  // Create a subscriber object for the sensor data topic
+  ros::Subscriber sub = nh.subscribe<sensor_msgs::LaserScan>(""sensor_data"", 10, sensorDataCallback);
+
+  // Spin() will keep this node up and process ROS messages on the given callback
+  ros::spin();
+
+  return 0;
+}
+
+void sensorDataCallback(const sensor_msgs::LaserScan& msg) {
+  // Process your sensor data here, such as printing it to console or using it in other calculations
+  ROS_INFO(""Received laser scan with range: %f"", msg.ranges[0]);
 }",0
-172,make a node ROS1 subscriber in c++,"#include <ros/ros.h>
-#include <geometry_msgs/Twist.h>
+6,code ROS sub subscriber in cpp,"#include <ros/ros.h>
+#include <std_msgs/String.h> // Assuming we want to subscribe to a String message type
 
 // Callback function for incoming messages
-void twistCallback(const geometry_msgs::Twist& msg)
-{
-    ROS_INFO(""Received Twist: x = %f, y = %f, z = %f, vx = %f, vy = %f, vz = %f"",
-             msg.linear.x, msg.linear.y, msg.linear.z,
-             msg.angular.x, msg.angular.y, msg.angular.z);
-}
-
-int main(int argc, char **argv)
-{
-    // Initialize the ROS node named 'velocity_subscriber'
-    ros::init(argc, argv, ""velocity_subscriber"");
-    ros::NodeHandle nh;
-
-    // Create a new subscriber object that listens to /cmd_vel topic and uses twistCallback for processing incoming messages.
-    ros::Subscriber sub = nh.subscribe<geometry_msgs::Twist>(""/cmd_vel"", 10, twistCallback);
-
-    // Spin the node to keep it running and receive incoming ROS messages
-    ros::spin();
-
-    return 0;
-}",0
-174,make a node ROS1 process in,"#!/usr/bin/env python
-
-import rospy
-from std_msgs.msg import String # Modify this line according to your desired message type
-
-def callback(data):
-    rospy.loginfo(""Received %s"", data.data)
-
-def listener():
-    rospy.init_node('my_node', anonymous=True)  # Replace 'my_node' with a unique name for your node
-    
-    rospy.Subscriber('/topic_name', String, callback)  # Replace '/topic_name' with the actual topic you want to subscribe to
-    
-    rospy.spin()
-
-if __name__ == '__main__':
-    listener()",0
-175,make a node ROS cpp,,0
-177,make a node subscriber in mapping cpp,"#include <ros/ros.h>
-
-#include <Eigen/Core>
-
-#include <mapping_2/map.h>
-
-#include <visualization_msgs/MarkerArray.h>
-
-#include ""NodeSubscriberExample.h"" // Assuming you've created a NodeSubscriber example file with relevant functionality
-
-
-int main(int argc, char **argv) {
-
-    ros::init(argc, argv, ""mapping_subscriber"");
-
-    ros::NodeHandle nh;
-
-
-    // Initialize mapping library (make sure it's available in your ROS environment)
-
-    mapping_2::Map map;
-
-    map.reset(); // Reset the map to initialize with no data points
-
-
-    // Create a subscriber for incoming sensor data, e.g., odometry or lidar messages
-
-    ros::Subscriber sub = nh.subscribe(""odom"", 1000, &NodeSubscriberExample::callback);
-
-
-    // Spin to keep the node alive and process callbacks
-
-    ros::spin();
-
-
-    return 0;
-
-}",0
-178,make parameter a ROS1 process subscriber in c++,"#include <ros/ros.h>
-#include <std_msgs/String.h> // Example message type
-
-// Callback function for the subscriber
-void messageCallback(const std_msgs::String::ConstPtr& msg) {
-    ROS_INFO(""Received: [%s]"", msg->data.c_str());
+void handleMessage(const std_msgs::String::ConstPtr& msg) {
+  ROS_INFO(""Received: [%s]"", msg->data.c_str());
 }
 
 int main(int argc, char **argv) {
-    ros::init(argc, argv, ""subscribe_example""); // Initialize the ROS node
-    
-    ros::NodeHandle nh;                          // Create a NodeHandle to interact with the ROS system
-    
-    // Subscribe to a topic and specify the message type
-    ros::Subscriber sub = nh.subscribe(""your_topic"", 1000, messageCallback);
-    
-    // Spin to receive incoming messages; this function will keep your program running
-    ros::spin();
-    
-    return 0;
-}",9.83866480870405
-182,make a node process subscriber in c++,npm install --save-dev @node-api/addon,0
-187,make robot a node process subscriber in c++,"// Include these headers (make sure they are available in your environment)
-#include <websocketpp/ws_client.hpp>
-#include <websocketpp/config/asio_no_tls_client.hpp>
-#include <iostream>
-#include <string>",0
-190,make a node ROS1 process in c++,"c++
-//!/usr/bin/env c++
-#include <ros/ros.h>
+  ros::init(argc, argv, ""subscriber_node""); // Initialize the ROS node
+  
+  ros::NodeHandle nh; // Create a handle to access resources used by this node
 
-int main(int argc, char** argv)
-{
-  // Initialize the ROS system
-  ros::init(argc, argv, ""example_node"");
+  // Subscribe to the desired topic and message type with an anonymous callback function
+  ros::Subscriber sub = nh.subscribe(""your_topic"", 10, handleMessage);
 
-  // Create a NodeHandle to interact with the ROS1 system
-  ros::NodeHandle nh;
-
-  // Subscribe to a topic called ""chatter"" and perform an action when data is received
-  ros::Subscriber sub = nh.subscribe(""chatter"", 1000, chatterCallback);
-
-  // Spin the node indefinitely, processing callbacks and waiting for input events
-  ros::spinit();
+  // Spin() will keep your node up and allow ROS to process incoming messages on the subscribed topics
+  ros::spin();
 
   return 0;
-}",0
-191,make a task node subscriber c++,"#include <iostream>
-#include <string>
-#include <boost/date_time/gregorian/gregorian.hpp>
-#include <zmq.h>
-#include <zmq-utils.hpp>
+}",9.475914980297977
+7,code ROS sub sub for ROS in c++,"c++
+#include ""ros/ros.h""
+#include <std_msgs/String> // Example message type, change as needed
 
-class TaskNodeSubscriber {
-public:
-    TaskNodeSubscriber() : subscriber_(ZMQ::context(1), ZMQ::socket(subscriber_, ZMQ_SUB)) {}
+// Callback function that will be called when a new message is received on the subscribed topic
+void callback(const std_msgs::String::ConstPtr& msg) {
+    ROS_INFO(""Received: [%s]"", msg->data.c_str()); // Print out the data from the incoming message
+}
 
-    void subscribeToTopic(const std::string& topic) {
-        subscriber_.setsockopt(ZMQ::SUBOK, 0);
-        subscriber_.setsockopt(ZMQ::SUBSCRIBE, topic.data());
-    }
+int main(int argc, char **argv) {
+    ros::init(argc, argv, ""my_subscriber_node""); // Initialize ROS node with given name
+    ros::NodeHandle nh; // Create a NodeHandle object to interact with the ROS system
 
-    void handleMessage(zmq::message_t& message) {
-        std::cout << ""Received task: "" << boost::to_string(message.size()) << std::endl;
+    ros::Subscriber sub = nh.subscribe(""example_topic"", 1000, callback); // Subscribe to 'example_topic' at rate of 1000 messages per second
+                                                                         // Adjust topic name and queue size as needed
 
-        // Extract the timestamp from the message header (assuming it's included in the first 8 bytes of the message).
-        const auto timestamp = boost::gregorian::utc_from_time_t(static_cast<uint64_t>(message.data()));
-
-        std::cout << ""Timestamp: "" << timestamp << std::endl;
-
-        // Process task here...
-    }
-
-private:
-    zmq::context_t context_;
-    zmq::socket_t subscriber_;
-};
-
-int main() {
-    TaskNodeSubscriber subscriber;
-
-    // Subscribe to the ""tasks"" topic.
-    subscriber.subscribeToTopic(""tasks"");
-
-    // Prepare a message (assuming you receive messages in this format).
-    const unsigned char taskData[] = ""\x01\x02\x03"";  // Example task data.
-    zmq::message_t msg(taskData, sizeof(taskData));
-
-    subscriber.handleMessage(msg);
+    ros::spin(); // Enter the ROS event loop
 
     return 0;
 }",0
-194,make a node node ROS1 process cpp,"#include <ros/ros.h>
-#include <std_msgs/String.h>
+8,code ROS sub subscriber planning in cpp,"//!/usr/bin/env c++
+#include <ros/ros.h>
+#include <std_msgs/String.h> // Example message type for demonstration purposes
+#include <nav_msgs/Odometry.h> // Assuming we receive odometry messages for planning
+// Include your custom planning library or API here
 
-// Structure for receiving messages from the chatter topic
-typedef struct {
-  std_msgs::String msg;
-} ChatMessage;
-
-int main(int argc, char **argv)
-{
-  // Initialize ROS system
-  ros::init(argc, argv, ""my_node"");
+int main(int argc, char **argv) {
+  ros::init(argc, argv, ""planner_subscriber"");
   ros::NodeHandle nh;
-  
-  // Create a publisher to send data
-  ros::Publisher chatter_pub = nh.advertise<std_msgs::String>(""chatter"", 10);
-  
-  // Create subscriber object and specify the callback function
-  ros::Subscriber sub = nh.subscribe(""chatter"", 10, chatterCallback);
 
-  // Spin to keep processing messages from ROS
+  // Subscriber setup
+  ros::Subscriber sub = nh.subscribe(""odometry"", 1000, odomCallback);
+
+  // Spin() will keep the node alive and call any callbacks as messages arrive on their subscribed topics
   ros::spin();
 
   return 0;
 }
 
-// Callback for incoming messages on the ""chatter"" topic
-void chatterCallback(const std_msgs::String::ConstPtr& msg)
-{
-  ROS_INFO(""I heard: [%s]"", msg->data.c_str());
+// Callback function for receiving odometry data
+void odomCallback(const nav_msgs::Odometry& msg) {
+  // TODO: Perform planning based on the received odometry message
+  // This could include updating a map, calculating trajectories or any other planning task.
+  
+  ROS_INFO(""Received new odometry data."");
 }",0
-195,make a node ROS1 cpp,"#include <ros/ros.h>
-#include <std_msgs/String.h>
+13,code ROS c++ sub execution node,"//!/usr/bin/env c++
+#include <ros/ros.h>
+#include <std_msgs/String.h> // Assuming messages are simple strings for demonstration
 
-// Define custom message type (if needed)
-// struct CustomMessage { /*...*/ };
+class ExecuteNode {
+public:
+    ExecuteNode() {}
 
-int main(int argc, char **argv)
-{
-    // Initialize the ROS system and node
-    ros::init(argc, argv, ""my_ros_node"");
+    void execute(const std_msgs::String::ConstPtr& msg) {
+        ROS_INFO(""Executing message received from %s"", msg->data.c_str());
+        // Add your execution logic here...
+    }
+};
+
+int main(int argc, char **argv) {
+    ros::init(argc, argv, ""execute_node"");
     ros::NodeHandle nh;
-    
-    // Create a subscriber to listen on ""/example_topic"" with String message type.
-    ros::Subscriber sub = nh.subscribe(""example_topic"", 1000, exampleCallback);
-    
-    // Spin the node to process callbacks and handle events.
-    ros::spin();
+
+    ExecuteNode execute_node;
+    ros::Subscriber sub = nh.subscribe(""/data_topic"", 1000, &ExecuteNode::execute);
+
+    ros::spin(); // Start the ROS event loop
 
     return 0;
-}
-
-// Callback function that gets called when a new message is received on ""/example_topic""
-void exampleCallback(const std_msgs::String& msg)
-{
-    ROS_INFO(""Received message: [%s]"", msg.data.c_str());
-    
-    // Process the message (custom processing logic goes here)
-
-    // Publish a result (if needed, using custom message type if defined above)
-    std::string result = ""Processed result based on received data"";
-    
-    std_msgs::String resMsg;
-    resMsg.data = result;
-
-    ros::Publisher pub = nh.advertise<std_msgs::String>(""result_topic"", 1000);
-    pub.publish(resMsg);
 }",0
-203,make a node ROS c++,"c++
+15,code ROS sub in in cpp,"//!/usr/bin/env c++
 #include <ros/ros.h>
-#include <std_msgs/String.h> // Example message type, replace as needed
+#include <std_msgs/String.h> // Include the message type you want to subscribe to, e.g., std_msgs::String
 
-void setup(int argc, char **argv) {
-  ros::init(argc, argv, ""my_node"");
-  
-  ros::NodeHandle n;
-  // Create a publisher for the topic
-  ros::Publisher pub = n.advertise<std_msgs::String>(""<your_topic>"", 10);
+// Callback function that will be called when a new message arrives on the topic
+void callback(const std_msgs::String::ConstPtr& msg) {
+    ROS_INFO(""A new string message was received: '%s'"", msg->data.c_str());
 }
 
 int main(int argc, char **argv) {
-  setup(argc, argv);
-  
-  // Node's main loop
-  ros::Rate rate(10); // Publish messages at 10 Hz
-  
-  while (ros::ok()) {
-    std_msgs::String msg;
-    
-    // Set up your message data here, e.g., using random values:
-    msg.data = ""Hello from my node!"";
+    ros::init(argc, argv, ""simple_subscriber""); // Initialize the ROS system and create a node named 'simple_subscriber'
+    ros::NodeHandle nh; // Create a NodeHandle to interact with the ROS system
 
-    pub.publish(msg); // Publish the message to your topic
+    ros::Subscriber sub = nh.subscribe(""chatter"", 10, callback); // Subscribe to the ""chatter"" topic at rate 10 messages per second using the provided callback function
 
-    ros::Duration(1.0).sleep(); // Sleep for 1 second between publishing messages
+    ros::spin(); // Enter the ROS event loop and process incoming messages
+
+    return 0;
+}",6.89562207390739
+18,parameter code ROS sub subscriber in cpp,"#include <ros/ros.h>
+#include <std_msgs/String.h> // Assuming the message type is String, adjust as per your needs.
+
+// Callback function that will be called whenever a new message arrives on the subscribed topic.
+void parameterCallback(const std_msgs::String::ConstPtr& msg) {
+    ROS_INFO(""Received parameter: [%s]"", msg->data.c_str());
+}
+
+int main(int argc, char **argv) {
+    // Initialize the ROS system and create a node named ""parameter_subscriber""
+    ros::init(argc, argv, ""parameter_subscriber"");
+    ros::NodeHandle nh;
+
+    // Subscribe to the specified topic with your callback function
+    ros::Subscriber sub = nh.subscribe(""your_topic_name"", 1000, parameterCallback);
+
+    // Spin the ROS node to process incoming messages and calls the callback function when a new message arrives
+    ros::spin();
+
+    return 0;
+}",9.911061757034718
+19,parameter code ROS mapping in cpp,"#include <ros/ros.h>
+
+#include <std_msgs/String.h>
+
+#include <sensor_msgs/PointCloud2.h>
+
+
+// Assuming you have declared this function in a class or main()
+
+void parameterCallback(const ros::parameter::Ptr &param) {
+
+    std::string param_value;
+
+    if (param->get(""your_parameter_name"").convertToStdString(&param_value)) {
+
+        // Use the parameter value as needed, for example:
+
+        ROS_INFO(""Got parameter value: %s"", param_value.c_str());
+
+    } else {
+
+        ROS_ERROR(""Failed to read parameter"");
+
+    }
+
+}
+
+
+int main(int argc, char **argv) {
+
+    ros::init(argc, argv, ""your_node_name"");
+
+    ros::NodeHandle nh;
+
+
+    // Create the parameter server object and add a parameter
+
+    ros::param::Server parsrv;
+
+    parsrv.addParameter(""your_parameter_name"", std::string(), true); // name, type (std::string), persistable flag
+
+
+    // Spin to receive messages including parameters from the server
+
+    nh.spin();
+
+
+    return 0;
+
+}",0
+20,parameter code sub in cpp,"#include <iostream>
+
+// Function to subtract two numbers and return the result
+int sub(int num1, int num2) {
+    return (num1 - num2);
+}
+
+int main() {
+    int a = 5;
+    int b = 3;
     
-    rate.sleep(); // Keep running at the desired rate
+    // Calling sub function with parameters 'a' and 'b'
+    int result = sub(a, b);
+    
+    std::cout << ""Result: "" << result << std::endl; // Outputs 2
+    
+    return 0;
+}",4.253294286543529
+21,parameter ROS sub in cpp,"#include <ros/ros.h>
+
+#include <std_msgs/Float64.h> // Assuming the parameter is of type Float64
+
+
+int main(int argc, char **argv) {
+
+    ros::init(argc, argv, ""param_subscriber"");
+
+    ros::NodeHandle nh;
+
+
+    ros::Subscriber sub = nh.subscribe(""my_param"", 1000, &MyCallbackFunction); // Subscribe to the topic with a queue size of 1000
+
+
+    ros::spin(); // Enter ROS's event loop
+
+
+    return 0;
+
+}
+
+
+void MyCallbackFunction(const std_msgs::Float64::ConstPtr& msg) {
+
+    // Access the parameter value using the received message
+
+    float param_value = msg->data;
+
+    // Do something with `param_value`...
+
+}",0
+22,component ROS sub in cpp,"#pragma once
+
+#include <ros/ros.h>
+#include <std_msgs/String.h> // Example message type; change as needed
+
+class SubscriberComponent {
+public:
+    SubscriberComponent(const ros::NodeHandle& nh);
+    ~SubscriberComponent();
+    
+    void subscribeToTopic(const std::string& topic_name,
+                          std::function<void(const std_msgs::String::ConstPtr&)> callback);
+private:
+    ros::NodeHandle _nh;
+    ros::Subscriber _subscriber_;
+};",0
+23,parameter code ROS sub cpp,"#include <ros/ros.h>
+#include <std_msgs/String.h>
+
+class ParameterClient {
+public:
+    ParameterClient() = default;
+    
+    // Function to read a single parameter by its name
+    void readParameter(const std::string& paramName) {
+        ros::NodeHandle nh;
+        
+        // Read the parameter using ROS Param Server API
+        auto param = nh.param<std_msgs::String>(""~parameter_name"", ""Default value"");
+        
+        if (!param.ok()) {
+            ROS_WARN(""Parameter not found: %s\nUse default value: %s"", paramName.c_str(), ""Default Value"".c_str());
+            return;
+        }
+        
+        // Print the retrieved parameter's value
+        ROS_INFO(""Retrieved Parameter: %s"", param.second.data.c_str());
+    }
+    
+    // Function to write a single parameter by its name and value
+    void writeParameter(const std::string& paramName, const std::string& paramValue) {
+        ros::NodeHandle nh;
+        
+        // Write the parameter using ROS Param Server API
+        bool success = nh.param<std_msgs::String>(""~parameter_name"", ""Default value"");
+        
+        if (success) {
+            std::cout << ""Warning: Parameter already exists, overwriting it."" << std::endl;
+        }
+        
+        // Update the parameter's value
+        nh.param<std_msgs::String>(""~parameter_name"", paramValue);
+        
+        ROS_INFO(""Written Parameter: %s = %s"", paramName.c_str(), paramValue.c_str());
+    }
+};",0
+25,parameter code ROS in cpp,"#include <ros/ros.h>
+#include <std_msgs/String>. // Example using std_msgs::String for simplicity
+
+// Callback function that will be called every time a new message arrives on the topic
+void callback(const std_msgs::String::ConstPtr& msg) {
+    ROS_INFO(""I heard: [%s]"", msg->data.c_str()); // Print out the data received from the message
+}
+
+int main(int argc, char **argv) {
+    ros::init(argc, argv, ""listener""); // Initialize ROS and create a node named 'listener'
+    ros::NodeHandle nh; // Create a NodeHandle which is used to interact with the ROS system.
+
+    ros::Subscriber sub = nh.subscribe(""chatter"", 1000, callback); // Subscribe to ""chatter"" topic and specify that it will handle up to 1000 msgs per second (Hz)
+
+    ros::spin(); // Enter the ROS event loop and process incoming messages
+
+    return 0;
+}",0
+26,parameter spin code ROS sub cpp,"#include <rclcpp/parameter_server.h>
+#include <iostream>
+
+// Node entry point
+void parameter_spin(const rclcpp::NodeConfiguration& config, rclcpp::NodeOptions options) {
+  // Create a new Parameter Server object with the node name ""ParameterServerNode""
+  auto ps = rclcpp::parameter_server(""ParameterServerNode"");
+  
+  // Subscribe to parameter updates (optional - if you want automatic spinner setup and configuration handling for parameters)
+  std::shared_ptr<rclcpp::Subscription> sub;
+  try {
+    sub = ps.create_subscription(std::string, ""param"", [&](const rclcpp::Value& msg) {
+      // Callback to handle parameter updates (optional - simply print the updated value)
+      std::cout << ""Parameter update: "" << msg.data() << std::endl;
+    });
+  } catch(const std::exception &ex) {
+    RCLCPP_ERROR(ps.get_logger(), ""Failed to subscribe to parameter updates: %s"", ex.what());
+    rclcpp::shutdown(); // Clean up the node and exit if subscription fails
   }
   
-  return 0;
-}",0
-204,make a localization node process subscriber in c++,,0
-212,make a ROS1 message process subscriber in c++,"#include <ros/ros.h>
-
-#include <std_msgs/String.h> // Assuming you want to process String type messages
-
-
-class MessageProcessorNode : public ros::NodeHandle {
-
-public:
-
-    MessageProcessorNode() : nh_(""~"") {}
-
-
-    void chanInCallback(const std_msgs::StringConstPtr& msg)
-
-    {
-
-        // Process the message here. This is where you'll implement your logic.
-
-        ROS_INFO(""Received message: %s"", msg->data.c_str());
-
-    }
-
-
-private:
-
-    ros::Subscriber sub_;
-
-};
-
-
-int main(int argc, char** argv)
-
-{
-
-    ros::init(argc, argv, ""message_processor_node"");
-
-    MessageProcessorNode processor;
-
-
-    // Subscribe to the topic and call chanInCallback when a message is received
-
-    processor.subscribe(""example_topic"", 10, &MessageProcessorNode::chanInCallback);
-
-
-    ros::spin(); // Enter ROS event loop
-
-
-    return 0;
-
-}",0
-213,make a node ROS1 subscriber queue in cpp,"#include <ros/ros.h>
-#include <queue>
-#include <string>
-#include <my_custom_msgs/msg/my_custom_message.hpp> // Replace with the actual path of your custom message header file
-#include <thread>
-#include <mutex>
-
-// Define a queue to hold incoming messages
-std::queue<my_custom_msgs::msg::MyCustomMessage, std::deque<my_custom_msgs::msg::MyCustomMessage>> messageQueue;
-
-// Mutex for thread-safe access to the message queue
-std::mutex mtx;
-
-void callback(const my_custom_msgs::msg::MyCustomMessage::ConstPtr& msg) {
-    std::lock_guard<std::mutex> lock(mtx); // Lock mutex before accessing the queue
-    messageQueue.push(*msg); // Push received message into the queue
+  // Spin until ctrl+c is pressed or shutdown triggered by an exception
+  rclcpp::spin(nullptr);
 }
 
+// Main function entry point
 int main(int argc, char **argv) {
-    ros::init(argc, argv, ""my_custom_message_subscriber""); // Initialize ROS node
-    ros::NodeHandle nh; // Create a NodeHandle instance for communication with other nodes and system resources.
-
-    ros::Subscriber sub = nh.subscribe<my_custom_msgs::msg::MyCustomMessage>(""my_custom_topic"", 10, callback); // Subscribe to ""my_custom_topic"" topic using the custom message type
-
-    ros::Rate loop_rate(10); // Set desired publish rate (in Hz)
-
-    while (ros::ok()) {
-        std::unique_lock<std::mutex> lock(mtx); // Lock mutex before accessing the queue
-        
-        if (!messageQueue.empty()) {
-            auto msg = messageQueue.front(); // Get the front message from the queue
-            messageQueue.pop(); // Remove the dequeued message from the queue
-            
-            // Process or publish your custom messages here...
-        }
-
-        lock.unlock(); // Unlock mutex after processing messages
-
-        ros::spinOnce(); // Execute callbacks and continue to process rate loop_rate()
-        loop_rate.sleep(); // Sleep until next iteration of the loop_rate() cycle
-    }
-
-    return 0;
-}",0
-214,make a node ROS1 process c++,"#include <ros/ros.h>
-#include <std_msgs/String.h> // Example message type
-
-int main(int argc, char **argv) {
-    ros::init(argc, argv, ""my_node"");
-    ros::NodeHandle nh;
-
-    // Your code goes here
-
-    return 0;
-}",5.534739738786156
-219,make a node message process subscriber in c++,"#include <iostream>
-#include <functional>
-#include <nlohmann/json.hpp> // Make sure to include the JSON library for parsing messages
-
-// Forward declaration of Message class, assuming it has a serialize method
-class Message;
-
-// Subscriber interface that will be implemented by message processors
-class IMessageProcessor {
-public:
-    virtual ~IMessageProcessor() = default;
-
-    // Method to process the incoming message
-    virtual void process(const std::function<void(const nlohmann::json&)>& callback) = 0;
-};
-
-// Concrete implementation of IMessageProcessor for handling messages as JSON objects
-class JsonMessageProcessor : public IMessageProcessor {
-public:
-    // Process a message by calling the provided callback with its JSON representation
-    void process(const std::function<void(const nlohmann::json&)>& callback) override {
-        std::string jsonStr; // Assuming incoming message is in string format (e.g., via a pubsub channel)
-        
-        try {
-            // Parse the JSON string into a JSON object
-            nlohmann::json messageJson = nlohmann::json::parse(jsonStr);
-            
-            // Callback with the processed JSON object
-            callback(messageJson);
-        } catch (const std::exception& e) {
-            std::cerr << ""Error processing message: "" << e.what() << std::endl;
-        }
-    }
-};
-
-// Example usage within a Node.js addon using N-API to expose the subscriber functionality to JavaScript
-#include <node_api.h>
-
-napi_value processMessage(napi_env env, napi_callback_info info) {
-    // Get arguments and access message string from them
-    
-    // Call the JsonMessageProcessor with a callback that will be invoked by Node.js upon completion
-    std::function<void(const nlohmann::json&)> callback = [](const nlohmann::json& jsonStr) {
-        // This is where you would handle the JSON data, e.g., parse it and use its content
-        std::string processedMessage = jsonStr.dump(); // Convert JSON object back to string for demonstration purposes
-        
-        // Return a result or error message as needed
-        return napi_get_null(env); // For simplicity, returning null in this example
-    };
-    
-    JsonMessageProcessor processor;
-    processor.process(callback);
-
-    // Convert the callback to a JsValue and return it to JavaScript caller
-    napi_value result = nullptr;
-    napi_status status = napi_call_function(env, callback, 1, &jsonStr, &result);
-    
-    if (status != napi_ok) {
-        // Handle the error scenario
-    }
-
-    return result;
-}
-
-napi_value createSubscriber(napi_env env, napi_callback_info info) {
-    assert(napi_version(env) == NAPI_VERSION_NODE_FIRETOOLS);
-
-    // Create a new function for the processMessage function using napi_create_function
-    
-    // Returning the function to JavaScript caller as an object (or addon instance, etc.)
-    return nullptr;
-}
-
-NAPI_MODULE(NODE_GYP_MODULE_NAME, CreateSubscriber)",0
-220,mapping make a node in mapping cpp,"#include <iostream>
-
-// The 'Node' class represents a single element within a structure (e.g., graph, tree)
-class Node {
-public:
-    // Constructor to initialize the node with specific data and next pointer
-    explicit Node(const T& data) : data_(data), next_(nullptr) {}
-
-    // Setter for modifying the node's data
-    void setData(const T& new_data) {
-        data_ = new_data;
-    }
-
-    // Getter to retrieve the node's data
-    const T& getData() const {
-        return data_;
-    }
-
-    // Setter for modifying the next pointer of the node (link to another node)
-    void setNext(Node* new_next) {
-        next_ = new_next;
-    }
-
-    // Getter to retrieve the next pointer of the node
-    Node* getNext() const {
-        return next_;
-    }
-
-private:
-    T data_;  // The data contained within this node
-    Node* next_;  // Pointer to the next node in a linked list or graph structure
-};",0
-224,make a node ROS1 process data in c++,"c++
-// MyDataProcessorNode.cpp
-#include <ros/ros.h>
-#include <std_msgs/Float64.h>
-
-class DataProcessorNode {
-public:
-    DataProcessorNode() {}
-    
-    void processData(const std_msgs::Float64& data) {
-        // Process your incoming data here, for example:
-        ROS_INFO(""Received data: %f"", data.data);
-    }
-};
-
-int main(int argc, char **argv) {
-    ros::init();
-    
-    ros::NodeHandle nh;
-    
-    DataProcessorNode node;
-    
-    // Subscriber setup
-    ros::Subscriber sub = nh.subscribe(""data_topic"", 1000, &DataProcessorNode::processData, &node);
-    
-    ros::spin();
-    
-    return 0;
-}",0
-229,make process a ROS1 process subscriber in c++,"#include <ros/ros.h>
-
-#include <ros/process_subscriber.h>
-
-#include <std_msgs/String>. // Assuming the message type is std::string
-
-
-int main(int argc, char **argv) {
-
-  ros::init(argc, argv, ""process_subscriber"");
-
-
-  // Create a Process Subscriber object. This subscribes to a topic named ""/your_topic"".
-
-  ros::ProcessSubscriber process_subscriber(""/your_topic"",
-
-                                            [](const std_msgs::String& msg) {
-
-                                              // Message handling logic here. For example:
-
-                                              ROS_INFO(""Received message with content: %s"",
-
-                                                       msg.data.c_str());
-
-                                            });
-
-
-  ros::spin(); // Enter the ROS event loop
-
-
-  return 0;
-
-}",0
-230,make launch a ROS1 process subscriber in c++,"#include <ros/ros.h>
-#include <std_msgs/String.h> // Replace with your desired message type
-
-// Define a callback function to process incoming messages
-void processSubscriberCallback(const std::string& msg) {
-    ROS_INFO(""Received message: %s"", msg.c_str());
-    // Process the received message here
-}
-
-int main(int argc, char **argv) {
-    ros::init(argc, argv, ""process_subscriber_node"");
-    ros::NodeHandle nh;
-
-    // Create a subscriber with your topic and callback function
-    ros::Subscriber sub = nh.subscribe(""your_topic"", 1000, processSubscriberCallback);
-
-    // Spin to wait for callbacks
-    ros::spin();
-
-    return 0;
-}",0
-235,make a ROS1 subscriber in c++,"#include <ros/ros.h>
-#include <std_msgs/String.h> // Replace with your desired message type, e.g., std::vector<int>
-
-// Callback function to handle incoming messages
-void callback(const std_msgs::String::ConstPtr& msg) {
-    ROS_INFO(""Received message: [%s]"", msg->data.c_str()); // Print the received data
-}
-
-int main(int argc, char** argv) {
-    ros::init(argc, argv, ""my_ros_subscriber""); // Initialize ROS and create a node named ""my_ros_subscriber""
-    ros::NodeHandle nh;                           // NodeHandle is the main access point to communication with other nodes
-
-    ros::Subscriber sub = nh.subscribe<std_msgs::String>(""my_topic"", 10, callback); // Create a subscriber that listens on ""my_topic"" and calls the callback function for each received message
-
-    ros::spin();                                  // Enter ROS's event loop to process incoming messages asynchronously
-
-    return 0;
-}",9.808088667024878
-236,make a node process subscriber navigation in c++,"#include <iostream>
-#include <string>
-#include <napi.h> // Make sure you have the N-API library available for Node addons
-
-// Function to handle subscription to navigation events
-Napi::Object SubscribeNavigationEvents(const Napi::CallbackInfo& info) {
-    Napi::Env env = info.Env();
-
-    if (info.Length() < 1 || !info[0].IsString()) {
-        Napi::TypeError::New(env, ""Expected a single string argument"").ThrowAsJavaScriptException();
-        return env.Null();
-    }
-
-    std::string eventSource = info[0].As<Napi::String>();
-
-    // Simulate subscribing to navigation events (implement your subscription logic here)
-    SubscribeToNavigationEvents(eventSource);
-
-    Napi::Object result = CreateObject(env, ""subscriptionResult"");
-    result.Set(""navigationEventSource"", eventSource);
-    return result;
-}
-
-// Function to simulate the actual navigation event handling
-void SubscribeToNavigationEvents(const std::string& source) {
-    // Your implementation goes here...
-    std::cout << ""Subscribed to navigation events from: "" << source << std::endl;
-    // Simulate receiving a navigation event (e.g., page change, link click)
-}
-
-// Module initialization function
-Napi::Object Init(Napi::Env env, Napi::CallbackInfo* info) {
-    return SubscribeNavigationEvents(info);
-}
-
-NODE_API_MODULE(subscriberNavigation, Init)",0
-242,make a node process subscriber launch in c++,npm install -g node-gyp,0
-244,make node ROS1 process cpp,cd /path/to/my_package,0
-250,make a message node ROS1 subscriber in c++,"#include <ros/ros.h>
-#include <message_filters/subscriber.h> // For message synchronization (optional)
-#include <std_msgs/String>. // Replace with your specific message type if necessary
-
-// Define the callback function that will be called when a new message arrives
-void handleMessage(const std_msgs::String& msg) {
-    ROS_INFO(""Received message: %s"", msg.data.c_str());
-}
-
-int main(int argc, char **argv) {
-    ros::init(argc, argv, ""message_listener""); // Initialize the ROS node
-    ros::NodeHandle nh;                          // Create a NodeHandle object to interact with the ROS system
-
-    // Subscriber setup (optional if message synchronization is not needed)
-    // For example, subscribing to two different topics and syncing messages:
-    message_filters::Subscriber<std_msgs::String> sub1(""/topic1"", 1);
-    message_filters::Subscriber<std_msgs::String> sub2(""/topic2"", 1); // Both with single-rate subscriptions (queue size of 1)
-    
-    ros::Subscriber sub = nh.subscribe(""your_message_topic"", 10, handleMessage); // Subscribe to the topic and call callback function on new message
-
-    ros::spin();                                // Enter ROS' main event loop and process incoming messages
-
-    return 0;
-}",0
-251,make a node ROS1 subscriber in,"$ sudo apt-get install git-core
-$ sudo apt-get install python3-pip
-$ pip3 install virtualenv
-$ cd ~
-$ mkdir -p $HOME/catkin_workspace
-$ cd $HOME/catkin_workspace
-$ sdk update opencv
-$ sdk build local-install",0
-255,make a node ROS1 process subscriber in c++,"#include <ros/ros.h>
-#include <std_msgs/String.h>
-
-// Callback function for when a new message arrives on the topic
-void callback(const std_msgs::String::ConstPtr& msg) {
-    ROS_INFO(""I heard: [%s]"", msg->data.c_str());
-}
-
-int main(int argc, char **argv) {
-    ros::init(argc, argv, ""subscriber_node""); // Initialize the ROS node
-    ros::NodeHandle nh;                         // Create a NodeHandle object
-
-    // Create a subscriber object that listens on the specified topic and calls the callback function when new messages arrive
-    ros::Subscriber sub = nh.subscribe(""chatter"", 1000, callback);
-
-    // Spin the ROS event loop to process incoming messages
-    ros::spin();
-
-    return 0;
-}",9.84180694226092
-256,make navigation a execution node ROS1 process subscriber in c++,"#include <ros/ros.h>
-
-#include <std_msgs/String.h> // Example message type, replace with actual message type for your application
-
-
-int main(int argc, char **argv) {
-
-    ros::init(argc, argv, ""process_subscriber""); // Initializes ROS and creates node named 'process_subscriber'
-
-    ros::NodeHandle nh;                         // Creates a handle to communicate with the ROS system
-
-
-    ros::Subscriber sub = nh.subscribe(""topic_name"", 1000, processReceived); // Subscribes to 'topic_name' topic
-
-
-    ros::spin(); // Starts callback loop
-
-
-    return 0;
-
-}
-
-
-void processReceived(const std_msgs::String::ConstPtr& msg) {
-
-    // Process the message received from ROS topics here
-
-    ROS_INFO(""Processed: %s"", msg->data.c_str()); // Example logging, replace with actual processing logic
-
-}",0
-260,make a node control ROS1 subscriber planning in c++,"#include <ros/ros.h>
-#include <std_msgs/Float64.h>
-#include <sensor_msgs/LaserScan.h>
-
-// Function to handle new messages on the subscriber
-void scanCallback(const sensor_msgs::LaserScan& msg) {
-    ROS_INFO(""Received laser scan data with range: [%f, %f]"", msg.ranges[0], msg.ranges[1]);
-
-    // Your planning code goes here
-    // For example, you can use the received data to generate a map and perform path planning using ROS's navigation stack (ROS2).
-}
-
-int main(int argc, char **argv) {
-    ros::init(argc, argv, ""robot_planning_node"");
-    ros::NodeHandle nh;
-
-    // Create a subscriber object that listens to the `/robot_state` topic and uses `scanCallback` function as its callback.
-    ros::Subscriber sub = nh.subscribe<sensor_msgs::LaserScan>(""/robot_state"", 10, scanCallback);
-
-    // Spin ROS's event loop to keep the node alive and process incoming messages.
-    ros::spin();
-
-    return 0;
-}",0
-261,actuator make a ROS1 process subscriber in c++,"#include <ros/ros.h>
-
-#include <std_msgs/Float64.h> // Example message type for actuator commands
-
-
-class ActuatorSubscriber {
-
-public:
-
-    ActuatorSubscriber(ros::NodeHandle& n) : node_(n), msgType_(std_msgs::Float64()), sub_(nullptr) {}
-
-
-    void setup() {
-
-        // Subscribe to a topic where actuators receive commands (e.g., /actuator/command)
-
-        sub_ = node_.subscribe(""~actuator/command"", 1000, &ActuatorSubscriber::messageCallback, this);
-
-    }
-
-
-    void messageCallback(const std_msgs::Float64ConstPtr& msg) {
-
-        // Process the actuation command received from ROS master (e.g., set motor speed or direction)
-
-        float commandedSpeed = msg->data;
-
-        processActuatorCommand(commandedSpeed);
-
-    }
-
-
-private:
-
-    ros::NodeHandle& node_; // Reference to the NodeHandle for communication with other nodes
-
-    std_msgs::Float64 msgType_; // The message type being published on /actuator/command topic
-
-    ros::Subscriber sub_; // Subscriber handle for received messages
-
-};
-
-
-int main(int argc, char** argv) {
-
-    ros::init(argc, argv, ""actuator_subscriber"");
-
-    ros::NodeHandle n;
-
-
-    ActuatorSubscriber actuatorSub(n); // Create an instance of the ActuatorSubscriber class with a NodeHandle reference
-
-    actuatorSub.setup(); // Set up the subscriber callback to process messages
-
-
-    ros::spin(); // Enter ROS's event loop and keep processing incoming messages
-
-
-    return 0;
-
-}",0
-270,make a node process subscriber task in c++,npm install --save-dev @node-addon-api/node,0
-271,make a node ROS1 in cpp,"#include <ros/ros.h>
-
-#include <std_msgs/String.h> // For using String message type
-
-
-// Define a simple Node class in C++ for ROS 1 (ROS Indigo or later)
-
-class HelloWorldNode {
-
-public:
-
-    HelloWorldNode() : n_(ros::NodeHandle(""~"")) {}
-
-
-private:
-
-    ros::NodeHandle n_; // Ros node handle instance
-
-};
-
-
-// Main function to run the ROS node
-
-int main(int argc, char **argv) {
-
-    // Initialize the ROS system
-
-    ros::init(argc, argv, ""hello_world_node"");
-
-    HelloWorldNode node; // Create an instance of our Node class
-
-
-    // Spin in a loop to process callbacks and handle other operations
-
-    ros::spin();
-
-
-    return 0;
-
-}",4.661651660647961
-272,make a ROS1 navigation process subscriber in node c++,"#include <ros/ros.h>
-#include <nav_msgs/GetGoalMarkersResponse.h>
-
-void goalMarkerCallback(const nav_msgs::GetGoalMarkersResponse& msg) {
-    ROS_INFO(""Received goal markers: %v"", msg.goal_markers);
-}
-
-int main(int argc, char **argv) {
-    ros::init(argc, argv, ""nav_process_subscriber"");
-    ros::NodeHandle nh;
-
-    // Subscribe to goal markers topic
-    ros::Subscriber sub = nh.subscribe(""goal_markers"", 1000);
-    
-    // Callback function for incoming goals
-    sub->listen((void*)(&goalMarkerCallback), queue_size=10);
-
-    ros::spin();
-
-    return 0;
-}",0
-278,make a node ROS1 process launch subscriber c++,"#include <ros/ros.h>
-#include <std_msgs/String.h> // Assuming we are subscribing to String messages
-
-// The callback function called every time a new message is received on the topic
-void handleMessage(const std_msgs::String::ConstPtr& msg) {
-    ROS_INFO(""Received: %s"", msg->data.c_str()); // Print out the content of the message to the console
-}
-
-int main(int argc, char **argv) {
-    ros::init(argc, argv, ""message_listener""); // Initialize ROS and create a node named 'message_listener'
-    ros::NodeHandle nh; // NodeHandle is used for communication with the rest of ROS (e.g., services, parameters).
-
-    ros::Subscriber sub = nh.subscribe(""my_topic"", 1000, handleMessage); // Subscribe to ""my_topic"" topic and set up a callback function `handleMessage` for each new message received.
-
-    ros::spin(); // Enter ROS's event loop and keep processing incoming messages until the node is shutdown or aborted.
-
-    return 0;
-}",9.38308048408949
-282,control make a ROS1 process subscriber in c++,"cmake_minimum_required(VERSION 3.5)
-project(process_subscriber)
-
-find_package(ament REQUIRED)
-find_package(rclcpp REQUIRED)
-find_package(std_msgs REQUIRED)
-
-catkin_package(
-  INCLUDE_DIRS include
-  LIBRARIES process_subscriber
-  CATKIN_DEPENDS rclcpp std_msgs
-)
-
-include_directories(SYSTEM ${rclcpp_INCLUDE_DIR} ${std_msgs_INCLUDE_DIRS})
-add_executable(${PROJECT_NAME} src/process_subscriber.cpp)
-target_link_libraries(${PROJECT_NAME} rclcpp)
-ament add_deps(roscpp std_msgs)",0
-285,make a process subscriber in c++,"#include <iostream>
-#include <vector>
-#include <functional>
-
-class Process; // Forward declaration of the Process class
-
-// Interface for observers (subscribers) in the observer pattern.
-using Observer = std::function<void(const Process&)>;
-
-class SubscriptionManager {
-public:
-    void registerObserver(Observer observer);
-    void unregisterObserver(Observer observer);
-    void notifySubscribers();
-
-private:
-    std::vector<Observer> observers_; // Vector to store subscribed observers.
-
-};
-
-// Process class representing a process that can be observed and notified.
-class Process {
-public:
-    Process(int id) : _id(id), status(""Pending"") {}
-
-    void setStatus(const std::string& new_status) {
-        if (new_status == ""Running"" || new_status == ""Stopped"") {
-            _status = new_status; // Update the process status.
-            notifySubscribers(); // Notify all subscribed observers about the change in status.
-        }
-    }
-
-private:
-    int _id;
-    std::string _status;
-};
-
-// Implementing SubscriptionManager methods.
-void SubscriptionManager::registerObserver(Observer observer) {
-    observers_.push_back(observer);
-}
-
-void SubscriptionManager::unregisterObserver(Observer observer) {
-    observers_.erase(std::remove(observers_.begin(), observers_.end(), observer), observers_.end());
-}
-
-void SubscriptionManager::notifySubscribers() {
-    for (const auto& observer : observers_) { // For each registered observer.
-        const Process& process = ...; // Get the current process to be observed (omitted here).
-        observer(process); // Notify the observer with the current process data.
-    }
-}
-
-int main() {
-    SubscriptionManager manager;
-
-    auto printStatus = [](const Process& p) {
-        std::cout << ""Process ID: "" << p._id << "", Status: "" << p._status << std::endl;
-    };
-
-    // Create a process and register the observer (printStatus).
-    Process my_process(1);
-    manager.registerObserver(printStatus);
-
-    // Simulate changing the status of the process.
-    my_process.setStatus(""Running"");
-    my_process.setStatus(""Stopped"");
-
-    return 0;
-}",0
-287,make a node for ROS cpp,"#include <ros/ros.h>
-#include <std_msgs/String.h> // Example message type
-
-// Define your custom node class that inherits from NodeHandle
-class MyCustomNode : public ros::NodeHandle {
-public:
-    MyCustomNode() : nh(""~"") {}
-    
-    void callback(const std_msgs::String::ConstPtr& msg) {
-        ROS_INFO(""%s"", msg->data.c_str()); // Example of handling received message
-        
-        // Custom processing or interaction with other nodes can go here
-    }
-};
-
-int main(int argc, char **argv) {
-    ros::init(argc, argv, ""my_custom_node"");
-    ros::NodeHandle nh;
-    
-    MyCustomNode customNode; // Create an instance of your custom node class
-    
-    // Subscribe to a topic with the callback function you defined in your custom node
-    ros::Subscriber sub = nh.subscribe(""my_topic"", 10, &MyCustomNode::callback);
-    
-    // Main ROS loop
-    ros::spin();
-    
-    return 0;
-}",0
-290,a node ROS1 subscriber in c++,"// main.cpp
-#include ""ros/ros.h""
-#include <std_msgs/String.h>
-
-// The callback function that will be called when messages are received
-void messageCallback(const std_msgs::String::ConstPtr& msg) {
-    ROS_INFO(""Received: [%s]"", msg->data.c_str());
-}
-
-int main(int argc, char **argv) {
-    ros::init(argc, argv, ""subscriber_node"");
-    ros::NodeHandle nh;
-
-    // Create a subscriber object with the specified message type and callback function
-    ros::Subscriber sub = nh.subscribe(""my_topic"", 1000, messageCallback);
-
-    // Spin to process incoming messages
-    ros::spin();
-
-    return 0;
-}",10.69830734019229
-291,a node ROS1 subscriber in subscriber in cpp,"#include <ros/ros.h>
-
-#include <std_msgs/String.h> // Assuming the message type is std::string
-
-
-// Callback function to handle incoming messages
-
-void callback(const std_msgs::String::ConstPtr& msg) {
-
-    ROS_INFO(""I heard: [%s]"", msg->data.c_str());
-
-}
-
-
-int main(int argc, char **argv) {
-
-    ros::init(argc, argv, ""my_subscriber""); // Initialize the ROS system and give a name to your node
-
-    ros::NodeHandle nh; // Create NodeHandle instance
-
-
-    ros::Subscriber sub = nh.subscribe(""chatter"", 1000, callback); // Subscribe to ""chatter"" topic with queue size of 1000 and use the provided callback function
-
-
-    ros::spin(); // Enter ROS event loop - handles incoming messages
-
-
-    return 0;
-
-}",7.673370705200901
-292,a node ROS1 subscriber in subscriber in queue c++,"// Import required libraries
-#include <ros/ros.h>
-#include <std_msgs/String.h>
-#include <ignition/math.hh>
-#include <ignition/node.hh>
-#include <ros2js/Node.h>
-
-int main(int argc, char **argv) {
-  // Initialize the ROS system
-  ros::init(argc, argv, ""robot_listener"");
-  ros::NodeHandle n;
-
-  // Define the callback function for subscriber
-  auto callback = [&]() {
-    std::string msgData;
-
-    // Get data from ROS1 topic and print it out
-    if (n.getParam(""topic"", &msgData)) {
-      ROS_INFO(""Received message: %s"", msgData.c_str());
-    } else {
-        ROS_ERROR(""Could not get the topic name"");
-    }
-  };
-
-  // Create a subscriber object that listens to ""chatter"" topic with String messages
-  auto sub = n.subscribe(""chatter"", 10, callback);
-
-  // Run the ROS2 main loop and handle shutdown signals
-  rclcpp::spin(sub);
-
-  return 0;
-}",0
-293,a node node ROS1 process subscriber in cpp,"// main.cpp
-#include <ros/ros.h>
-#include ""std_msgs/String.h"" // Replace with your desired message type
-
-void talkerCallback(const std_msgs::String::ConstPtr& msg) {
-  ROS_INFO(""I heard: [%s]"", msg->data.c_str());
-}
-
-int main(int argc, char** argv) {
-  // Initialize the ROS system
-  ros::init(argc, argv, ""subscriber_node"");
+  rclcpp::init(argc, argv); // Initialize the ROS node (required for parameter server functionality)
   
-  // Create a NodeHandle object to interact with ROS
-  ros::NodeHandle nh;
-
-  // Declare your subscriber using a specific topic name, message type and queue size
-  ros::Subscriber sub = nh.subscribe(""your_topic"", 100, talkerCallback);
-
-  // Enter the main loop to wait for new messages
-  ros::spin();
-
-  return 0;
-}",6.850468974560659
-294,a node ROS1 subscriber process subscriber in cpp,"// subscriber.cpp
-#include <ros/ros.h>
+  // Set up the parameters and pass options to the `parameter_spin` function
+  auto config = rclcpp::NodeConfiguration();
+  std::vector<std::string> args;
+  if (!rclcpp::init(argc, argv, args)) {
+    return -1; // Exit in case of initialization failure
+  }
+  
+  const char* package_name = ""parameter_spin"";
+  config.package_name = package_name;
+  
+  rclcpp::NodeOptions options(config);
+  parameter_spin(config, options);
+  
+  return 0; // Indicate successful execution
+}",0
+27,parameter code launch ROS sub subscriber in in c++,"#include <ros/ros.h>
 #include <std_msgs/String.h>
+#include <iostream>
 
-// Callback function for handling incoming messages
-void messageCallback(const std_msgs::String::ConstPtr& msg) {
-    ROS_INFO(""Received message: [%s]"", msg->data.c_str());
-}
-
-int main(int argc, char **argv) {
-    // Initialize the ROS node system and create a NodeHandle object
-    ros::init(argc, argv, ""subscriber"");
-    ros::NodeHandle nh;
-
-    // Create a Subscriber Object with specified topic name and message type
-    ros::Subscriber sub = nh.subscribe(""chatter"", 1000, messageCallback);
-
-    // Spin the node to wait for callbacks (messages)
-    ros::spin();
-
-    return 0;
-}",6.431007198259342
-295,a node ROS1 process subscriber task in c++,"//!/usr/bin/env c++
-#include <ros/ros.h>
-#include ""std_msgs/String.h""
-
-void callback(const std_msgs::StringConstPtr& msg) {
-  ROS_INFO(""Received message: %s"", msg->data.c_str());
+// Callback function for message handling
+void stringCallback(const std_msgs::String::ConstPtr& msg) {
+  ROS_INFO(""Received: [%s]"", msg->data.c_str());
 }
 
 int main(int argc, char** argv) {
   ros::init();
-  
   ros::NodeHandle nh;
 
-  // Create a subscriber object that listens to the 'chatter' topic and invokes callback() when new messages arrive.
-  ros::Subscriber sub = nh.subscribe(""chatter"", 1000, callback);
-  
-  // Spin in a separate thread so we can exit without blocking it.
-  ros::spin();
+  // Subscribe to a topic named ""chatter"" and specify the message type std_msgs::String
+  ros::Subscriber sub = nh.subscribe(""chatter"", 1000, stringCallback);
 
+  ros::spin();
   return 0;
 }",0
-296,a node ROS1 ROS1 process launch subscriber c++,"// listener.cpp
-#include <ros/ros.h>
+29,parameter code ROS sub subscriber in in c++,"# CMakeLists.txt file for the ROS package
+find_package(ament_cmake REQUIRED)
+project(my_subscriber_example)
+
+find_package(catkin REQUIRED COMPONENTS roscpp)
+include_directories(${catkin_INCLUDE_DIRS})
+ament_package()",0
+35,code ROS sub subscriber cpp,"#include <ros/ros.h>
 #include <std_msgs/String.h>
 
-int main(int argc, char **argv) {
-  // Initialize the ROS node
-  ros::init(argc, argv, ""listener"");
-  ros::NodeHandle n;
-
-  // Create a subscriber to receive messages from 'chatter' topic of type String
-  ros::Subscriber sub = n.subscribe(""chatter"", 1000, chatterCallback);
-
-  // Spin the ROS event loop
-  ros::spin();
-
-  return 0;
-}",0
-297,a node ROS1 subscriber in planning subscriber in cpp,"#include <ros/ros.h>
-#include <std_msgs/String.h> // Assuming that your message is of type String (replace with the appropriate custom message class if necessary)
-
-int main(int argc, char** argv) {
-  ros::init(argc, argv, ""planning_subscriber"");
-  
-  ros::NodeHandle nh; // Create a NodeHandle object for ROS1 communication
-
-  // Define the topic name and message type you want to subscribe to (replace '/your_topic' and 'std_msgs/String')
-  std_msgs::String msg;
-  ros::Subscriber subscriber = nh.subscribe(""your_topic"", 10, &YourClass::callbackFunction, this); // Replace YourClass with your class name where the callback function is defined
-
-  ros::spin(); // Enter ROS1 event loop and process callbacks
-  
-  return 0;
-}
-
-// Define a callback function to handle incoming messages from subscribed topic
-void YourClass::callbackFunction(const std_msgs::String::ConstPtr& msg) {
-  // Access the message data using the 'data' member of the received message object (replace with appropriate custom message class fields if necessary)
-  ROS_INFO(""Received a message: %s"", msg->data.c_str());
-}",0
-298,a a node ROS1 process execution subscriber in cpp,"#include <ros/ros.h>
-#include <message_filters/subscriber.h>
-#include <nav_msgs/Odometry.h> // Example message type, replace with your specific ROS topic
-
-// A simple callback function that will be called when a new message is received on the subscribed topic
-void odometryCallback(const nav_msgs::Odometry::ConstPtr& msg) {
-    std::cout << ""Received Odometry: x="" << msg->pose.pose.position.x 
-              << "", y="" << msg->pose.pose.position.y << std::endl;
-}
-
-int main(int argc, char **argv) {
-    ros::init(argc, argv, ""odometry_subscriber""); // Initialize ROS and create a node named ""odometry_subscriber""
-    ros::NodeHandle nh;
-    
-    // Subscribe to the desired topic with message filtering
-    typedef message_filters::Subscriber<nav_msgs::Odometry> OdometrySubscriber;
-    OdometrySubscriber sub = nh.subscribe(""odom"", 10, odometryCallback);
-    
-    ros::spin(); // Enter ROS's event loop
-    
-    return  cv::waitKey(5) == 'q'; // Keep the program running until a key is pressed (replace with your own condition if needed)
-}",0
-299,a node ROS1 subscriber process subscriber cpp,"//!/usr/bin/env c++
-#include <ros/ros.h>
-#include <std_msgs/String.h>
-
-// The callback function to handle incoming messages
+// Callback function called whenever there's a new message available
 void stringCallback(const std_msgs::String::ConstPtr& msg)
 {
-    ROS_INFO(""Received message: %s"", msg->data.c_str());
+    ROS_INFO(""Received: [%s]"", msg->data.c_str());
 }
 
 int main(int argc, char **argv)
 {
+    // Initialize the ROS node named ""subscriber""
     ros::init(argc, argv, ""subscriber"");
     ros::NodeHandle nh;
-
-    // Subscribe to a topic named ""chatter"" and call stringCallback whenever new messages arrive
+    
+    // Create a Subscriber object that listens to std_msgs/String messages published on ""chatter"" topic
     ros::Subscriber sub = nh.subscribe(""chatter"", 1000, stringCallback);
 
-    // Spin the node to process callbacks for incoming messages
+    // Spin the node and wait for callbacks
+    ros::spin();
+    
+    return 0;
+}",9.645446914609801
+37,parameter code queue ROS sub system cpp,"#include <ros/ros.h>
+#include <queue>
+#include <string>
+#include <memory>
+
+// Your custom message type that includes priority information
+struct QueueItem {
+    int id;
+    int priority; // Lower values represent higher priorities
+    
+    QueueItem(int id, int priority) : id(id), priority(priority) {}
+};
+
+// Custom dequeuing method based on priority (min-heap approach)
+struct PriorityQueueDeque {
+    std::queue<std::unique_ptr<QueueItem>> minHeap;
+    
+    void push(const std::unique_ptr<QueueItem>& item) {
+        // If the heap is empty, directly insert the new item
+        if (minHeap.empty()) {
+            minHeap.emplace();
+            minHeap.emplace(item);
+            return;
+        }
+        
+        bool smaller = false;
+        auto current = minHeap.top().get();
+        // If new item has higher priority than the top of the heap, push it to the heap
+        if (item->priority < current->priority) {
+            smaller = true;
+            minHeap.emplace(std::move(item));
+        } else {
+            // Compare this item's priority with its parent's priority in a binary tree-like structure
+            auto parentIndex = (minHeap.size() - 2) / 2;
+            while (parentIndex >= 0 && item->priority < minHeap[parentIndex].get()->priority) {
+                std::swap(minHeap[parentIndex], minHeap[minHeap.size() - 1]);
+                --parentIndex;
+            }
+        }
+        
+        // If new item is smaller, we need to bubble it up (heapify the heap)
+        if (smaller) {
+            while (!isMinHeap()) {
+                auto currentParent = minHeap[index / 2].get();
+                if (item->priority > currentParent->priority) break;
+                
+                std::swap(minHeap[index], minHeap[parentIndex]); // Swap item and its parent
+                --index;
+                ++parentIndex;
+            }
+        }
+    }
+    
+    QueueItem pop() {
+        if (minHeap.empty()) return {};
+        
+        auto top = minHeap.top().get();
+        minHeap.pop();
+        return std::move(top);
+    }
+    
+private:
+    bool isMinHeap() {
+        for (size_t i = 0; i < minHeap.size(); ++i) {
+            auto parentIndex = i / 2;
+            if (parentIndex >= 0 && minHeap[i]->get()->priority > minHeap[parentIndex]->get()->priority) return false;
+        }
+        return true;
+    }
+};
+
+int main(int argc, char** argv) {
+    ros::init();
+    auto node = new ros::NodeHandle(""queue_node"");
+    
+    // Subscribe to your ROS topic that sends QueueItem messages with priorities
+    auto sub = node->subscribe<QueueItem>(""/queue_topic"", 100);
+    
+    PriorityQueueDeque pq;
+    
+    // Callback function for the subscriber
+    void callback(const QueueItem::ConstPtr& msg) {
+        pq.push(std::make_unique<QueueItem>(msg->id, static_cast<int>(10 - msg->priority)));
+        
+        while (!pq.empty()) {
+            auto item = pq.pop();
+            
+            // Do something with the dequeued item
+            ROS_INFO(""Dequeued Item: %d"", item->id);
+        }
+    }
+    
+    sub->registerCallback(callback);
+    
+    ros::spin();
+    
+    delete node;
+    return 0;
+}",0
+59,factor code ROS sub cpp,"#include <vector>
+#include <Eigen/Dense> // Use Eigen library for linear algebra operations
+
+// Include the necessary headers from ROS (ensure they are available in your environment)
+#include <ros/ros.h>
+
+/**
+ * @brief Performs LU decomposition on a matrix using partial pivoting with row interchanges.
+ * 
+ * This function can be integrated into a ROS node to perform matrix factorization, which might
+ * then be used for various purposes like solving linear systems or eigenvalue computation.
+ */
+void luDecomposition(const Eigen::MatrixXd& input_matrix) {
+    // Perform LU decomposition using the Eigen library
+    Eigen::FullPivLU<Eigen::MatrixXd> lu_decomp(input_matrix);
+    
+    if (lu_decomp.isInvertible()) {
+        // The matrix is decomposed successfully; you can now access L, U factors:
+        Eigen::MatrixXd L = lu_decomp.matrixL();
+        Eigen::MatrixXd U = lu_decomp.matrixU();
+        
+        ROS_INFO(""L factor:\n%s"", L.eval().cast<double*>());
+        ROS_INFO(""U factor:\n%s"", U.eval().cast<double*>());
+    } else {
+        // Handle non-invertible case (either singular or nearly singular)
+        throw std::runtime_error(""Matrix is not invertible."");
+    }
+}
+
+/**
+ * @brief A ROS node that performs LU decomposition on an input matrix.
+ */
+int main(int argc, char** argv) {
+    // Initialize the ROS system and create a node handle
+    ros::init(argc, argv, ""lu_decomposition_node"");
+    ros::NodeHandle nh;
+    
+    // Read matrix data from an input topic or service call (implementation depends on your specific use case)
+    
+    // Example: Receiving a Matrix as sensor_msgs/FloatStamped message and converting it to Eigen::MatrixXd
+    ros::Subscriber sub = nh.subscribe<sensor_msgs::FloatStamped>(""input_matrix"", 10, [&](const sensor_msgs::FloatStamped& msg) {
+        // Parse the FloatStamped message and convert it to Eigen::MatrixXd (implementation depends on your specific use case)
+        
+        try {
+            luDecomposition(matrix);
+        } catch (const std::runtime_error& e) {
+            ROS_ERROR(""Error during LU decomposition: %s"", e.what());
+            return;
+        }
+    });
+    
+    ros::spin(); // Enter ROS event loop to handle callbacks
+    
+    return 0;
+}",0
+61,parameter code ROS queue sub cpp,"#include <ros/ros.h>
+#include <std_msgs/String.h> // Example using std::string as payload type
+#include ""custom_message.h""  // Replace with your actual message header file
+
+// Your custom message class declaration (if not already defined)
+class CustomMessage {
+public:
+    int id;
+    std::string data;
+};",0
+62,parameter process code ROS in cpp,"#include <ros/ros.h>
+#include <parameter_server.h>
+
+void processParameter(const std::string& param_name) {
+    // Create a NodeHandle object to interact with ROS parameters and services
+    ros::NodeHandle nh;
+    
+    try {
+        // Retrieve the parameter value from the parameter server using its name
+        double value = nh.get(param_name);
+        
+        // Process the retrieved value (example: scaling)
+        double processedValue = 10.0 * value;
+        
+        // Use or publish the processed value as required
+        ROS_INFO(""Processed Value: %f"", processedValue);
+    } catch(const std::exception& e) {
+        // Handle exception if parameter retrieval fails
+        ROS_ERROR(""Failed to retrieve parameter '%s': %s"", param_name.c_str(), e.what());
+    }
+}
+
+int main(int argc, char **argv) {
+    ros::init(argc, argv, ""parameter_processor"");
+    
+    // Retrieve the desired parameter name as an argument or hardcode it for testing purposes
+    std::string param_name = ""example_param"";
+    
+    processParameter(param_name);
+    
+    ros::spin();
+    
+    return 0;
+}",0
+69,parameter code navigation sub in cpp,"#include <iostream>
+#include <vector>
+#include <string>
+
+class Parameter {
+public:
+    std::string name;
+};
+
+class Navigator {
+private:
+    int currentIndex;
+    std::vector<Parameter*> parameters;
+
+public:
+    Navigator(const std::vector<Parameter*>& paramList) : currentIndex(0), parameters(paramList) {}
+
+    void navigatePrevious() {
+        if (currentIndex > 0) --currentIndex;
+    }
+
+    void navigateNext() {
+        if (currentIndex < static_cast<int>(parameters.size()) - 1) ++currentIndex;
+    }
+
+    std::string getCurrentParameterName() const {
+        return parameters[currentIndex]->name;
+    }
+};",0
+78,parameter code ROS in,,0
+79,parameter ROS c++ sub execution node,"#include <rclcpp/parameter_server.h>
+#include <ros/ros.h>",0
+82,parameter code ROS process in cpp,"#include <ros/ros.h>
+#include <string>
+
+int main(int argc, char **argv) {
+  // Initialize the ROS system
+  ros::init(argc, argv, ""my_node"");
+
+  // Create a NodeHandle object to interact with the ROS system
+  ros::NodeHandle nh;
+
+  // Get and print parameter values from launch file (optional)
+  std::string param_name = ""/example/param"";
+  if (!nh.getParam(param_name, ""Default value"")) {
+    ROS_ERROR(""Could not get '%s' parameter!"", param_name.c_str());
+    return -1;
+  }
+  std::cout << ""Parameter 'example/param': "" << nh.lookup<std::string>(""example/param"").asString() << std::endl;
+
+  // Alternatively, set parameter values from the command line (optional)
+  if (argc == 2) {
+    std::string param_name = argv[1];
+    nh.setParam(param_name, ""New value"");
+    std::cout << ""Set 'example/' parameter to: New value"" << std::endl;
+  }
+
+  // Rest of your ROS node implementation...
+  
+  return 0;
+}",0
+83,code ROS in cpp,"#include <ros/ros.h>
+#include <sensor_msgs/LaserScan.h> // Example using Lidar data
+
+// Forward declaration of the callback function for messages received from a topic subscription
+void scanCallback(const sensor_msgs::LaserScan::ConstPtr& msg);
+
+class MyROSNode {
+public:
+    MyROSNode() : nh_(""~"") {} // ROS node handle initialized with name ""MyROSNode""
+
+    void run() {
+        // Subscribing to the 'scan' topic of type LaserScan
+        sub_ = nh_.subscribe<sensor_msgs::LaserScan>(""scan"", 1, scanCallback);
+        
+        // Spinning to keep running and processing messages
+        ros::spin();
+    }
+
+private:
+    void scanCallback(const sensor_msgs::LaserScan::ConstPtr& msg) {
+        ROS_INFO(""Received Laser Scan data"");
+        // Process the received laser scan message here...
+        
+        // For example, let's just publish a modified version of the incoming message
+        sensor_msgs::LaserScan filtered_msg;
+        std::copy(msg->ranges.begin(), msg->ranges.end(), filtered_msg.ranges.begin());
+        // Filtering or processing can be done here before publishing
+        
+        pub_.publish(filtered_msg);
+    }
+    
+    ros::NodeHandle nh_;
+    ros::Subscriber sub_;
+    ros::Publisher pub_;
+};
+
+int main(int argc, char **argv) {
+    ros::init(argc, argv, ""my_ros_node""); // Initialize ROS system and node name as ""my_ros_node""
+    
+    MyROSNode myNode; // Create an instance of our Node class
+    myNode.run(); // Run the node's main functionality
+    
+    return 0;
+}",0
+87,parameter execution code sub in cpp,"#include <iostream>
+#include <string>
+
+// Define a struct as an example of different data types you may want to process.
+struct ExampleStruct {
+    int value;
+};
+
+template<typename T>
+void executeCodeSub(const T& input) {
+    // Perform the desired operation based on the given type 'T'
+    
+    std::cout << ""Executing code for type: "" << typeid(T).name() << std::endl;
+
+    if constexpr (std::is_same<T, int>::value) {
+        // Specific implementation for integer input
+        std::cout << ""Input is an integer with value: "" << input << std::endl;
+    } else if constexpr (std::is_same<T, ExampleStruct>::value) {
+        // Specific implementation for ExampleStruct input
+        std::cout << ""Input is an ExampleStruct with value: "" << input.value << std::endl;
+    } else {
+        // Generic or default behavior if the type does not match any specific case
+        std::cout << ""Type unsupported!"" << std::endl;
+    }
+}
+
+int main() {
+    int exampleInt = 42;
+    ExampleStruct exampleStruct{10};
+    
+    executeCodeSub(exampleInt); // Call with integer input
+    executeCodeSub(exampleStruct); // Call with struct input
+
+    return 0;
+}",3.2933688271908235
+88,parameter code ROS localization sub cpp,"#include <ros/ros.h>
+#include ""std_msgs/String.h"" // If you need to handle parameters as strings
+
+// Forward declaration of LocalizationSubscriber class for this example
+class LocalizationSubscriber;
+
+int main(int argc, char **argv) {
+    ros::init();
+    
+    // Declare a localization node named ""localization_node""
+    ros::NodeHandle nh;
+
+    // Create an instance of your subscriber class (implementation not shown here)
+    LocalizationSubscriber mySubscriber(nh);
+
+    ros::spin();
+    
+    return 0;
+}
+
+// LocalizationSubscriber.h
+class LocalizationSubscriber {
+public:
+    LocalizationSubscriber(ros::NodeHandle& nh) : nh_(nh) {}
+
+    // A simple function to handle incoming localization data (parameters could be passed here if needed).
+    void processLocalizationData();
+    
+private:
+    ros::NodeHandle& nh_;  // To access parameters in this class
+};",0
+90,parameter parameter interface code ROS sub cpp,"#include <ros/ros.h>
+#include <std_msgs/String.h> // Assuming we are working with strings as an example
+#include ""cpp_common/param_base.h""",0
+100,parameter code sub cpp,"void processCode(const char* code) {
+    // Implementation goes here.
+}",0
+116,parameter code ROS cpp,"<parameter name=""my_param"" type=""int"" default=""42"">
+</parameter>",0
+121,component ROS navigation sub in cpp,"#include ""rclcpp/rclcpp.hpp""
+#include ""geometry_msgs/msg/point.h""
+#include ""nav_msgs/msg/path.hpp""
+
+class NavigationSubscriber : public rclcpp::Node {
+public:
+  NavigationSubscriber() : Node(""navigation_sub"") {
+    // Subscribe to the navigation topic
+    this->navigator = create_publisher<nav_msgs::msg::Path>(
+        ""navigation_path"",
+        10);
+
+    sub_nav_pub = this->create_subscription<nav_msgs::msg::Path>(
+        ""robot_localization/current_pose"", 10, std::bind(&NavigationSubscriber::navigateCallback, this, _1));
+
+    // Other initialization and setup code...
+  }
+
+private:
+  rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr navigator;
+  rclcpp::NodeConfiguration::SharedPtr node_config;
+  
+  void navigateCallback(const nav_msgs::msg::Path& msg) {
+    // Process the received navigation data and generate a path
+    
+    geometry_msgs::msg::Point current_position = /* Get robot's current position */;
+    std::vector<geometry_msgs::msg::Point> waypoints;
+
+    // Generate desired path based on incoming nav message and current_position
+
+    // Publish the generated path to be used by navigation system
+    auto result = navigator->publish(waypoints);
+    
+    if (!result.ok()) {
+      RCLCPP_ERROR(this->get_logger(), ""Failed to publish path: %s"", result.get_message());
+    }
+  }
+};",0
+127,navigation parameter code ROS in cpp,"sudo apt-get install ros-<your_ros_distro>-desktop-source
+sudo apt-get build-essential -y # If not using Catkin
+git clone https://github.com/roscompile/roscomp.git
+cd roscomp
+sudo ./autogen.sh && sudo checkinstall --default",0
+128,parameter queue ROS sub in cpp,"#include <ros/ros.h>
+#include <std_msgs/String>. // Assuming the data type is String in your case, adjust it according to your message types.
+
+int main(int argc, char **argv) {
+    ros::init(argc, argv, ""parameter_queue_node"");
+    ros::NodeHandle nh;
+
+    // Initialize publisher for queueing parameters
+    ros::Publisher parameter_pub = nh.advertise<std_msgs::String>(""parameter_queue"", 10);
+    
+    // Initialize subscriber to receive updated parameters from other nodes
+    ros::Subscriber sub = nh.subscribe(""parameters_topic"", 10, &ParameterQueueCallback);
+
+    ros::Rate loop_rate(10);
+
+    while (ros::ok()) {
+        // Here you can process your incoming parameter data or store it for further processing
+        
+        // Publish the current parameters to the queue topic
+        std_msgs::String msg;
+        msg.data = ""example_parameter""; // Set your own data here
+        parameter_pub.publish(msg);
+
+        ros::spinOnce();
+        loop_rate.sleep();
+    }
+
+    return 0;
+}
+
+// Callback function to process incoming parameters from subscriber
+void ParameterQueueCallback(const std_msgs::String& msg) {
+    ROS_INFO(""Received parameter: [%s]"", msg.data.c_str());
+    
+    // You can also add your own processing logic here, like storing the received data or publishing it to another topic.
+}",0
+129,planning parameter code ROS in cpp,"#include <ros/ros.h>
+#include <std_srvs/SetBool.h>
+#include <param_server_msgs/GetParameter.h>
+
+class ParameterServer {
+public:
+  // Constructor and destructor
+  ParameterServer();
+  ~ParameterServer();
+  
+  // Function to set a parameter value
+  bool setParam(const std::string& paramName, const ros::Time& timestamp, int newValue);
+
+  // Function to get a parameter value
+  template<typename T>
+  T getParam(const std::string& paramName) {
+    // Implementation using ROS Parameter Server
+  }
+
+private:
+  ros::NodeHandle nh_;
+};",0
+134,component code sub in cpp,"// Component.h
+
+#ifndef COMPONENT_H
+#define COMPONENT_H
+
+class Component {
+public:
+    // Constructor
+    Component();
+    
+    // Destructor
+    ~Component();
+    
+    // Method to initialize the component
+    void Initialize();
+    
+    // Method to update the state of the component
+    void Update();
+    
+private:
+    // Member variables representing the state or properties of the component
+    int property1;
+    float property2;
+    
+    // Private methods if needed for internal operations (not exposed outside)
+    void InternalMethod();
+};
+
+#endif // COMPONENT_H",0
+141,parameter code control sub in cpp,"#include <iostream>
+
+// Function prototype with two parameters for demonstration
+void codeControlSub(int controlParameter, int valueToProcess);
+
+int main() {
+    // Example usage of the code control subroutine
+    const int CONTROL_PARAM = 2; // Set a parameter to control execution flow
+    const int VALUE_TO_PROCESS = 42;
+    
+    codeControlSub(CONTROL_PARAM, VALUE_TO_PROCESS);
+
+    return 0;
+}
+
+// Implementation of the Code Control Subroutine (CCS)
+void codeControlSub(int controlParameter, int valueToProcess) {
+    if (controlParameter == 1) { // Parameter-based conditional branch
+        std::cout << ""Processing with parameter: "" << controlParameter << std::endl;
+        processValue(valueToProcess);
+    } else if (controlParameter == 2) {
+        // Additional processing for this case
+        std::cout << ""Another set of operations."" << std::endl;
+    } else {
+        // Default execution path or error handling
+        std::cerr << ""Invalid control parameter"" << std::endl;
+    }
+}
+
+// Helper function to demonstrate processing with a value.
+void processValue(int val) {
+    if (val % 2 == 0) {
+        std::cout << ""Processing an even number: "" << val << std::endl;
+    } else {
+        std::cout << ""Processing an odd number: "" << val << std::endl;
+    }
+}",0
+142,parameter node code ROS in cpp,"#include <ros/ros.h>
+#include <std_msgs/String.h>
+
+int main(int argc, char **argv) {
+    // Initialize the ROS system
+    ros::init(argc, argv, ""my_node"");
+    ros::NodeHandle n;
+
+    // Declare a parameter named 'param_name' of type std::string (default string value: """")
+    auto param = n.param<std_msgs::String>(""param_name"", ""DefaultValue"");
+
+    ROS_INFO(""%s"", param.data.c_str()); // Print the value of the parameter
+
+    ros::spin(); // Keep this node from exiting until a shutdown command is received.
+
+    return 0;
+}",0
+143,parameter code ROS for ROS in c++,"#include <rclcpp/rclcpp.hpp>
+
+int main(int argc, char **argv) {
+  rclcpp::init(argc, argv);
+  
+  // Create a NodeHandle for accessing the parameter server
+  auto node = rclcpp::Node::make_shared(""my_node"");
+  
+  try {
+    // Get a parameter named ""example_param"" and print its value
+    std::string example_param;
+    rclcpp::get_parameter(node, ""example_param"", example_param);
+    
+    RCLCPP_INFO(rclcpp::get_logger(""my_node""), ""Parameter 'example_param' has value: %s"", example_param.c_str());
+  } catch (const std::exception& e) {
+    RCLCPP_ERROR(rclcpp::get_logger(""my_node""), ""Failed to get parameter: %s"", e.what());
+  }
+  
+  rclcpp::spin(node);
+  return 0;
+}",0
+148,parameter code ROS sub subscriber ROS in c++,"#include <ros/ros.h>
+#include <std_msgs/String.h> // Assuming a String message is being published on the topic
+
+// Callback function for incoming ROS messages
+void callback(const std_msgs::String::ConstPtr& msg) {
+    ROS_INFO(""Received: [%s]"", msg->data.c_str());
+}
+
+int main(int argc, char **argv) {
+    // Initialize the ROS system and create a node handle
+    ros::init(argc, argv, ""subscriber_node"");
+    ros::NodeHandle nh;
+
+    // Declare a subscriber object for a specific topic (replace ""/chosen_topic"" with your desired topic)
+    ros::Subscriber sub = nh.subscribe<std_msgs::String>(""chosen_topic"", 10, callback);
+
+    // Spin the node to keep listening and processing messages indefinitely
     ros::spin();
 
     return 0;
-}",6.859605343175497
+}",6.236029186854903
+155,parameter code ROS sub execution,"#include <ros/ros.h>
+
+int main(int argc, char **argv) {
+    // Initialize ROS
+    ros::init(argc, argv, ""your_node"");
+    ros::NodeHandle nh;
+
+    // Get the parameter value
+    std::string myParam = nh.param<std::string>(""my_param"", ""default_value"");
+
+    ROS_INFO(""The parameter 'my_param' is: %s"", myParam.c_str());
+
+    ros::spin(); // Keep the node running and processing callbacks
+
+    return 0;
+}",4.95583877744902
+162,execution parameter code ROS in cpp,"#include <ros/ros.h>
+#include <string>
+
+int main(int argc, char** argv) {
+  // Initialize ROS system
+  ros::init(argc, argv, ""your_node"");
+
+  // Retrieve command line arguments (assuming they are passed in order)
+  std::string node_name;
+  std::string topic_name;
+  
+  if (argc < 3) {
+    ROS_ERROR(""Incorrect number of arguments, expected: <node_name> <topic_name>"");
+    return -1;
+  }
+
+  // Parse command line arguments for node name and topic name
+  node_name = argv[1];
+  topic_name = argv[2];
+
+  // Initialize ROS node with the provided name
+  ros::NodeHandle nh;
+
+  // Access your ROS functions and publish/subscribe to topics using 'node_name' and 'topic_name'
+  
+  return 0;
+}",3.815173892310153
+163,parameter code ROS sub subscriber cpp,param_name: value,0
+165,parameter control ROS sub in cpp,"// main.cpp
+#include ""ros/ros.h""
+#include <std_msgs/String.h>
+
+// Function to handle the callback when new data is received from the topic
+void parameterCallback(const std_msgs::String& msg) {
+    // Retrieve ROS parameters using ros::param::get<Type>(scope, name).
+    // For example: double someParameter = ros::param::get<double>(""~some_parameter"", ""global"");
+
+    // Access the received parameter and control behavior accordingly.
+    // E.g., adjust motor speed based on value of 'msg' or another retrieved ROS parameter.
+}
+
+int main(int argc, char **argv) {
+    ros::init(argc, argv, ""parameter_control_node"");
+    ros::NodeHandle nh;
+
+    // Create a subscriber that listens to the desired topic and invokes 'parameterCallback' when new data is received.
+    ros::Subscriber sub = nh.subscribe<std_msgs::String>(""topic_name"", 10, parameterCallback);
+
+    ros::spin(); // Enter ROS event loop
+
+    return 0;
+}",0
+177,parameter sensor code ROS sub cpp,"// sensor_subscriber.cpp
+#include ""ros/ros.h""
+#include <std_msgs/String.h> // Assuming the parameter is stored as a string for simplicity
+
+void parameterCallback(const std_msgs::String::ConstPtr& msg) {
+    int sensorCode;
+    try {
+        sensorCode = std::stoi(msg->data);
+        ROS_INFO(""Sensor code received: %d"", sensorCode);
+        
+        // Retrieve the parameter value using its name or index (if applicable).
+        // For example, assuming there is a parameter named ""sensor_code"":
+        int customParamValue;
+        ros::param::get(""~sensor_code"", customParamValue);
+        ROS_INFO(""Retrieved sensor code value: %d"", customParamValue);
+    } catch (const std::exception& e) {
+        ROS_ERROR(""Error parsing parameter: %s"", e.what());
+    }
+}
+
+int main(int argc, char **argv) {
+    ros::init(argc, argv, ""sensor_subscriber"");
+    
+    ros::NodeHandle nh;
+    ros::Subscriber sub = nh.subscribe(""parameter_topic"", 10, parameterCallback); // Adjust the topic and queue size as needed
+    
+    ros::spin();
+    return 0;
+}",8.89096669850016
+185,parameter mapping code sub in mapping cpp,"#include <iostream>
+#include <vector>
+#include <map>
+
+class ParameterMapper {
+public:
+    // Function to map parameters from input format to output format
+    std::map<std::string, int> mapParameters(const std::vector<std::string>& inputParams) {
+        std::map<std::string, int> parameterMap;
+
+        for (const auto& param : inputParams) {
+            // Convert the input parameter to its corresponding output format
+            // Here we assume that the mapping logic is based on some predefined rules.
+            if (param == ""param1"") {
+                parameterMap[""output_param1""] = 10;
+            } else if (param == ""param2"") {
+                parameterMap[""output_param2""] = 20;
+            } // Add more mapping conditions as required by your application
+            else {
+                std::cerr << ""Invalid input parameter: "" << param << std::endl;
+            }
+        }
+
+        return parameterMap;
+    }
+};
+
+int main() {
+    ParameterMapper mapper;
+
+    // Define the input parameters
+    std::vector<std::string> inputParams = {""param1"", ""param2""};
+
+    // Map the parameters using the defined function
+    std::map<std::string, int> mappedParameters = mapper.mapParameters(inputParams);
+
+    // Print the resulting parameter map
+    for (const auto& pair : mappedParameters) {
+        std::cout << ""Output Parameter: "" << pair.first << "", Value: "" << pair.second << std::endl;
+    }
+
+    return 0;
+}",0.3061024679116038
+186,variable code ROS in cpp,"#include <iostream>
+
+// Define the ROS_VERSION macro to check and set it based on your development environment.
+// For illustration, we'll manually define common versions. In real scenarios, you should 
+// use an appropriate method or tool to get this information at compile-time.
+#define ROS_VERSION ""1.0"" // Default version if not defined in the environment.
+
+int main() {
+    std::cout << ""Using ROS Version: "" << ROS_VERSION << std::endl;
+
+    // Depending on your needs, you could use conditional compilation to handle different versions.
+#ifdef ROS_VERSION_1_0
+    std::cout << ""ROS 1.0 specific code goes here."" << std::endl;
+#elif defined(ROS_VERSION_2_0)
+    std::cout << ""ROS 2.0 specific code goes here."" << std::endl;
+#else
+    std::cerr << ""Unsupported ROS version!"" << std::endl;
+#endif
+
+    return 0;
+}",3.8705559394204223
+194,execution parameter sub in,"public class MyClass {
+    public void myMethod() {
+        // Method body
+    }
+}
+
+// Usage of 'sub' as a parameter would be like this in Java, calling an instance method
+MyClass obj = new MyClass();
+obj.myMethod(); // Here, ""obj"" acts as the context (object) that you are operating on with ""myMethod"".",0
+196,parameter code ROS subscriber in cpp,"#include <ros/ros.h>
+
+#include <param/get.h>
+
+
+int main(int argc, char** argv) {
+
+    // Initialize the ROS system
+
+    ros::init(argc, argv, ""parameter_subscriber"");
+
+
+    // Create a node handle; used to interact with ROS
+
+    ros::NodeHandle nh;
+
+
+    // Get parameters from ROS parameter server
+
+    std::string topic_name = nh.param(""topic_to_subscribe"").asString();
+
+
+    // Define the callback function that will be called when a message is received on the subscribed topic
+
+    void handleParameterCallback(const std_msgs::String& msg) {
+
+        ROS_INFO(""Received parameter from '%s': %s"", topic_name.c_str(), msg.data.c_str());
+
+    }
+
+
+    // Create a subscriber object, specifying the type of message you are expecting and the callback function to handle incoming messages
+
+    ros::Subscriber sub = nh.subscribe(topic_name + ""/param"", 1000, handleParameterCallback);
+
+
+    // Spin in a loop to wait for callbacks from subscribed topics
+
+    ros::spin();
+
+
+    return 0;
+
+}",0
+198,parameter code sub subscriber cpp,"#include <string>
+
+class Subscriber {
+public:
+    // Constructors
+    Subscriber();
+    Subscriber(const std::string& name, const std::string& phoneNumber);
+
+    // Getter and Setter methods for subscriber details
+    std::string getName() const;
+    void setName(const std::string& name);
+
+    std::string getPhoneNumber() const;
+    void setPhoneNumber(const std::string& phoneNumber);
+
+    // Method to manage the subscription status of a subscriber
+    bool subscribe();
+    bool unsubscribe();
+
+private:
+    std::string name_;  // Subscriber's name
+    std::string phoneNumber_;  // Subscriber's phone number
+    bool isSubscribed_;   // Flag to check the subscription status of a subscriber
+};
+
+// Constructor definitions
+Subscriber::Subscriber() : name_(""""), phoneNumber_(""""), isSubscribed_(false) {}
+
+Subscriber::Subscriber(const std::string& name, const std::string& phoneNumber) 
+    : name_(name), phoneNumber_(phoneNumber), isSubscribed_(false) {}
+
+// Getter and Setter methods implementation
+std::string Subscriber::getName() const {
+    return name_;
+}
+
+void Subscriber::setName(const std::string& name) {
+    name_ = name;
+}
+
+std::string Subscriber::getPhoneNumber() const {
+    return phoneNumber_;
+}
+
+void Subscriber::setPhoneNumber(const std::string& phoneNumber) {
+    phoneNumber_ = phoneNumber;
+}
+
+// Methods to manage the subscription status implementation
+bool Subscriber::subscribe() {
+    isSubscribed_ = true;
+    return true;
+}
+
+bool Subscriber::unsubscribe() {
+    isSubscribed_ = false;
+    return true;
+}",0

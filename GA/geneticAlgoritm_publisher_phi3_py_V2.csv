@@ -1,0 +1,497 @@
+generation,prompt,code,fitness
+0,make a ROS1 publisher in python,"import rospy
+
+from std_msgs.msg import String  # Assuming we want to publish messages of type String
+
+
+def callback(data):
+
+    print(""Received data: %s"" % data.data)
+
+
+def main():
+
+    rospy_init()
+
+    rate = rospy.Rate(10)  # Adjust the publishing frequency as needed
+
+
+    pub = rospy.Publisher('topic_name', String, queue_size=10)  # Replace 'topic_name' with your desired topic name
+
+
+    while not rospy.is_shutdown():
+
+        data = String()
+
+        data.data = ""Hello, ROS!""  # Set the message you want to publish
+
+        pub.publish(data)
+
+        rate.sleep()
+
+
+if __name__ == '__main__':
+
+    main()",4.253247475791345
+0,code ROS pub in python,"#!/usr/bin/env python
+import rospy
+from std_msgs.msg import String  # Change the message type as needed for your use case
+
+def publisher():
+    # Initialize a ROS node named ""my_publisher""
+    rospy.init_node('my_publisher', anonymous=True)
+    
+    # Create a Publisher object with topic and queue size (default is 10)
+    pub = rospy.Publisher('my_topic', String, queue_size=10)
+    
+    try:
+        # Enter the main loop to keep publishing messages
+        rate = rospy.Rate(10)  # Adjust the publish frequency as needed
+        while not rospy.is_shutdown():
+            # Create a message object with your data
+            msg = String()
+            msg.data = ""Hello, ROS World!""
+            
+            # Publish the message on the topic
+            pub.publish(msg)
+            rate.sleep()  # Sleep for the specified time (10 Hz in this case)
+    except rospy.ROSInterruptException:
+        pass
+
+if __name__ == '__main__':
+    try:
+        publisher()
+    except rospy.ROSInterruptException:
+        pass",3.562705200907635
+0,create a publisher for ROS in python,"# Import required modules
+
+import rospy
+
+from std_msgs.msg import String  # Example message type, replace as needed
+
+
+def setup_publisher():
+
+    try:
+
+        # Initialize the ROS node
+
+        rospy.init_node('message_publisher', anonymous=True)
+
+
+        # Create a publisher object on the given topic with String message type and default QoS (Quality of Service)
+
+        pub = rospy.Publisher('/your_topic', String, queue_size=10)  # Replace '/your_topic' with your desired topic
+
+
+        print(""Ready to publish on '{}'"".format('/your_topic'))
+
+
+    except rospy.ROSInterruptException:
+
+        pass
+
+
+if __name__ == ""__main__"":
+
+    setup_publisher()",4.75878332794345
+0,generate a python pub node,"import hashlib
+
+from time import time
+
+from threading import Thread
+
+
+class Block:
+
+    def __init__(self, index, transactions, previous_hash, nonce=0):
+
+        self.index = index
+
+        self.transactions = transactions
+
+        self.previous_hash = previous_hash
+
+        self.nonce = nonce
+
+        self.timestamp = time()
+
+        self.hash = self.compute_hash()
+
+
+    def compute_hash(self):
+
+        return hashlib.sha256((str(self.index) +
+
+                              str(self.previous_hash) +
+
+                              str(self.timestamp) +
+
+                              str(self.transactions).encode('utf-8') +
+
+                              str(self.nonce)).encode()).hexdigest()
+
+
+class Blockchain:
+
+    def __init__(self):
+
+        self.unconfirmed_transactions = []
+
+        self.chain = [self.create_genesis_block()]
+
+
+    def create_genesis_block(self):
+
+        return Block(index=0,
+
+                     transactions=[],
+
+                     previous_hash=""1"",  # Genesis block has no predecessor
+
+                     nonce=0)
+
+
+    @staticmethod
+
+    def compute_proof_of_work(block):
+
+        target = '0000' * Block.target_length()
+
+        while block.hash[0:Block.target_length()] != target:
+
+            block.nonce += 1
+
+            block.hash = block.compute_hash()
+
+        return block.nonce
+
+
+    @staticmethod
+
+    def target_length():
+
+        # You may adjust the difficulty of your network by changing this value
+
+        return 5
+
+
+    @property
+
+    def latest_block(self):
+
+        return self.chain[-1]
+
+
+    def add_new_transaction(self, transaction):
+
+        self.unconfirmed_transactions.append(transaction)
+
+
+    def mine_pending_transactions(self, miner_address):
+
+        block = Block(len(self.chain), self.unconfirmed_transactions, selfayer.hash())
+
+        return self.compute_proof_of_work(block)
+
+
+# This is a simple pub node simulation example:
+
+class PubNode:
+
+    def __init__(self):
+
+        self.chain = Blockchain()
+
+
+    def receive_transaction(self, transaction):
+
+        if not self.chain.validate_transaction(transaction):
+
+            return ""Transaction rejected""
+
+        self.chain.add_new_transaction(transaction)
+
+        # Assuming the node is part of a network to mine blocks (not implemented here)
+
+        nonce = self.mine_pending_transactions(""node_address"")
+
+        block = Block(len(self.chain.chain), [transaction], self.latest_block.hash, nonce=nonce)
+
+        self.chain.chain.append(block)
+
+        return ""Transaction mined into the next block""
+
+
+# Example usage:
+
+pub_node = PubNode()
+
+transaction = {
+
+    'sender': 'Alice',
+
+    'recipient': 'Bob',
+
+    'amount': 50,
+
+}
+
+response = pub_node.receive_transaction(transaction)
+
+print(response)",3.169265478641107
+1,create a publisher for in python,"import threading
+from typing import Any, Callable, Dict, List, Tuple
+
+class Observer:
+    """"""A base class for observers.""""""
+    
+    def update(self, message):
+        pass
+
+
+class Publisher:
+    """"""Publisher that notifies subscribers about messages.""""""
+    
+    def __init__(self):
+        self._subscribers: Dict[Any, List[Observer]] = {}
+        # Lock to ensure thread safety during modifications.
+        self._lock = threading.Lock()
+        
+    def subscribe(self, observer: Observer) -> None:
+        """"""Subscribe an observer.""""""
+        with self._lock:
+            if observer not in self._subscribers:
+                self._subscribers[observer] = []
+            self._subscribers[observer].append(None)  # Placeholder for the Observer instance.
+    
+    def unsubscribe(self, observer: Observer) -> None:
+        """"""Unsubscribe an observer.""""""
+        with self._lock:
+            if observer in self._subscribers and any(o is not None for o in self._subscribers[observer]):
+                self._subscribers[observer].remove(None)  # Remove the placeholder.
+    
+    def publish(self, message: Any) -> None:
+        """"""Publish a message to all subscribed observers.""""""
+        with self._lock:
+            for observer in self._subscribers.values():
+                if observer:
+                    for o in observer:  # Assuming each subscription has at least one Observer instance.
+                        o.update(message)
+    
+class MyObserver(Observer):
+    """"""A simple observer that prints received messages.""""""
+    
+    def __init__(self, name: str):
+        self._name = name
+        
+    def update(self, message):
+        print(f""{self._name} received the following message: {message}"")
+
+# Example usage
+if __name__ == ""__main__"":
+    publisher = Publisher()
+    
+    # Subscribe observers.
+    observer1 = MyObserver(""Observer 1"")
+    observer2 = MyObserver(""Observer 2"")
+    publisher.subscribe(observer1)
+    publisher.subscribe(observer2)
+    
+    # Simulate publishing a message.
+    publisher.publish(""Hello, World!"")",3.227454464477046
+2,create a ROS1 publisher in python,"import rospy
+
+from std_msgs.msg import String  # Importing the message type used in this example
+
+
+def main():
+
+    rospy.init_node('my_publisher', anonymous=True)  # Initializing a ROS node named 'my_publisher'
+
+
+    publisher = rospy.Publisher('my_topic', String, queue_size=10)  # Creating a publisher with the specified message type and queue size
+
+
+    try:
+
+        rospy.spin()  # Entering ROS's event loop
+
+    except rospy.ROSInterruptException:
+
+        print(""Node was killed"")
+
+
+if __name__ == '__main__':
+
+    main()",4.797179364095072
+3,create a ROS1 publisher ROS in python,pip install rospkg,6.671130694735802
+5,create a ROS1 publisher ROS python,"#!/usr/bin/env python
+import rospy
+from std_msgs.msg import String  # Replace 'String' with appropriate message type for your use case
+
+def callback(data):
+    print(""Received data: %s"" % data.data)
+
+if __name__ == ""__main__"":
+    try:
+        rospy.init_node('my_publisher', anonymous=True)  # Create a ROS node named 'my_publisher'
+        
+        publisher = rospy.Publisher('/topic_name', String, queue_size=10)  # Replace '/topic_name' with your desired topic name and 'String' with the message type you want to publish
+        
+        rospy.Subscriber('/topic_name', String, callback)  # Create a subscriber for receiving data from the specified topic
+        
+        rospy.spin()  # Start ROS event loop
+    except rospy.ROSInterruptException:
+        pass",3.8161637529459083
+10,create a ROS1 publisher data in python,"import rospy
+
+from std_msgs.msg import String  # Replace 'String' with your desired message type
+
+
+def main():
+    rospy.init_node('my_publisher', anonymous=True)  # Initialize a ROS node named ""my_publisher""
+    
+    publisher = rospy.Publisher('/my_topic', String, queue_size=10)  # Create a publisher with topic '/my_topic' and message type 'String'
+    
+    rate = rospy.Rate(10)  # Set the publishing rate to 10 Hz (adjust as needed)
+    
+    while not rospy.is_shutdown():
+        msg = String()  # Create a dummy message of type 'String'
+        msg.data = ""Hello, ROS!""  # Set your desired data for the publisher
+        
+        publisher.publish(msg)  # Publish the message to '/my_topic'
+        
+        rate.sleep()
+
+
+if __name__ == '__main__':
+    main()",3.9564001201587686
+11,create a ROS1 in python,"mkdir ros_node
+cd ros_node",6.559126756253235
+14,create a ROS1 publisher python,"import rospy
+from std_msgs.msg import String  # Change the message type as needed for your use case
+
+# Initialize ROS node
+rospy.init_node('simple_publisher', anonymous=True)",4.302451940121899
+28,create a in python,"# Greeting Script in Python
+
+def get_user_name():
+    """"""Prompt the user to enter their name.""""""
+    return input(""Please enter your name: "")
+
+def greet_user(name):
+    """"""Print out a personalized greeting for the user.""""""
+    print(f""Hello, {name}! Welcome to our program."")
+
+if __name__ == ""__main__"":
+    # Get the user's name
+    user_name = get_user_name()
+    
+    # Greet the user
+    greet_user(user_name)",4.064015269405964
+29,node create a ROS1 in python,"cd ~/catkin_ws/
+catkin create src my_package",6.30434102934103
+32,create a ROS1 publisher node,"cd ~/path-to-your-workspace
+rospack init
+catkin_create_pkg ros1_publisher roscpp",6.277656081478932
+49,create a ROS1 queue publisher in python,"#!/usr/bin/env python
+
+import rospy
+
+from std_msgs.msg import String  # If you're publishing a simple string message, this is sufficient
+
+
+def main():
+
+    rospy.init_node('my_publisher', anonymous=True)
+
+    pub = rospy.Publisher('/my_queue_topic', String, queue_size=10)  # Queue size can be adjusted as per your needs
+
+
+    rate = rospy.Rate(10)  # Adjust the frequency at which you publish messages
+
+    while not rospy.is_shutdown():
+
+        msg = String()
+
+        msg.data = ""Hello from my Queue Publisher""
+
+        pub.publish(msg)
+
+        rate.sleep()
+
+
+if __name__ == '__main__':
+
+    main()",4.311707324691846
+50,create a ROS1 message publisher python,"# my_msgs/MyMessage.msg
+float32 my_data
+bool is_active",6.290659658533824
+52,create task a ROS1 publisher python,"sudo apt update
+
+sudo apt install ros-noetic-desktop-full
+
+source /opt/ros/noetic/setup.bash
+
+python3 -m pip install rospkg",6.264360880194596
+54,control create a ROS1 publisher python,pip install rospkg rclpy [packages-you-need],6.28376111055573
+55,create launch a ROS1 in python,pip install ROSClient,6.665086078691186
+56,create a a ROS1 in python,"mkdir -p /your/workspace/src/myrospackage
+cd /your/workspace/src/myrospackage
+touch CMakeLists.txt
+touch src/__init__.py
+touch src/greeting_node.py
+touch build.symlink
+touch devel/setup.bash",3.266722303920261
+57,a ROS1 ROS1 in python,"sudo apt update
+sudo apt install ros-noetic-desktop-full
+pip3 install rospkg rviz gazebo_ros python3-tk",3.272999856999741
+58,create a ROS1 process publisher in python,"#!/usr/bin/env python
+
+import rospy
+
+from std_msgs.msg import String  # Replace String with your custom message type
+
+
+def init():
+
+    global publisher
+
+    rospy.init_node('my_publisher', anonymous=True)
+
+    pub = rospy.Publisher('my_topic', String, queue_size=10)  # Replace 'my_topic' and String with your topic and message type
+
+    return pub
+
+
+def publish():
+
+    rate = rospy.Rate(10)  # Adjust the publishing frequency as needed
+
+    while not rospy.is_shutdown():
+
+        msg = String()  # Replace with your custom message initialization
+
+        msg.data = 'Hello, ROS!'  # Assign a value to your message's data field
+
+        publisher.publish(msg)
+
+        rate.sleep()
+
+
+if __name__ == ""__main__"":
+
+    try:
+
+        publisher = init()
+
+        rospy.loginfo(""Starting the publisher node"")
+
+        publish()
+
+    except rospy.ROSInterruptException:
+
+        pass  # This allows you to interrupt the ROS process with Ctrl+C",3.913343416493242
+62,create a ROS1 ROS1 in python,"sudo apt update
+sudo apt install ros-melodic-desktop-full -y",3.275681550442272

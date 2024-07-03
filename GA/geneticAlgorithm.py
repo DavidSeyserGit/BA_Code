@@ -95,10 +95,10 @@ def getFitness(code, prompt, benchmark):
         case _:
             benchmarkScore = 1
     
-    ka = 5
-    kb = 2
+    ka = 3
+    kb = 1
     kc = 0.3
-    kd = 0.9
+    kd = 2
     ke = 4
     kf = 2
     

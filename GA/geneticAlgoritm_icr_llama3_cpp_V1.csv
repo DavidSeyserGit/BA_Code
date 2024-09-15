@@ -1,0 +1,5348 @@
+generation,prompt,code,fitness
+0,Create a ROS node in C++ that publishes odometry data for a differential drive robot moving in a circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/TwistStamped.h>
+
+class OdometryPublisher {
+public:
+    OdometryPublisher(ros::NodeHandle& nh) : 
+        nh_(nh), publisher_(nh.advertise(""odometry"", geometry_msgs::message_traits::create<std::string>(_msg_type, ""geometry_msgs""))), 
+        odometry_data_(new geometry_msgs::TwistStamped()) {}
+
+    ~OdometryPublisher() {
+        delete odometry_data_;
+    }
+
+    void publishOdometry(double x, double y, double theta) {
+        geometry_msgs::TwistStamped msg = *odometry_data_;
+        msg.twist.linear.x = x;
+        msg.twist.linear.y = y;
+        msg.twist.angular.z = theta;
+        publisher_.publish(msg);
+    }
+
+private:
+    ros::NodeHandle& nh_;
+    ros::Publisher publisher_;
+    geometry_msgs::TwistStamped* odometry_data_;
+};
+
+int main(int argc, char** argv) {
+    // Initialize the ROS node
+    ros::init(argc, argv, ""odometry_publisher"");
+    ros::NodeHandle nh;
+
+    OdometryPublisher odometry_pub(nh);
+
+    // Define the circular motion parameters
+    double radius = 0.5; // in meters
+    double speed = 1.0; // in meters per second
+
+    // Publish odometry data at a rate of 100 Hz
+    ros::Rate rate(100);
+    while (ros::ok()) {
+        // Calculate the robot's position and orientation based on its linear and angular velocity
+        double x = radius * cos(ros::Time::now().toSec() * speed);
+        double y = radius * sin(ros::Time::now().toSec() * speed);
+        double theta = ros::Time::now().toSec() * speed;
+
+        // Publish the odometry data
+        odometry_pub.publishOdometry(x, y, theta);
+
+        // Wait for the next iteration
+        rate.sleep();
+    }
+
+    return 0;
+}",0
+0,Write a ROS C++ program that simulates and publishes the motion of a robot around its Instantaneous Center of Rotation (ICR).,"#include <ros/ros.h>
+#include <geometry_msgs/PoseStamped.h>
+#include <tf/transformBroadcaster.h>
+
+class RobotMotionSimulator {
+public:
+    RobotMotionSimulator(ros::NodeHandle& nh) : 
+        node_(nh), 
+        broadcaster_(new tf::TransformBroadcaster()) {}
+
+    void simulateAndPublish() {
+        ros::Rate rate(10.0);
+        while (node_.ok()) {
+            // Simulate the robot's motion around its ICR
+            double theta = ros::Duration::now().toSec() * 2 * M_PI;
+            geometry_msgs::PoseStamped pose;
+            pose.header.stamp = node_.now();
+            pose.pose.position.x = sin(theta);
+            pose.pose.position.y = cos(theta);
+            pose.pose.position.z = 0.5; // assume the robot is moving in a plane
+            pose.pose.orientation.w = 1;
+
+            // Publish the transformation between the ICR frame and the world frame
+            tf::Transform transform;
+            transform.setOrigin(tf::Vector3(pose.pose.position.x, pose.pose.position.y, pose.pose.position.z));
+            transform.setRotation(pose.pose.orientation);
+            broadcaster_->sendTransform(transform);
+
+            rate.sleep();
+        }
+    }
+
+private:
+    ros::NodeHandle node_;
+    boost::shared_ptr<tf::TransformBroadcaster> broadcaster_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv);
+    ros::NodeHandle nh;
+
+    RobotMotionSimulator simulator(nh);
+    simulator.simulateAndPublish();
+
+    return 0;
+}",0
+0,Generate a ROS C++ node that calculates and publishes odometry and TF data for a robot moving with constant angular velocity.,"// Include the necessary headers
+#include <ros/ros.h>
+#include <tf/transform_datatype.h>
+#include <geometry_msgs/PoseStamped.h>
+
+class OdometryNode {
+public:
+  // Constructor
+  OdometryNode() : ros_node_(""odom_pub""), tf_buffer_(new tf::TransformBuffer()) {}
+
+  // Destructor
+  ~OdometryNode() {
+    delete tf_buffer_;
+  }
+
+  // Main loop
+  void run() {
+    // Initialize odometry variables
+    double x = 0.0;
+    double y = 0.0;
+    double theta = 0.0;
+
+    // Set the angular velocity (e.g., 1.0 rad/s)
+    double omega = 1.0;
+
+    // Main loop
+    while (ros::ok()) {
+      // Calculate new odometry values based on the previous values and the angular velocity
+      x += cos(theta) * omega;
+      y += sin(theta) * omega;
+      theta += omega;
+
+      // Create a TF message with the new odometry values
+      tf::Transform transform;
+      transform.setOrigin(x, y, 0.0);
+      transform.setRotation(tf::createQuaternionFromYaw(theta));
+
+      // Publish the odometry and TF messages
+      ros_node_.publish(odom_message_);
+      tf_buffer_->sendTransform(transform);
+
+      // Sleep for a short period to avoid overloading the node
+      ros::Duration sleep_time_(0.01);
+      sleep_time.sleep();
+    }
+  }
+
+private:
+  // ROS node handle
+  ros::NodeHandle ros_node_;
+
+  // TF transform buffer
+  tf::TransformBuffer* tf_buffer_;
+};
+
+int main(int argc, char** argv) {
+  // Initialize the ROS node
+  ros::init(argc, argv, ""odom_pub"");
+  ros::NodeHandle nh;
+
+  // Create an instance of the odometry node
+  OdometryNode node;
+
+  // Run the node's main loop
+  node.run();
+
+  return 0;
+}",0
+0,Implement a ROS C++ publisher that simulates circular robot motion and broadcasts odometry and transform data.,"#include <ros/ros.h>
+#include <geometry_msgs/PoseStamped.h>
+#include <tf/transform_broadcaster.h>
+
+class RobotMotionPublisher {
+public:
+  RobotMotionPublisher() : 
+    nodeHandle_(new ros::NodeHandle(""robot_motion_publisher"")),
+    broadcaster_(*new tf::TransformBroadcaster),
+    currentAngle_(0.0) {}
+
+  void run() {
+    // Initialize the simulation parameters
+    double radius_ = 1.0;
+    double angularVelocity_ = M_PI / 2.0; // 1/2 PI rad/s
+
+    while (nodeHandle_->ok()) {
+      // Calculate the new robot pose
+      geometry_msgs::PoseStamped pose_;
+      pose_.header.stamp = ros::Time::now();
+      pose_.pose.position.x = radius_ * std::cos(currentAngle_);
+      pose_.pose.position.y = radius_ * std::sin(currentAngle_);
+      pose_.pose.orientation.w = 1.0;
+
+      // Broadcast the odometry data
+      nodeHandle_->publish(pose_);
+
+      // Calculate and broadcast the transform from the map frame to the robot's base link
+      tf::TransformStamped transform_;
+      transform_.header.stamp = ros::Time::now();
+      transform_.transform.translation.x = pose_.pose.position.x;
+      transform_.transform.translation.y = pose_.pose.position.y;
+      transform_.transform.rotation = pose_.pose.orientation;
+
+      broadcaster_->sendTransform(transform_);
+
+      // Update the current angle
+      currentAngle_ += angularVelocity_;
+    }
+  }
+
+private:
+  ros::NodeHandle nodeHandle_;
+  tf::TransformBroadcaster broadcaster_;
+  double currentAngle_;
+};
+
+int main(int argc, char** argv) {
+  ROS_INFO(""Initializing robot motion publisher..."");
+
+  RobotMotionPublisher publisher;
+
+  publisher.run();
+
+  return 0;
+}",0
+1,Create a ROS node in C++ that and publishes the motion of a robot around its Instantaneous Center of Rotation (ICR).,"#include <ros/ros.h>
+#include <tf/transform_listener.h>
+#include <geometry_msgs/PoseStamped.h>
+
+class ICRMotionPublisher {
+public:
+  ICRMotionPublisher() : node_(nh_) {}
+
+  void spin() {
+    ros::Rate r(10.0); // publish at 10 Hz
+    while (ros::ok()) {
+      geometry_msgs::PoseStamped msg;
+      tf::TransformListener listener(node_);
+      tf::StampedTransform transform;
+      if (listener.lookupTransform(""base_link"", ""end_effector"", transform)) {
+        // Get the ICR position from the end effector pose
+        tf::Vector3 icr_pos = transform.getOrigin();
+        // Calculate the relative rotation around the ICR
+        tf::Quaternion rel_rotation = tf::createQuaternionFromYaw(transform.getRotation().y());
+        // Publish the motion message
+        msg.header.stamp = node_.now();
+        msg.header.frame_id = ""base_link"";
+        msg.pose.position.x = icr_pos.getX();
+        msg.pose.position.y = icr_pos.getY();
+        msg.pose.orientation = rel_rotation;
+        pub_.publish(msg);
+      }
+      r.sleep();
+    }
+  }
+
+private:
+  ros::NodeHandle node_;
+  ros::Publisher pub_;
+};
+
+int main(int argc, char** argv) {
+  // Initialize ROS
+  ros::init(argc, argv, ""icr_motion_publisher"");
+  ros::NodeHandle node;
+  ICRMotionPublisher publisher(node);
+  
+  // Create a publisher for the motion message
+  publisher.pub_ = node.advertise<geometry_msgs::PoseStamped>(""icr_motion"", 10);
+  
+  // Start the main loop
+  while (ros::ok()) {
+    publisher.spin();
+  }
+  
+  return 0;
+}",0
+2,Create a ROS node in C++ that publishes odometry data for a differential drive robot moving in Center of Rotation (ICR).,"#include <ros/node.h>
+#include <ros/publisher.h>
+#include <ros/time.h>
+#include <geometry_msgs/PoseStamped.h>
+
+class DifferentialDriveNode {
+public:
+  DifferentialDriveNode() : node_(nullptr), pub_(nullptr) {}
+
+  void init(ros::NodeHandle& nh) {
+    node_ = &nh;
+    pub_ = node_->advertise<geometry_msgs::PoseStamped>(""odometry"", 10);
+  }
+
+  void run() {
+    ros::Rate rate(10.0); // 10 Hz
+    while (node_->ok()) {
+      // Simulate odometry data for a differential drive robot moving in ICR mode
+      geometry_msgs::PoseStamped odom_msg;
+      odom_msg.header.stamp = node_->now();
+      odom_msg.header.frame_id = ""map"";
+      odom_msg.pose.position.x = 0.5; // x position (meters)
+      odom_msg.pose.position.y = 0.2; // y position (meters)
+      odom_msg.pose.orientation.w = 0.8; // orientation (quaternion)
+
+      pub_.publish(odom_msg);
+
+      rate.sleep();
+    }
+  }
+
+private:
+  ros::NodeHandle* node_;
+  ros::Publisher pub_;
+};
+
+int main(int argc, char** argv) {
+  ros::init(argc, argv);
+  ros::NodeHandle nh;
+
+  DifferentialDriveNode node;
+  node.init(nh);
+  node.run();
+
+  return 0;
+}",0
+3,Create a ROS C++ program that simulates and publishes the motion of a robot around its Instantaneous Center of Rotation (ICR).,"#include <ros/ros.h>
+#include <geometry_msgs/PoseStamped.h>
+#include <Eigen/Dynamic>
+
+class ICRRobot {
+public:
+  ICRRobot() : node_(new ros::NodeHandle()) {}
+
+  void simulateMotion() {
+    Eigen::Vector3d ICR; // Instantaneous Center of Rotation
+    Eigen::Vector3d direction;
+
+    for (int i = 0; i < 100; i++) {
+      double angle = 2.0 * M_PI * (i / 100.0); // simulate robot moving in a circle around the ICR
+
+      // calculate the new pose based on the current pose and direction
+      geometry_msgs::PoseStamped new_pose;
+      new_pose.header.stamp = node_->now();
+      new_pose.pose.position.x = ICR.x() + cos(angle);
+      new_pose.pose.position.y = ICR.y() + sin(angle);
+
+      // publish the new pose
+      pub_.publish(new_pose);
+    }
+  }
+
+private:
+  boost::shared_ptr<ros::NodeHandle> node_;
+  ros::Publisher pub_;
+};
+
+int main(int argc, char** argv) {
+  ros::init(argc, argv);
+  ICRRobot robot;
+  robot.pub_ = robot.node_->advertise<geometry_msgs::PoseStamped>(""icr_pose"");
+
+  while (node_->ok()) {
+    robot.simulateMotion();
+  }
+
+  return 0;
+}",0
+4,Create a ROS node in C++ that publishes odometry data for a differential robot around its Instantaneous Center of Rotation (ICR).,"#include <ros/node.h>
+#include <ros/publisher.h>
+#include <tf/transform_broadcaster.h>
+#include <geometry_msgs/PoseStamped.h>
+
+class OdometryPublisher {
+public:
+    OdometryPublisher() : node_(nullptr) {}
+
+    void setup(const ros::NodeHandle& nh) {
+        node_ = &nh;
+        broadcaster_.reset(new tf::TransformBroadcaster());
+        odom_pub_ = node_->advertise<geometry_msgs::PoseStamped>(""odom"", 10);
+    }
+
+    void publishOdometry(double x, double y, double theta, double linear_velocity_x, double angular_velocity_theta) {
+        geometry_msgs::PoseStamped msg;
+
+        // Set the pose message
+        msg.header.stamp = ros::Time::now();
+        msg.pose.position.x = x;
+        msg.pose.position.y = y;
+        tf::Quaternion quat;
+        quat.setRPY(0, 0, theta);
+        msg.pose.orientation.x = quat.x();
+        msg.pose.orientation.y = quat.y();
+        msg.pose.orientation.z = quat.z();
+        msg.pose.orientation.w = quat.w();
+
+        // Set the velocity message
+        geometry_msgs::TwistStamped vel_msg;
+        vel_msg.header.stamp = ros::Time::now();
+        vel_msg.twist.linear.x = linear_velocity_x;
+        vel_msg.twist.angular.z = angular_velocity_theta;
+
+        // Broadcast the transform from the base link to the map frame
+        tf::Transform transform;
+        transform.setOrigin(tf::Vector3(x, y, 0));
+        transform.setRotation(quat);
+        broadcaster_->sendTransform(transform, ""base_link"", ""map"");
+
+        // Publish the odometry and velocity messages
+        odom_pub_.publish(msg);
+    }
+
+private:
+    ros::NodeHandle* node_;
+    tf::TransformBroadcaster* broadcaster_;
+    ros::Publisher odom_pub_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv);
+
+    OdometryPublisher publisher;
+
+    ros::NodeHandle nh;
+    publisher.setup(nh);
+
+    while (ros::ok()) {
+        // Simulate odometry data
+        double x = 1.0; // meters
+        double y = 2.0; // meters
+        double theta = 0.5; // radians
+        double linear_velocity_x = 0.2; // m/s
+        double angular_velocity_theta = 0.3; // rad/s
+
+        publisher.publishOdometry(x, y, theta, linear_velocity_x, angular_velocity_theta);
+
+        ros::spinOnce();
+    }
+
+    return 0;
+}",0
+5,Create a ROS node in C++ that odometry data a differential drive robot its Instantaneous Center of Rotation (ICR).,"#include <ros/ros.h>
+#include <tf/transform_listener.h>
+#include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/TwistStamped.h>
+
+// Function to calculate the instantaneous center of rotation (ICR)
+void calcICR(ros::NodeHandle& nh, tf::TransformListener* listener) {
+  // Get the odometry data
+  geometry_msgs::PoseStamped pose_msg;
+  ros::Subscriber odom_sub = nh.subscribe(""odom"");
+  while (ros::ok()) {
+    odom_sub.waitForMessage();
+    pose_msg = *odom_sub.msg;
+  }
+
+  // Calculate the ICR using the odometry data
+  tf::Vector3 icr_pose;
+  icr_pose.setX(pose_msg.pose.position.x);
+  icr_pose.setY(pose_msg.pose.position.y);
+  icr_pose.setZ(0); // Assuming z-coordinate is zero for differential drive robot
+
+  // Publish the ICR pose message
+  geometry_msgs::PoseStamped icr_pose_msg;
+  icr_pose_msg.header.stamp = ros::Time::now();
+  icr_pose_msg.pose.position.x = icr_pose.getX();
+  icr_pose_msg.pose.position.y = icr_pose.getY();
+  icr_pose_msg.pose.position.z = 0; // Assuming z-coordinate is zero
+  nh.publish(""icr_pose"", icr_pose_msg);
+}",0
+6,Create a ROS node in C++ that publishes odometry data for a differential drive around its Instantaneous rate Center of Rotation (ICR).,"#include <ros/ros.h>
+#include <geometry_msgs/PoseStamped.h>
+
+// Define the robot's wheel radii (in meters)
+#define WHEEL_RADIUS_LEFT 0.05 // left wheel radius
+#define WHEEL_RADIUS_RIGHT 0.05 // right wheel radius
+
+// Define the robot's distance between wheels (in meters)
+#define WHEEL_BASE_WIDTH 0.20 // distance between wheels
+
+// Define the node name and namespace
+#define NODE_NAME ""differential_drive_odom""
+#define NODE_NAMESPACE ""odom""
+
+int main(int argc, char** argv) {
+    // Initialize ROS
+    ros::init(argc, argv, NODE_NAME);
+    ros::NodeHandle nh;
+
+    // Create a publisher for odometry data
+    ros::Publisher odom_pub = nh.advertise<geometry_msgs::PoseStamped>(NODE_NAMESPACE + ""/odom"", 10);
+
+    // Define the robot's initial pose (x, y, theta)
+    double x_initial = 0.0;
+    double y_initial = 0.0;
+    double theta_initial = 0.0;
+
+    // Main loop
+    while (ros::ok()) {
+        // Get the current wheel velocities (in radians per second)
+        double left_wheel_velocity = 0.5; // example velocity values
+        double right_wheel_velocity = 0.5;
+
+        // Calculate the ICR pose (x, y, theta)
+        double x_ICR = x_initial + (WHEEL_RADIUS_LEFT * left_wheel_velocity - WHEEL_RADIUS_RIGHT * right_wheel_velocity) / (2 * M_PI);
+        double y_ICR = y_initial;
+        double theta_ICR = theta_initial + (left_wheel_velocity - right_wheel_velocity) / (2.0);
+
+        // Create a PoseStamped message for the odometry data
+        geometry_msgs::PoseStamped odom_msg;
+        odom_msg.header.stamp = ros::Time::now();
+        odom_msg.header.frame_id = NODE_NAMESPACE;
+        odom_msg.pose.position.x = x_ICR;
+        odom_msg.pose.position.y = y_ICR;
+        odom_msg.pose.orientation.w = std::cos(theta_ICR / 2.0);
+        odom_msg.pose.orientation.z = std::sin(theta_ICR / 2.0);
+
+        // Publish the odometry data
+        odom_pub.publish(odom_msg);
+
+        // Update the robot's pose (x, y, theta)
+        x_initial += (WHEEL_RADIUS_LEFT * left_wheel_velocity - WHEEL_RADIUS_RIGHT * right_wheel_velocity) / (2.0);
+        y_initial = 0.0;
+        theta_initial += (left_wheel_velocity - right_wheel_velocity) / (2.0);
+
+        // Sleep for a short duration to avoid flooding the publisher
+        ros::Duration(0.01).sleep();
+    }
+
+    return 0;
+}",0
+7,Create process a ROS node in C++ that publishes odometry the motion of a robot around its Instantaneous Center of Rotation (ICR).,"cmake_minimum_required(VERSION 3.10)
+project(robot_odometry)
+
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+find_package(ros REQUIRED)
+find_package(Eigen REQUIRED)
+
+add_executable(${PROJECT_NAME} main.cpp)
+
+target_link_libraries(${PROJECT_NAME} ${ROS_LIBRARIES})",0
+9,Create a ROS node in in C++ that publishes odometry the motion of a robot around its Instantaneous Center of Rotation (ICR).,"#include <ros/node.h>
+#include <ros/publisher.h>
+#include <geometry_msgs/PoseArray.h>
+
+class ICRPublisher {
+public:
+  ICRPublisher() : Node(""icr_publisher"") {
+    publisher_ = this->advertise<geometry_msgs::PoseArray>(""odom"", 10);
+  }
+
+  void publishOdometry(const tf::Transform &transform) {
+    geometry_msgs::PoseArray odom;
+    odom.poses.resize(1);
+
+    // Calculate the ICR position
+    double x = transform.getOrigin().x();
+    double y = transform.getOrigin().y();
+
+    // Convert the ICR position to a ROS message
+    odom.poses[0].pose.position.x = x;
+    odom.poses[0].pose.position.y = y;
+
+    publisher_.publish(odom);
+  }
+
+private:
+  ros::Publisher publisher_;
+};
+
+int main(int argc, char** argv) {
+  // Initialize the node
+  ros::init(argc, argv);
+  ros::NodeHandle node_handle;
+
+  ICRPublisher icr_publisher;
+  tf::Transform transform;
+
+  while (ros::ok()) {
+    // Simulate a transformation from the current odometry to the next one
+    tf::Vector3 displacement(0.1, 0.2, 0);
+    transform.setOrigin(tf::Vector3(x + displacement.x, y + displacement.y, 0));
+    tf::Quaternion rotation;
+    rotation.setRPY(0, 0, 0);
+
+    // Publish the new odometry
+    icr_publisher.publishOdometry(transform);
+
+    // Wait for a certain amount of time before publishing the next odometry
+    ros::Duration(0.1).sleep();
+  }
+
+  return 0;
+}",0
+10,Create a ROS node in C++ that publishes localization publishes the motion of a robot around its Instantaneous Center of Rotation (ICR).,"#include <iostream>
+#include <ros/node.h>
+#include <ros/publisher.h>
+#include <geometry_msgs/PoseStamped.h>
+#include <Eigen/Dynamics>
+
+// Define the robot's parameters
+const double wheel_radius = 0.1; // [m]
+const double track_width = 0.2; // [m]
+
+int main(int argc, char** argv) {
+    // Initialize the ROS node
+    ros::init(argc, argv, ""robot_icr_publisher"");
+    ros::NodeHandle nh;
+
+    // Create a publisher for the ICR pose messages
+    ros::Publisher icr_pose_pub = nh.advertise<geometry_msgs::PoseStamped>(""icr_pose"", 10);
+
+    // Define a function to compute the robot's ICR pose from its wheel velocities
+    Eigen::Vector3d computeICRPose(double left_wheel_vel, double right_wheel_vel) {
+        Eigen::Vector3d icr_pos;
+
+        // Compute the robot's linear velocity and angular velocity from its wheel velocities
+        double v = (wheel_radius / track_width) * (left_wheel_vel + right_wheel_vel);
+        double w = (2.0 * wheel_radius / track_width) * (right_wheel_vel - left_wheel_vel);
+
+        // Compute the robot's ICR pose using the kinematic model of a differential drive robot
+        icr_pos << v, 0, w;
+
+        return icr_pos;
+    }
+
+    // Define a function to publish the ICR pose as a ROS message
+    void publishICRPose(ros::Publisher& pub, double left_wheel_vel, double right_wheel_vel) {
+        geometry_msgs::PoseStamped icr_pose_msg;
+
+        Eigen::Vector3d icr_pos = computeICRPose(left_wheel_vel, right_wheel_vel);
+
+        // Convert the ICR pose from Eigen's coordinate system to ROS's coordinate system
+        icr_pose_msg.header.stamp = ros::Time::now();
+        icr_pose_msg.pose.position.x = icr_pos(0);
+        icr_pose_msg.pose.position.y = 0;
+        icr_pose_msg.pose.position.z = icr_pos(2);
+        icr_pose_msg.pose.orientation.w = 1.0;
+
+        pub.publish(icr_pose_msg);
+    }
+
+    // Main loop: Read the robot's wheel velocities from a ROS topic and publish its ICR pose
+    while (ros::ok()) {
+        ros::spinOnce();
+
+        double left_wheel_vel, right_wheel_vel; // Read the robot's wheel velocities from a ROS topic
+
+        publishICRPose(icr_pose_pub, left_wheel_vel, right_wheel_vel);
+
+        ros::Duration(0.01).sleep(); // Sleep for 10 milliseconds
+    }
+
+    return 0;
+}",0
+11,Create a ROS node data in C++ that publishes odometry data for a of a robot around its Instantaneous Center of Rotation (ICR).,"#include <ros/ros.h>
+#include <sensor_msgs/NavSatFix.h> // For publishing ICR coordinates
+#include <geometry_msgs/PoseStamped.h> // For publishing odometry data",0
+12,Create a ROS node in C++ simulates and publishes the motion of a robot around its Instantaneous Center of Rotation (ICR).,mkdir icr_simulator,0
+14,Create a ROS node in C++ sensor that publishes odometry data for a differential drive robot its Instantaneous Center of Rotation (ICR).,"#include <ros/ros.h>
+#include <geometry_msgs/PoseStamped.h>
+
+class ICRSensor {
+public:
+  ICRSensor(ros::NodeHandle& nh, std::string name)
+    : node_(nh), name_(name) {
+    // Subscribe to the robot's wheel odometry data
+    wheel_odom_sub_ = node_.subscribe(""wheel_odom"", 10);
+  }
+
+  void spin() {
+    ros::Rate rate(100.0); // Spin at 10 Hz
+
+    while (node_.ok()) {
+      // Get the left and right wheel positions from the odometry data
+      geometry_msgs::PoseStamped left_wheel_pose, right_wheel_pose;
+      wheel_odom_sub_.read(left_wheel_pose);
+      wheel_odom_sub_.read(right_wheel_pose);
+
+      // Calculate the ICR position based on the wheel positions
+      double left_distance = left_wheel_pose.pose.position.x;
+      double right_distance = right_wheel_pose.pose.position.x;
+
+      double icr_x = (left_distance + right_distance) / 2.0; // Instantaneous center of rotation
+      double icr_y = 0.0; // The robot is only moving forward
+
+      // Publish the ICR position
+      geometry_msgs::PoseStamped icr_pose;
+      icr_pose.header.stamp = ros::Time::now();
+      icr_pose.pose.position.x = icr_x;
+      icr_pose.pose.position.y = icr_y;
+      icr_pose.pose.orientation.w = 1.0; // No rotation
+
+      node_.publish(icr_pose);
+
+      rate.sleep();
+    }
+  }
+
+private:
+  ros::NodeHandle& node_;
+  std::string name_;
+  ros::Subscriber wheel_odom_sub_;
+};
+
+int main(int argc, char** argv) {
+  ros::init(argc, argv);
+  ros::NodeHandle nh;
+
+  ICRSensor icr_sensor(nh, ""icr_sensor"");
+  icr_sensor.spin();
+
+  return 0;
+}",0
+15,Create a ROS node in C++ that mapping publishes odometry the motion of a robot around its Instantaneous Center of Rotation (ICR).,"#include <ros/ros.h>
+#include <geometry_msgs/PoseStamped.h>
+#include <nav_msgs/Odometry.h>
+
+class ICROdometryNode {
+public:
+  ICROdometryNode(ros::NodeHandle& nh, ros::Rate rate) : 
+    nh_(nh), rate_(rate) {
+    // Subscribe to the robot's pose topic
+    pose_sub_ = nh_.subscribe(""robot_pose"", 10);
+
+    // Publish odometry messages at a fixed rate
+    odom_pub_ = nh_.advertise<nav_msgs::Odometry>(""odom"", rate_);
+  }
+
+  void loop() {
+    // Get the current robot pose
+    geometry_msgs::PoseStamped pose;
+    pose_sub_.read(pose);
+
+    // Calculate the ICR position and orientation
+    tf::Vector3 icr_pos = tf::Vector3(0, 0, 0); // initialize at origin
+    tf::Quaternion icr_quat = tf::createQuaternionFromRPY(0, 0, 0);
+    for (int i = 0; i < pose.position.x.size(); i++) {
+      // Calculate the ICR position using the robot's pose and orientation
+      icr_pos.setX(pose.position.x[i] - pose.orientation.x[i]);
+      icr_pos.setY(pose.position.y[i] - pose.orientation.y[i]);
+      icr_quat = tf::createQuaternionFromRPY(icr_quat.getAngleX(), icr_quat.getAngleY(), 0);
+
+      // Calculate the ICR velocity and acceleration
+      tf::Vector3 icr_vel;
+      tf::Vector3 icr_acc;
+
+      // Publish odometry messages
+      nav_msgs::Odometry odom;
+      odom.header.stamp = ros::Time::now();
+      odom.header.frame_id = ""odom_frame"";
+      odom.child_frame_id = ""robot_frame"";
+      odom.pose.covariance[0] = 0.1; // covariance matrix (e.g., 0.1 for position)
+      odom.twist.covariance[0] = 0.01; // covariance matrix (e.g., 0.01 for velocity)
+
+      // Add the ICR pose, velocity, and acceleration to the odometry message
+      odom.pose.position.x = icr_pos.getX();
+      odom.pose.position.y = icr_pos.getY();
+      odom.pose.orientation.x = icr_quat.getAngleX();
+      odom.pose.orientation.y = icr_quat.getAngleY();
+
+      // Publish the odometry message
+      odom_pub_.publish(odom);
+    }
+  }
+
+private:
+  ros::NodeHandle& nh_;
+  ros::Rate rate_;
+  ros::Subscriber pose_sub_;
+  ros::Publisher odom_pub_;
+};
+
+int main(int argc, char** argv) {
+  ros::init(argc, argv);
+  ros::NodeHandle nh;
+
+  // Create the ICR odometry node
+  ICROdometryNode icr_node(nh, ros::Rate(10)); // publish at a rate of 10 Hz
+
+  // Spin until Ctrl+C is pressed
+  while (ros::ok()) {
+    icr_node.loop();
+  }
+
+  return 0;
+}",0
+16,Create a ROS node in C++ actuator that publishes odometry data for a differential drive robot moving in a circular Rotation (ICR).,"#include <ros/ros.h>
+#include <geometry_msgs/TwistStamped.h>
+#include <nav_msgs/Odometry.h>
+
+class CircularDriveActuator {
+public:
+  CircularDriveActuator(ros::NodeHandle& nh) : 
+    node_handle_(nh), 
+    odom_publisher_(node_handle_.advertise<nav_msgs::Odometry>(""odometry"", 10)) {}
+
+  void publish_odometry(double radius, double angular_velocity) {
+    nav_msgs::Odometry odom;
+    geometry_msgs::PoseStamped pose;
+
+    // Set the timestamp
+    odom.header.stamp = node_handle_.getLatestFromSequence(0);
+
+    // Calculate the position and orientation
+    double x = 0; // assuming origin is at center of rotation
+    double y = radius * std::sin(angular_velocity * ros::Time::now().toSec());
+    double theta = angular_velocity * ros::Time::now().toSec();
+
+    pose.pose.position.x = x;
+    pose.pose.position.y = y;
+    pose.pose.orientation.w = std::cos(theta / 2);
+    pose.pose.orientation.z = std::sin(theta / 2);
+
+    // Fill in the rest of the odom message
+    odom.header.frame_id = ""odom_frame"";
+    odom.child_frame_id = ""base_link"";
+    odom.pose = pose;
+
+    // Publish the odometry data
+    odom_publisher_.publish(odom);
+  }
+
+private:
+  ros::NodeHandle node_handle_;
+  ros::Publisher odom_publisher_;
+};
+
+int main(int argc, char** argv) {
+  // Initialize ROS
+  ros::init(argc, argv, ""circular_drive_actuator"");
+  ros::NodeHandle nh;
+
+  // Create the actuator
+  CircularDriveActuator actuator(nh);
+
+  // Set the parameters for the circular drive
+  double radius = 1.0; // meters
+  double angular_velocity = 0.5; // radians per second
+
+  while (ros::ok()) {
+    actuator.publish_odometry(radius, angular_velocity);
+    ros::spinOnce();
+  }
+
+  return 0;
+}",0
+17,Create a ROS node in C++ that publishes odometry data for a a robot around its Instantaneous Center of Rotation (ICR).,"#include <ros/node.h>
+#include <ros/publisher.h>
+#include <geometry_msgs/PoseStamped.h>
+
+int main(int argc, char** argv) {
+  // Initialize the ROS node
+  ros::init(argc, argv, ""icr_odometry"");
+  ros::NodeHandle nh;
+
+  // Create a publisher to publish odometry data
+  ros::Publisher odom_pub = nh.advertise<geometry_msgs::PoseStamped>(""odom"", 10);
+
+  // Define the ICR (Instantaneous Center of Rotation)
+  double icr_x, icr_y, icr_z;
+  icr_x = 0.5;  // arbitrary values for demonstration purposes
+  icr_y = 0.3;
+  icr_z = 0.1;
+
+  // Define the robot's pose (position and orientation) around the ICR
+  double robot_pos_x, robot_pos_y, robot_pos_z;
+  double robot_rot_x, robot_rot_y, robot_rot_z;
+
+  // Main loop: publish odometry data at a fixed rate
+  ros::Rate rate(10.0);  // 10 Hz
+
+  while (ros::ok()) {
+    // Calculate the robot's pose around the ICR
+    robot_pos_x = icr_x + sin(ros::time().toSec() * 2 * M_PI);
+    robot_pos_y = icr_y + cos(ros::time().toSec() * 2 * M_PI);
+    robot_pos_z = icr_z;
+    robot_rot_x = 0.0;  // arbitrary values for demonstration purposes
+    robot_rot_y = sin(ros::time().toSec() * 2 * M_PI);
+    robot_rot_z = cos(ros::time().toSec() * 2 * M_PI);
+
+    // Create a PoseStamped message to publish odometry data
+    geometry_msgs::PoseStamped odom_msg;
+    odom_msg.header.stamp = ros::time::now();
+    odom_msg.pose.position.x = robot_pos_x;
+    odom_msg.pose.position.y = robot_pos_y;
+    odom_msg.pose.position.z = robot_pos_z;
+    odom_msg.pose.orientation.x = robot_rot_x;
+    odom_msg.pose.orientation.y = robot_rot_y;
+    odom_msg.pose.orientation.z = robot_rot_z;
+    odom_msg.pose.orientation.w = 0.0;
+
+    // Publish the odometry data
+    odom_pub.publish(odom_msg);
+
+    // Sleep for a short period to avoid consuming too much CPU
+    rate.sleep();
+  }
+
+  return 0;
+}",0
+18,Create a ROS node in in C++ that publishes odometry rate the motion a robot around its Instantaneous of Rotation (ICR).,"mkdir icr_odometry_node
+cd icr_odometry_node
+touch CMakeLists.txt
+touch src/icr_odometry_node.cpp",0
+19,Create a ROS node in C++ that publishes odometry data for a differential robot around its Center of Rotation (ICR).,"#include <ros/ros.h>
+#include <geometry_msgs/PoseStamped.h>
+
+class ICROdometryPublisher {
+public:
+    ICROdometryPublisher(ros::NodeHandle& nh) : 
+        nodeHandle_(nh),
+        pub_(nodeHandle_.advertise<geometry_msgs::PoseStamped>(""icr_odometry"", 1000)) {}
+
+    void publishOdometry(double distance, double angle) {
+        geometry_msgs::PoseStamped msg;
+        msg.header.stamp = nodeHandle_.now();
+        msg.pose.position.x = distance * cos(angle);
+        msg.pose.position.y = distance * sin(angle);
+        msg.pose.orientation.w = 1.0; // Assume all rotations are around the Z-axis
+        pub_.publish(msg);
+    }
+
+private:
+    ros::NodeHandle& nodeHandle_;
+    ros::Publisher pub_;
+};
+
+int main(int argc, char** argv) {
+    int rate = 100;
+    if (argc > 1) {
+        rate = std::stoi(argv[1]);
+    }
+
+    ros::init(argc, argv);
+    ros::NodeHandle nh;
+
+    ICROdometryPublisher publisher(nh);
+
+    ros::Rate loop_rate(rate);
+
+    while (nh.ok()) {
+        double distance = 0.01; // Example odometry data
+        double angle = M_PI / 2; // Example odometry data
+        publisher.publishOdometry(distance, angle);
+        loop_rate.sleep();
+    }
+
+    return 0;
+}",0
+20,Create a ROS node in C++ that publishes odometry the motion of a robot around its Instantaneous Center of Rotation (ICR).,sudo apt-get update && sudo apt-get install ros-kinetic-tf ros-kinetic-geometry-common,0
+21,Create a ROS node in C++ that publishes odometry the node motion of a robot around its Instantaneous Center of Rotation (ICR).,sudo apt-get update && sudo apt-get install ros-kinetic-geometry-msgs,0
+22,Create a ROS node in C++ that publishes odometry the motion of a spin robot around its Instantaneous Center of Rotation (ICR).,sudo apt-get install ros-<your_ros_version>-ros-tutorials ros-<your_ros_version>-common-msgs,0
+23,Create a ROS node program that simulates and publishes the motion of a robot around its Instantaneous Center of Rotation (ICR).,"import rospy
+from geometry_msgs.msg import Twist, PoseStamped
+from tf.transformations import quaternion_from_euler
+
+class ICRSimulator:
+    def __init__(self):
+        self.odom_sub = rospy.Subscriber('odom', PoseStamped)
+        self.joint_states_sub = rospy.Subscriber('joint_states', JointState)
+
+        self.icr_pub = rospy.Publisher('icr_motion', Twist, queue_size=10)
+
+        self.icr_pose = PoseStamped()
+        self.icr_twist = Twist()
+
+    def calculate_icr_motion(self):
+        odom_pose = self.odom_sub.get_last_message()
+        joint_states = self.joint_states_sub.get_last_message()
+
+        # Calculate the ICR pose
+        icr_pose.x = odom_pose.position.x
+        icr_pose.y = odom_pose.position.y
+        icr_pose.z = 0.0  # Assuming the robot is moving in the x-y plane
+
+        # Calculate the ICR twist
+        icr_twist.linear.x = joint_states.joint_velocities[0]
+        icr_twist.linear.y = joint_states.joint_velocities[1]
+
+    def publish_icr_motion(self):
+        self.icr_pub.publish(self.icr_twist)
+
+    def run(self):
+        rate = rospy.Rate(10.0)  # 10 Hz
+        while not rospy.is_shutdown():
+            self.calculate_icr_motion()
+            self.publish_icr_motion()
+            rate.sleep()
+
+if __name__ == '__main__':
+    rospy.init_node('icr_simulator')
+    icr_simulator = ICRSimulator()
+    icr_simulator.run()",0
+24,Create a node ROS node in C++ that and publishes the motion of a robot around its Instantaneous Center of Rotation (ICR).,"#include <ros/node.h>
+#include <ros/publisher.h>
+#include <tf/transform_listener.h>
+#include <tf/message_buffer.h>
+#include <geometry_msgs/Vector3.h>
+
+class ICRNode {
+public:
+  ICRNode() : it_(ros::Iterator(""base_link"", ros::TOPIC_TYPE_TRANSFORM)) {
+    pub_ = node_.advertise<geometry_msgs::Vector3>(""icr_velocity"");
+  }
+
+  void spin() {
+    while (node_.ok()) {
+      tf::Transform transform;
+      if (!it_.lookupTransform(transform, ros::Time::now())) {
+        ROS_WARN(""Failed to get transform from base_link"");
+        continue;
+      }
+
+      // Calculate the ICR velocity
+      geometry_msgs::Vector3 msg;
+      // Your code here to calculate the velocity of the robot around its ICR
+      // For example:
+      tf::Vector3 velocity = transform.getOrigin().toVec3();
+      msg.x() = velocity.getX();
+      msg.y() = velocity.getY();
+      msg.z() = velocity.getZ();
+
+      pub_.publish(msg);
+
+      ros::Duration d(0.01);
+      node_.sleep(d);
+    }
+  }
+
+private:
+  ros::NodeHandle node_;
+  tf::TransformListener it_;
+  ros::Publisher pub_;
+};
+
+int main(int argc, char** argv) {
+  ros::init(argc, argv, ""icr_node"");
+  ICRNode icr;
+  icr.spin();
+  return 0;
+}",0
+25,Create a ROS node in C++ that and publishes the motion of a automaton around its Instantaneous Center of Rotation (ICR).,"#include <ros/ros.h>
+#include <geometry_msgs/PoseStamped.h>
+
+class AutomatonMotionPublisher {
+public:
+    AutomatonMotionPublisher() {
+        node_handle_ = ros::NodeHandle(""automaton_motion_publisher"");
+        pose_publisher_ = node_handle_.advertise<geometry_msgs::PoseStamped>(""automaton_motion"", 10);
+    }
+
+    ~AutomatonMotionPublisher() {
+        pose_publisher_.shutdown();
+    }
+
+    void run() {
+        double theta = 0.0; // Initial orientation of the automaton
+        double radius = 1.0; // Radius of the circular motion
+
+        ros::Rate loop_rate(10); // Loop rate (10 Hz)
+
+        while (ros::ok()) {
+            geometry_msgs::PoseStamped pose_msg;
+
+            pose_msg.header.stamp = node_handle_.getCurTime();
+            pose_msg.pose.position.x = 0.0; // x-coordinate of the ICR
+            pose_msg.pose.position.y = radius * cos(theta); // y-coordinate of the ICR (circular motion)
+            pose_msg.pose.position.z = 0.0; // z-coordinate of the ICR
+
+            pose_msg.pose.orientation.w = sin(theta / 2); // Orientation of the automaton at the ICR
+            pose_msg.header.frame_id = ""map""; // Reference frame ID (""map"" in this case)
+
+            pose_publisher_.publish(pose_msg);
+
+            loop_rate.sleep();
+
+            theta += (M_PI / 180.0) * 5.0; // Increase the orientation by a small amount each loop iteration
+        }
+    }
+
+private:
+    ros::NodeHandle node_handle_;
+    ros::Publisher pose_publisher_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""automaton_motion_publisher"");
+
+    AutomatonMotionPublisher publisher;
+    publisher.run();
+
+    return 0;
+}",0
+26,Create a ROS node in C++ that publishes publishes the motion of a robot around its Instantaneous Center of Rotation (ICR).,"#include <ros/node.h>
+#include <ros/publisher.h>
+#include <geometry_msgs/PoseStamped.h>
+
+class ICRMotionPublisher {
+public:
+    ICRMotionPublisher(ros::NodeHandle& nh) : 
+        node_(nh),
+        pub_(node_.advertise<geometry_msgs::PoseStamped>(""icr_motion"", 10)) {}
+
+    void publishICRMotion(double x, double y, double theta) {
+        geometry_msgs::PoseStamped msg;
+        msg.header.stamp = ros::Time::now();
+        msg.pose.position.x = x;
+        msg.pose.position.y = y;
+        msg.pose.orientation.w = std::cos(theta / 2.0);
+        msg.pose.orientation.z = std::sin(theta / 2.0);
+
+        pub_.publish(msg);
+    }
+
+private:
+    ros::NodeHandle node_;
+    ros::Publisher pub_;
+};
+
+int main(int argc, char** argv) {
+    // Initialize ROS
+    int argc_ = argc;
+    char** argv_=argv;
+    ros::init(argc_, argv_);
+    ros::NodeHandle node(ros::this_node::getName());
+
+    ICRMotionPublisher publisher(node);
+
+    while (node.ok()) {
+        // Simulate robot motion around its ICR
+        double x = 0.5 + sin(ros::Time::now().toSec());
+        double y = 0.5 + cos(ros::Time::now().toSec());
+        double theta = 2 * M_PI * ros::Time::now().toSec();
+
+        publisher.publishICRMotion(x, y, theta);
+
+        // Sleep for a short time to avoid flooding the topic
+        ros::Duration duration(0.01);
+        node.sleep(duration);
+    }
+
+    return 0;
+}",0
+27,Create a node in C++ that publishes publishes the motion of a robot around its Instantaneous Center of Rotation (ICR).,"#include <ros/node.h>
+#include <ros/publisher.h>
+#include <geometry_msgs/PoseArray.h>
+
+class ICRMotionPublisher {
+public:
+  ICRMotionPublisher(ros::NodeHandle& node) : 
+    node_(node), publisher_(node_.advertise<PoseArray>(""icr_motion"", 10)) {}
+
+  void publish(const geometry_msgs::PoseArray& pose_array) {
+    publisher_.publish(pose_array);
+  }
+
+private:
+  ros::NodeHandle node_;
+  ros::Publisher publisher_;
+};
+
+int main(int argc, char** argv) {
+  // Initialize ROS
+  ros::init(argc, argv, ""icr_motion_publisher"");
+  ros::NodeHandle node(ros::on_name(""icr_motion_publisher""));
+
+  ICRMotionPublisher publisher(node);
+
+  while (node.ok()) {
+    // Simulate the motion of a robot around its ICR here
+
+    geometry_msgs::PoseArray pose_array;
+    pose_array.poses.push_back(geometry_msgs::Pose());
+    pose_array.poses[0].position.x = 1.0; // Update x position
+    pose_array.poses[0].position.y = 2.0; // Update y position
+    pose_array.poses[0].orientation.w = 1.0; // Update z orientation
+
+    publisher.publish(pose_array);
+
+    ros::spinOnce();
+    ros::Duration(0.01).sleep(); // Sleep for 10ms to avoid hogging CPU
+  }
+
+  return 0;
+}",0
+28,Create a ROS node in C++ that publishes odometry data for a differential drive robot moving in a circular Rotation parameter (ICR).,"#include <ros/node.h>
+#include <ros/publisher.h>
+#include <geometry_msgs/PoseStamped.h>
+
+class OdometryPublisher {
+public:
+    OdometryPublisher(ros::NodeHandle& nh) : 
+        node_handle_(nh),
+        pose_publisher_(node_handle_.advertise<geometry_msgs::PoseStamped>(""pose"", 10)) {
+        // Initialize robot parameters
+        double wheel_radius = 0.05; // in meters
+        double robot_radius = 0.2; // in meters
+        double initial_angle = 0.0; // in radians
+
+        ros::Time current_time = node_handle_.getSimTime();
+        geometry_msgs::PoseStamped pose_msg;
+        pose_msg.header.stamp = current_time;
+
+        while (ros::ok(node_handle_)) {
+            // Read rotation and distance from your robot's sensors or motor controllers
+            double rotation = 0.1; // in radians
+            double distance = 0.5; // in meters
+
+            // Calculate new odometry values
+            double new_angle = initial_angle + (distance / robot_radius) * sin(rotation);
+            double new_x = 0;
+            double new_y = 0;
+
+            pose_msg.header.stamp = current_time;
+            pose_msg.pose.position.x = new_x;
+            pose_msg.pose.position.y = new_y;
+            pose_msg.pose.orientation.w = cos(new_angle);
+
+            // Publish the odometry data
+            pose_publisher_.publish(pose_msg);
+
+            // Wait for a bit before publishing again
+            ros::Duration(0.01).sleep();
+        }
+    }
+
+private:
+    ros::NodeHandle& node_handle_;
+    ros::Publisher pose_publisher_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv);
+    ros::NodeHandle nh;
+    OdometryPublisher odometry_publisher(nh);
+
+    return 0;
+}",0
+32,Create a ROS in C++ spin that publishes odometry data for a differential drive robot in a of Rotation (ICR).,"#include <ros/ros.h>
+#include <geometry_msgs/PoseStamped.h>
+#include <nav_msgs/Odometry.h>
+
+class OdometryPublisher {
+public:
+    OdometryPublisher(ros::NodeHandle &node, double wheel_base) {
+        node_ = &node;
+        wheel_base_ = wheel_base;
+
+        odom_pub_ = node_.advertise<nav_msgs::Odometry>(""odom"");
+    }
+
+    void publishOdometry(double distance_travelled, double rotation_angle) {
+        nav_msgs::Odometry odom;
+        odom.header.stamp = ros::Time::now();
+
+        // Set the position
+        geometry_msgs::PoseStamped pose;
+        pose.header.stamp = ros::Time::now();
+        pose.pose.position.x = 0.0; // Assuming origin at (0, 0)
+        pose.pose.position.y = distance_travelled * sin(rotation_angle);
+        pose.pose.position.z = 0.0;
+        odom.pose = pose;
+
+        // Set the velocity
+        nav_msgs::Odometry odometry;
+        odometry.header.stamp = ros::Time::now();
+        odometry.twist.twist.linear.x = distance_travelled / wheel_base_;
+        odometry.twist.twist.angular.z = rotation_angle;
+        odom.twist = odometry.twist;
+
+        // Publish the odometry data
+        odom_pub_.publish(odom);
+    }
+
+private:
+    ros::NodeHandle *node_;
+    double wheel_base_;
+    ros::Publisher odom_pub_;
+};
+
+int main(int argc, char** argv) {
+    // Initialize ROS node
+    ros::init(argc, argv, ""odometry_publisher"");
+    ros::NodeHandle node;
+
+    // Create the odometry publisher with a wheel base of 0.2 meters (example value)
+    OdometryPublisher odometry_publisher(node, 0.2);
+
+    // Simulate robot movement and publish odometry data
+    while (ros::ok()) {
+        double distance_travelled = 0.5; // Example distance travelled in meters
+        double rotation_angle = M_PI / 4; // Example rotation angle in radians
+
+        odometry_publisher.publishOdometry(distance_travelled, rotation_angle);
+
+        ros::Duration(1).sleep(); // Sleep for 1 second before publishing again
+    }
+
+    return 0;
+}",0
+34,Create a ROS node in C++ that publishes odometry data for a differential launch drive robot moving in of Rotation (ICR).,"#include <ros/node.h>
+#include <ros/publishers.h>
+#include <sensor_msgs/NavSatFixStamped.h>
+
+class DLRotationOdometryNode {
+public:
+    DLRotationOdometryNode() : node_(nullptr) {}
+
+    void init(ros::NodeHandle& nh, ros::NodeHandle& private_nh) {
+        node_ = &nh;
+
+        // Initialize the odometry publisher
+        pub_odom_ = node_->advertise<sensor_msgs::NavSatFixStamped>(""odom"", 10);
+
+        // Initialize the launch drive parameters
+        double wheel_radius_ = 0.05; // [m]
+        double track_width_ = 0.15; // [m]
+        double motor_speed_ = 1000.0; // [RPM]
+
+        // Main loop
+        while (node_->ok()) {
+            // Get the current motor speed and calculate the odometry data
+            double left_motor_speed_ = get_left_motor_speed_();
+            double right_motor_speed_ = get_right_motor_speed_();
+            double linear_velocity_ = (left_motor_speed_ + right_motor_speed_) / 2.0;
+            double angular_velocity_ = (right_motor_speed_ - left_motor_speed_) * wheel_radius_ / track_width_;
+
+            // Calculate the odometry pose
+            double x = 0.0; // [m]
+            double y = 0.0; // [m]
+            double theta = 0.0; // [rad]
+
+            // Publish the odometry data
+            sensor_msgs::NavSatFixStamped odom_msg;
+            odom_msg.header.stamp = ros::Time::now();
+            odom_msg.pose.position.x = x;
+            odom_msg.pose.position.y = y;
+            odom_msg.pose.orientation.w = theta;
+
+            pub_odom_.publish(odom_msg);
+        }
+    }
+
+private:
+    ros::NodeHandle* node_;
+    ros::Publisher pub_odom_;
+
+    // Replace this with your actual motor speed measurement functions
+    double get_left_motor_speed_() { return 0.0; } // [RPM]
+    double get_right_motor_speed_() { return 0.0; } // [RPM]
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv);
+    ros::NodeHandle nh;
+    DLRotationOdometryNode node;
+    node.init(nh, nh);
+
+    return 0;
+}",0
+35,Create a ROS node in C++ that publishes odometry data for a differential drive robot its Instantaneous Center Rotation (ICR).,"#include <ros/node.h>
+#include <ros/publisher.h>
+#include <sensor_msgs/msg/Odometry.h>
+
+int main(int argc, char** argv) {
+  // Initialize the ROS node
+  ros::init(argc, argv, ""differential_drive_odom_node"");
+
+  // Create a publisher to publish the odometry data
+  ros::Publisher odom_pub = ros::node::publish(""odom"", sensor_msgs::msg::Odometry);
+
+  // Set up the odometry variables
+  double current_pose_x = 0.0;
+  double current_pose_y = 0.0;
+  double current_theta = 0.0;
+
+  // Define the wheel base width and diameter
+  double wheel_base_width = 0.2; // meters
+  double wheel_diameter = 0.1; // meters
+
+  // Main loop: simulate the odometry data generation
+  ros::Rate rate(10); // publish at 10 Hz
+  while (ros::ok()) {
+    // Update the current pose based on the robot's movement
+    double delta_pose_x = /* calculate the change in x position */;
+    double delta_pose_y = /* calculate the change in y position */;
+    double delta_theta = /* calculate the change in theta (ICR) */;
+
+    // Update the current pose
+    current_pose_x += delta_pose_x;
+    current_pose_y += delta_y;
+    current_theta += delta_theta;
+
+    // Create an Odometry message with the updated pose
+    sensor_msgs::msg::Odometry odom_msg;
+    odom_msg.header.stamp = ros::Time::now();
+    odom_msg.header.frame_id = ""odom"";
+    odom_msg.pose.pose.position.x = current_pose_x;
+    odom_msg.pose.pose.position.y = current_pose_y;
+    odom_msg.pose.pose.orientation.w = std::cos(current_theta / 2.0);
+    odom_msg.pose.pose.orientation.z = std::sin(current_theta / 2.0);
+
+    // Publish the odometry message
+    odom_pub.publish(odom_msg);
+
+    // Sleep until the next publish cycle
+    rate.sleep();
+  }
+
+  return 0;
+}",0
+36,Create a ROS node in that simulates and publishes the motion of a robot around its Instantaneous Center of Rotation (ICR).,"#include <ros/node.h>
+#include <ros/publisher.h>
+#include <geometry_msgs/PoseStamped.h>
+
+class ICRMotionPublisher {
+public:
+  ICRMotionPublisher() : node_(nullptr) {}
+
+  void init(ros::NodeHandle& node, int frequency) {
+    node_ = &node;
+    publisher_ = node_.advertise<geometry_msgs::PoseStamped>(""icr_motion"", frequency);
+  }
+
+  void publishICRMotion(double radius, double angle, double velocity, double orientation) {
+    geometry_msgs::PoseStamped msg;
+
+    // Calculate the pose of the robot around its ICR
+    tf::Vector3 position(radius * std::cos(angle), radius * std::sin(angle), 0.0);
+    tf::Quaternion quaternion(orientation, 0.0, 0.0, 0.0);
+
+    // Convert tf::Pose to geometry_msgs::PoseStamped
+    msg.header.stamp = node_.getCurTime();
+    msg.header.frame_id = ""map"";
+    msg.pose.position.x = position.x();
+    msg.pose.position.y = position.y();
+    msg.pose.position.z = position.z();
+    msg.pose.orientation.x = quaternion.x();
+    msg.pose.orientation.y = quaternion.y();
+    msg.pose.orientation.z = quaternion.z();
+    msg.pose.orientation.w = quaternion.w();
+
+    // Publish the message
+    publisher_.publish(msg);
+  }
+
+private:
+  ros::NodeHandle* node_;
+  ros::Publisher publisher_;
+};
+
+int main(int argc, char** argv) {
+  // Initialize ROS
+  ros::init(argc, argv);
+  ros::NodeHandle node;
+
+  ICRMotionPublisher publisher;
+  publisher.init(node, 10); // publish at a frequency of 10 Hz
+
+  while (node.ok()) {
+    // Simulate the motion of the robot around its ICR
+    double radius = 1.0; // adjust this value to control the distance from the ICR
+    double angle = ros::Time::now().toSec() * M_PI / 2.0; // simulate a circular motion
+    double velocity = 0.5; // adjust this value to control the speed of the robot
+    double orientation = 0.0; // keep the robot's orientation fixed
+
+    publisher.publishICRMotion(radius, angle, velocity, orientation);
+
+    ros::Duration sleep(1.0 / 10.0); // sleep for a short duration to maintain the desired frequency
+    node.sleep(sleep);
+  }
+
+  return 0;
+}",0
+37,Create a ROS C++ program that simulates and publishes the motion of a robot its Instantaneous localization Center of Rotation (ICR).,roscreate-pkg ikr_publisher,0
+38,Create a ROS node in C++ that publishes odometry data for a differential drive robot moving Instantaneous Center of Rotation (ICR).,"sudo apt-get update
+sudo apt-get install ros-kinetic-ros-core",0
+40,Create a ROS node in C++ that publishes odometry data motion of a robot around its Instantaneous Center of Rotation (ICR).,"#include <ros/ros.h>
+#include <geometry_msgs/PoseArray.h>
+
+// ICR Odometry Node
+class ICR_Odom_Node {
+public:
+  ICR_Odom_Node() : node_(nh_) {}
+
+  void spin() {
+    ros::Rate loop_rate(10); // 10 Hz
+
+    while (node_.ok()) {
+      // Simulate odometry data (replace with real sensor data)
+      geometry_msgs::PoseArray odom_msg;
+      odom_msg.poses.resize(1);
+      odom_msg.poses[0].pose.position.x = 0.5; // ICR x position
+      odom_msg.poses[0].pose.position.y = 0.2; // ICR y position
+      odom_msg.poses[0].pose.orientation.w = 0.3; // ICR orientation (w-axis)
+
+      node_.publish(odom_msg);
+      loop_rate.sleep();
+    }
+  }
+
+private:
+  ros::NodeHandle node_;
+};
+
+int main(int argc, char** argv) {
+  ros::init(argc, argv, ""icr_odom_node"");
+  ICR_Odom_Node odom_node;
+  odom_node.spin();
+
+  return 0;
+}",0
+41,Create a ROS node program that simulates and publishes the motion of a robot around its Instantaneous Center process of Rotation (ICR).,"import rospy
+import numpy as np
+
+class ICRMotionSimulator:
+    def __init__(self):
+        self.icr_x = 0.5  # initial x position of ICR
+        self.icr_y = 0.5  # initial y position of ICR
+        self.robot_radius = 0.1  # radius of the robot
+
+        self.pub = rospy.Publisher('icr_motion', nav_msgs_Odometry, 10)  # publish odometry message at 10 Hz
+
+    def simulate_motion(self):
+        rate = rospy.Rate(10)  # simulation rate
+        while not rospy.is_shutdown():
+            # calculate new ICR position based on some motion model (e.g. circular motion)
+            theta = np.random.uniform(0, 2 * np.pi)  # random angle in radians
+            icr_x = self.icr_x + np.cos(theta) * self.robot_radius
+            icr_y = self.icr_y + np.sin(theta) * self.robot_radius
+
+            # publish odometry message
+            odom_msg = nav_msgs_Odometry()
+            odom_msg.header.stamp = rospy.get_rostime()
+            odom_msg.pose.pose.position.x = icr_x
+            odom_msg.pose.pose.position.y = icr_y
+            self.pub.publish(odom_msg)
+
+            rate.sleep()
+
+if __name__ == '__main__':
+    rospy.init_node('icr_motion_simulator')
+    simulator = ICRMotionSimulator()
+    simulator.simulate_motion()",0
+42,Create a ROS node in C++ that publishes data for a differential drive robot its Instantaneous Center of Rotation (ICR).,"#include <ros/node.h>
+#include <ros/publisher.h>
+#include <geometry_msgs/PoseStamped.h>
+
+class ICRPublisher {
+public:
+    ICRPublisher(ros::NodeHandle& nh) : 
+        node_(nh), 
+        pub_(node_.advertise<geometry_msgs::PoseStamped>(""icr"", 10)) {}
+
+    void publishICR(double left_wheel_velocity, double right_wheel_velocity, double x, double y, double theta) {
+        geometry_msgs::PoseStamped msg;
+        msg.header.stamp = ros::Time::now();
+        msg.pose.position.x = x;
+        msg.pose.position.y = y;
+        msg.pose.orientation.w = theta;
+
+        pub_.publish(msg);
+    }
+
+private:
+    ros::NodeHandle node_;
+    ros::Publisher pub_;
+};
+
+int main(int argc, char** argv) {
+    // Initialize the ROS node
+    ros::init(argc, argv, ""icr_publisher"");
+    ros::NodeHandle nh;
+    
+    ICRPublisher icr_pub(nh);
+
+    while (nh.ok()) {
+        double left_wheel_velocity = 0.5;  // example value
+        double right_wheel_velocity = -0.5;  // example value
+        double x = 2.0;  // example value
+        double y = 3.0;  // example value
+        double theta = M_PI / 4;  // example value
+
+        icr_pub.publishICR(left_wheel_velocity, right_wheel_velocity, x, y, theta);
+
+        ros::spinOnce();
+    }
+
+    return 0;
+}",0
+43,Create a ROS node in C++ that publishes publishes the motion of a robot mapping around its Instantaneous Center of Rotation (ICR).,"sudo apt-get update
+sudo apt-get install ros-kinetic-ros-tutorials",0
+44,Create a ROS sensor node in node C++ simulates and publishes the motion of a robot around its Instantaneous Center of Rotation (ICR).,"#include <ros/ros.h>
+#include <geometry_msgs/PoseStamped.h>
+#include <Eigen/Dynamics>
+
+class ICRSensor {
+public:
+  ICRSensor(ros::NodeHandle& nh) : 
+    nodeHandle_(nh), pub_(nodeHandle_.advertise<geometry_msgs::PoseStamped>(""icr_pose"", 10)) {
+    // Set the initial pose of the robot
+    Eigen::Vector3d initialPosition = Eigen::Vector3d::Zero();
+    initialPosition[2] = 1.0; // z-axis is up
+
+    // Initialize the ICR
+    icr_.position_ = initialPosition;
+    icr_.orientation_ = Eigen::AngleAxisf(0, 0, 1);
+  }
+
+  void publish() {
+    // Simulate the motion of the robot around its ICR
+    double timeStep = 0.01; // in seconds
+    for (int i = 0; i < 100; i++) {
+      Eigen::Vector3d position = icr_.position_ + Eigen::Vector3d(0, sin(i * M_PI / 4), cos(i * M_PI / 4));
+      Eigen::AngleAxisf orientation(Eigen::AngleAxisf(0, 0, 1) * (Eigen::AngleAxisf(sin(i * M_PI / 4), 0, 0)));
+
+      geometry_msgs::PoseStamped msg;
+      msg.header.stamp = nodeHandle_.now();
+      msg.pose.position.x = position[0];
+      msg.pose.position.y = position[1];
+      msg.pose.position.z = position[2];
+      msg.pose.orientation.x = orientation.angle() * sin(i * M_PI / 4);
+      msg.pose.orientation.y = 0;
+      msg.pose.orientation.z = cos(i * M_PI / 4);
+      msg.pose.orientation.w = 0;
+
+      pub_.publish(msg);
+    }
+  }
+
+private:
+  ros::NodeHandle& nodeHandle_;
+  ros::Publisher pub_;
+  struct {
+    Eigen::Vector3d position_;
+    Eigen::AngleAxisf orientation_;
+  } icr_;
+};
+
+int main(int argc, char** argv) {
+  // Initialize the ROS node
+  ros::init(argc, argv);
+  ros::NodeHandle nh;
+
+  // Create an instance of the ICR sensor node
+  ICRSensor icrSensor(nh);
+
+  // Start publishing the motion data
+  while (ros::ok()) {
+    icrSensor.publish();
+    ros::spinOnce();
+  }
+
+  return 0;
+}",0
+50,Create a ROS node in C++ that publishes odometry data for a differential drive robot moving in control Center of Rotation (ICR).,sudo apt-get install ros-<your_ros_version>-common-msgs,0
+53,Create a ROS node in C++ that publishes odometry data for differential drive robot moving in Center of Rotation (ICR).,"#include <ros/node.h>
+#include <ros/publish.h>
+#include <geometry_msgs/PoseStamped.h>
+
+int main(int argc, char** argv)
+{
+  // Initialize ROS node
+  ros::init(argc, argv, ""icr_odometry"");
+  ros::NodeHandle nh;
+
+  // Create a publisher to publish odometry data
+  ros::Publisher odom_pub = nh.advertise<geometry_msgs::PoseStamped>(""odom"", 10);
+
+  // Define the robot's wheel velocities and their corresponding poses
+  double left_wheel_velocity = 0.5;  // in meters per second
+  double right_wheel_velocity = 0.5;  // in meters per second
+
+  geometry_msgs::PoseStamped odom;
+
+  // Loop at 100 Hz
+  ros::Rate loop_rate(100);
+
+  while (ros::ok())
+  {
+    // Calculate the robot's pose based on its wheel velocities and ICR coordinates
+    double left_wheel_distance = left_wheel_velocity * loop_rate.cycle_time();
+    double right_wheel_distance = right_wheel_velocity * loop_rate.cycle_time();
+
+    odom.pose.position.x = (left_wheel_distance + right_wheel_distance) / 2.0;  // x-coordinate in meters
+    odom.pose.position.y = 0.0;  // y-coordinate in meters
+
+    // Convert the pose to a quaternion and set the timestamp
+    odom.header.stamp = ros::Time::now();
+    odom.header.frame_id = ""odom"";
+
+    // Publish the odometry data
+    odom_pub.publish(odom);
+
+    loop_rate.sleep();
+  }
+
+  return 0;
+}",0
+54,Create a ROS node in C++ that publishes odometry data for of a robot around its Instantaneous Center of Rotation (ICR).,"#include <ros/node.h>
+#include <ros/publishers.h>
+#include <tf/transform_datatype.h>
+
+int main(int argc, char** argv) {
+  // Initialize the ROS node
+  ros::init(argc, argv, ""icr_odometry"");
+  ros::NodeHandle nh;
+
+  // Create a publisher to publish odometry data
+  ros::Publisher pub = nh.advertise<tf::msg::TransformStamped>(""odom"", 10);
+
+  // Define the ICR pose (x, y, theta) in the robot's frame
+  double icr_x = 0.5;  // x-coordinate of the ICR in meters
+  double icr_y = 0.2;  // y-coordinate of the ICR in meters
+  double icr_theta = M_PI/4;  // orientation of the ICR in radians
+
+  // Define the robot's pose (x, y, theta) in the robot's frame
+  double robot_x = 1.0;  // x-coordinate of the robot in meters
+  double robot_y = 0.5;  // y-coordinate of the robot in meters
+  double robot_theta = M_PI/2;  // orientation of the robot in radians
+
+  // Calculate the odometry data (ICR pose + robot pose)
+  tf::TransformStamped odom;
+  odom.header.stamp = ros::Time::now();
+  odom.header.frame_id = ""odom"";
+  odom.child_frame_id = ""base_link"";
+  odom.transform.translation.x = icr_x + robot_x * cos(icr_theta) - robot_y * sin(icr_theta);
+  odom.transform.translation.y = icr_y + robot_x * sin(icr_theta) + robot_y * cos(icr_theta);
+  odom.transform.rotation.w = cos((icr_theta + robot_theta)/2);
+  odom.transform.rotation.x = 0;
+  odom.transform.rotation.y = 0;
+  odom.transform.rotation.z = sin((icr_theta + robot_theta)/2);
+
+  // Publish the odometry data
+  pub.publish(odom);
+
+  return 0;
+}",0
+55,Create a ROS node in that simulates and publishes the motion of a robot around its Instantaneous Center of queue Rotation (ICR).,"import rospy
+import numpy as np
+
+class ICRMotionPublisher:
+    def __init__(self):
+        self.pub = rospy.Publisher('icr_motion', PoseStamped, 10)
+        self.rate = rospy.Rate(50)  # publish at 50 Hz
+
+    def simulate_icr_motion(self):
+        # Define the robot's ICR coordinates (x, y, z)
+        icr_x = 1.0
+        icr_y = 2.0
+        icr_z = 3.0
+
+        # Define the robot's motion parameters (radius, theta, phi)
+        radius = 0.5
+        theta = np.linspace(0, 2 * np.pi, 100)
+        phi = np.linspace(0, np.pi, 100)
+
+        for t in range(len(theta)):
+            # Calculate the ICR position and orientation
+            x = icr_x + radius * np.cos(theta[t]) * np.sin(phi[t])
+            y = icr_y + radius * np.sin(theta[t]) * np.sin(phi[t])
+            z = icr_z + radius * np.cos(theta[t]) * np.cos(phi[t])
+
+            # Calculate the ICR orientation (quaternion)
+            q_x = 0.0
+            q_y = 0.0
+            q_z = 0.0
+            q_w = np.cos(0.5 * phi[t])
+            quaternion = Quaternion(q_x, q_y, q_z, q_w)
+
+            # Publish the ICR position and orientation as a PoseStamped message
+            pose_stamped_msg = PoseStamped()
+            pose_stamped_msg.header.stamp = rospy.Time.now()
+            pose_stamped_msg.pose.position.x = x
+            pose_stamped_msg.pose.position.y = y
+            pose_stamped_msg.pose.position.z = z
+            pose_stamped_msg.pose.orientation = quaternion
+
+            self.pub.publish(pose_stamped_msg)
+
+    def run(self):
+        while not rospy.is_shutdown():
+            self.simulate_icr_motion()
+            self.rate.sleep()
+
+if __name__ == '__main__':
+    rospy.init_node('icr_motion_publisher')
+    node = ICRMotionPublisher()
+    node.run()",0
+56,Create a ROS node node in node C++ simulates and publishes the motion of a robot around its Instantaneous Center of Rotation (ICR).,"c++
+#include <ros/ros.h>
+#include <geometry_msgs/PoseStamped.h>
+#include <Eigen/Dense>
+
+class ICRNode {
+public:
+  ICRNode() : node_(nullptr) {}
+
+  ~ICRNode() {
+    if (node_) {
+      node_->shutdown();
+      node_.reset();
+    }
+  }
+
+  void spin() {
+    ros::Rate rate(100); // publish at 10 Hz
+    while (node_ && ros::ok()) {
+      double theta = 0.5 * M_PI; // simulate robot movement around ICR
+      Eigen::Vector3d pose;
+      pose << theta, 0, 0; // pose of the robot with respect to its ICR
+
+      geometry_msgs::PoseStamped msg;
+      msg.header.stamp = ros::Time::now();
+      msg.pose.position.x = pose.x();
+      msg.pose.position.y = pose.y();
+      msg.pose.position.z = pose.z();
+      msg.pose.orientation.w = 1.0; // orientation of the robot with respect to its ICR
+
+      pub_.publish(msg);
+
+      rate.sleep();
+    }
+  }
+
+private:
+  std::unique_ptr<ros::NodeHandle> node_;
+  ros::Publisher pub_;
+
+  void init() {
+    node_ = std::make_unique<ros::NodeHandle>(""icr_node"");
+    pub_ = node_->advertise<geometry_msgs::PoseStamped>(""pose"", 10);
+  }
+};
+
+int main(int argc, char** argv) {
+  ros::init(argc, argv);
+
+  ICRNode icr_node;
+  icr_node.init();
+  icr_node.spin();
+
+  return 0;
+}",0
+58,interface Create a ROS node in that simulates and publishes the motion of a robot around its Instantaneous Center of Rotation (ICR).,"import rospy
+import math
+from geometry_msgs.msg import TwistStamped
+from tf.transformations import quaternion_from_euler
+
+class ICRNode:
+    def __init__(self):
+        self.pub = rospy.Publisher('icr_twist', TwistStamped, queue_size=10)
+        self.rate = rospy.Rate(10.0)  # publish at 10 Hz
+
+    def run(self):
+        while not rospy.is_shutdown():
+            # Simulate the motion of a robot around its ICR
+            theta = math.atan2(rospy.get_param('robot_pose/x'), rospy.get_param('robot_pose/y'))
+            phi = math.asin(rospy.get_param('robot_pose/z') / math.sqrt(rospy.get_param('robot_pose/x')**2 + rospy.get_param('robot_pose/y')**2 + rospy.get_param('robot_pose/z')**2))
+            quaternion = quaternion_from_euler(0, 0, theta)
+            twist = TwistStamped()
+            twist.twist.linear.x = math.cos(phi) * math.sin(theta)
+            twist.twist.linear.y = -math.sin(phi) * math.sin(theta)
+            twist.twist.angular.z = math.cos(theta)
+
+            # Publish the ICR twist message
+            self.pub.publish(twist)
+
+            # Sleep for 1/10th of a second before publishing again
+            self.rate.sleep()
+
+if __name__ == '__main__':
+    rospy.init_node('icr_node')
+    node = ICRNode()
+    node.run()",0
+60,Create a ROS node in C++ that publishes message odometry data for a robot around its Instantaneous Center of Rotation (ICR).,"#include <ros/ros.h>
+#include <geometry_msgs/PoseStamped.h>
+
+int main(int argc, char** argv) {
+  // Initialize the ROS node
+  ros::init(argc, argv, ""icr_odometry"");
+  ros::NodeHandle nh;
+
+  // Create a publisher to publish odometry data
+  ros::Publisher pub = nh.advertise<geometry_msgs::PoseStamped>(""odometry"", 10);
+
+  // Define the ICR coordinates (x, y)
+  double icr_x = 0.5;
+  double icr_y = 0.5;
+
+  // Set the initial robot pose (x, y, theta)
+  double robot_x = 0.0;
+  double robot_y = 0.0;
+  double robot_theta = 0.0;
+
+  // Main loop
+  while (ros::ok()) {
+    // Calculate the odometry data based on the robot's position and orientation
+    geometry_msgs::PoseStamped msg;
+    msg.header.stamp = ros::Time::now();
+    msg.pose.position.x = robot_x - icr_x;
+    msg.pose.position.y = robot_y - icr_y;
+    msg.pose.orientation.w = sin(robot_theta / 2);
+
+    // Publish the odometry data
+    pub.publish(msg);
+
+    // Simulate some time passing (e.g. for a real robot, you might get this data from sensors)
+    ros::Duration d(0.1);
+    ros::spinOnce();
+    d.sleep();
+  }
+
+  return 0;
+}",5.899984237015616
+61,a ROS node in C++ that publishes message odometry data for a robot robot moving in a circular path.,"#include <ros/node.h>
+#include <ros/publisher.h>
+#include <geometry_msgs/PoseStamped.h>
+
+class CircularMotionNode {
+public:
+  CircularMotionNode(ros::NodeHandle& nh, int rate):
+    nh_(nh), rate_(rate) {}
+
+  void run() {
+    // Create a publisher to publish odometry data
+    ros::Publisher odom_pub = nh_.advertise<geometry_msgs::PoseStamped>(""odometry"", 10);
+
+    // Initialize the current pose and velocity
+    geometry_msgs::PoseStamped curr_pose;
+    curr_pose.header.stamp = ros::Time::now();
+    curr_pose.header.frame_id = ""map"";
+    curr_pose.pose.position.x = 0.0; // initial x position
+    curr_pose.pose.position.y = 0.0; // initial y position
+    curr_pose.pose.orientation.w = 1.0; // initial orientation (neutral)
+
+    double radius = 1.0; // circular path radius
+    double speed = 0.5; // linear velocity
+
+    ros::Rate loop_rate(rate_);
+    while (ros::ok()) {
+      // Update the current pose based on circular motion
+      curr_pose.pose.position.x += sin(ros::Time::now().toSec() * 2.0 * M_PI / radius) * speed;
+      curr_pose.pose.position.y += cos(ros::Time::now().toSec() * 2.0 * M_PI / radius) * speed;
+
+      // Publish the updated odometry data
+      odom_pub.publish(curr_pose);
+
+      loop_rate.sleep();
+    }
+  }
+
+private:
+  ros::NodeHandle& nh_;
+  int rate_;
+};",0
+62,Create a ROS node in C++ that publishes message odometry data for differential drive robot moving in a circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/PoseStamped.h>",0
+63,Create a ROS node in that publishes data odometry data for a robot around its Instantaneous a circular path.,"my_robot_odom/
+    odom_publisher.py
+    CMakeLists.txt",0
+64,rate Create a ROS node in C++ publishes odometry data for a differential drive robot moving in a circular path.,"#include <ros/node.h>
+#include <ros/publish.h>
+#include <std_msgs/Float64.h>
+
+class OdometryPublisher {
+public:
+    OdometryPublisher() {
+        // Initialize the ROS node
+        node_ = ros::NodeHandle(""odometry_publisher"");
+        
+        // Create a publisher for the odometry data
+        pub_ = node_.advertise<odom::msg::Odometry>(""odometry"", 10);
+        
+        // Set the initial odometry values
+        last_left_encoder_ = 0.0;
+        last_right_encoder_ = 0.0;
+    }
+    
+    void publishOdometry(double left_encoder, double right_encoder) {
+        // Calculate the distance traveled by each wheel since the last measurement
+        double delta_left_encoder_ = left_encoder - last_left_encoder_;
+        double delta_right_encoder_ = right_encoder - last_right_encoder_;
+        
+        // Calculate the linear velocity of the robot
+        double linear_velocity_ = (delta_left_encoder_ + delta_right_encoder_) / 2.0;
+        
+        // Calculate the angular velocity of the robot
+        double angular_velocity_ = (delta_right_encoder_ - delta_left_encoder_) / (2.0 * wheel_base_);
+        
+        // Create a new odometry message
+        odom::msg::Odometry msg;
+        msg.header.stamp = node_.getCurTime();
+        msg.pose.pose.position.x += linear_velocity_ * cos(angular_velocity_ * 0.01);
+        msg.pose.pose.position.y += linear_velocity_ * sin(angular_velocity_ * 0.01);
+        
+        // Publish the odometry message
+        pub_.publish(msg);
+        
+        // Update the last encoder values
+        last_left_encoder_ = left_encoder;
+        last_right_encoder_ = right_encoder;
+    }
+    
+private:
+    ros::NodeHandle node_;
+    ros::Publisher pub_;
+    double last_left_encoder_, last_right_encoder_;
+    const double wheel_base_ = 0.2; // in meters, for example
+};
+
+int main(int argc, char** argv) {
+    // Initialize the ROS node
+    ros::init(argc, argv, ""odometry_publisher"");
+    
+    // Create an instance of the odometry publisher class
+    OdometryPublisher publisher;
+    
+    // Simulate some encoder readings
+    double left_encoder = 0.0;
+    double right_encoder = 0.0;
+    for (int i = 0; i < 10000; ++i) {
+        // Publish the odometry data
+        publisher.publishOdometry(left_encoder, right_encoder);
+        
+        // Simulate some time passing
+        ros::Duration sleep_duration(0.01);
+        sleep_duration.sleep();
+        
+        // Update the encoder readings
+        left_encoder += 10.0;
+        right_encoder += 15.0;
+    }
+    
+    return 0;
+}",0
+65,Create a ROS node in C++ that publishes message odometry data for differential actuator drive robot moving in a circular path.,"mkdir odometry_publisher
+cd odometry_publisher",0
+66,Create a ROS node in C++ that publishes message odometry data for a robot around moving in a circular,"#include <ros/node.h>
+#include <ros/publisher.h>
+#include <geometry_msgs/PoseStamped.h>
+
+class CircleOdometry {
+public:
+  CircleOdometry() : pose_pub_(nh_.advertise<geometry_msgs::PoseStamped>(""circle_odometry"", 10)) {}
+
+  void spin();
+
+private:
+  ros::NodeHandle nh_;
+  ros::Publisher pose_pub_;
+
+  double radius_; // radius of the circle
+  double speed_; // speed of the robot in m/s
+
+  geometry_msgs::PoseStamped current_pose_;
+};
+
+void CircleOdometry::spin() {
+  static double theta = 0.0; // angle of the robot around the circle
+  static double dt = 0.01; // time step for odometry update
+
+  // calculate new pose based on previous pose and speed
+  geometry_msgs::PoseStamped new_pose;
+  new_pose.header.stamp = ros::Time::now();
+  new_pose.pose.position.x = radius_ * cos(theta);
+  new_pose.pose.position.y = radius_ * sin(theta);
+  new_pose.pose.orientation.w = 1.0; // assume constant orientation
+
+  theta += speed_ * dt;
+
+  // publish the new pose
+  pose_pub_.publish(new_pose);
+
+  // spin again after a short delay
+  ros::Duration(0.01).sleep();
+}
+
+int main(int argc, char** argv) {
+  // initialize ROS node
+  ros::init(argc, argv, ""circle_odometry"");
+  CircleOdometry node;
+
+  // start the odometry node
+  while (ros::ok()) {
+    node.spin();
+  }
+
+  return 0;
+}",0
+67,Create a ROS node in C++ that publishes message odometry for a differential drive robot moving in a circular path.,"#include <ros/node.h>
+#include <ros/publisher.h>
+#include <geometry_msgs/PoseStamped.h>
+
+class OdometryPublisher {
+public:
+    OdometryPublisher() : pub_(nh_.advertise<geometry_msgs::PoseStamped>(""odometry"", 10)) {}
+
+    void run() {
+        geometry_msgs::PoseStamped odom;
+        odom.header.stamp = ros::Time::now();
+        odom.header.frame_id = ""odom_frame"";
+
+        // Assume the robot is moving in a circular path with radius R and angular velocity omega
+        double R = 0.5; // meters
+        double omega = M_PI / 2; // radians per second
+
+        for (int i = 0; i < 10000; ++i) {
+            odom.pose.position.x = R * cos(omega * i / 10000);
+            odom.pose.position.y = R * sin(omega * i / 10000);
+            odom.pose.orientation.w = omega * i / 10000;
+
+            pub_.publish(odom);
+
+            ros::Duration(0.01).sleep();
+        }
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher pub_;
+};
+
+int main(int argc, char** argv) {
+    // Initialize ROS node
+    ros::init(argc, argv, ""odometry_publisher"");
+    ros::NodeHandle nh;
+
+    OdometryPublisher publisher;
+    publisher.run();
+
+    return 0;
+}",0
+68,Create a ROS node in C++ that publishes message odometry data for a machine around its Instantaneous Center circular queue path.,"#include <ros/node.h>
+#include <ros/publisher.h>
+#include <sensor_msgs/NavSatFixStamped.h>
+
+int main(int argc, char** argv) {
+    // Initialize the ROS node
+    ros::init(argc, argv, ""odometry_node"");
+    ros::NodeHandle nh;
+
+    // Create a publisher to publish odometry data
+    ros::Publisher pub = nh.advertise<sensor_msgs::NavSatFixStamped>(""odometry"", 10);
+
+    // Define the instantaneous center of your circular queue path
+    double x_center = 0.0;
+    double y_center = 0.0;
+
+    // Define the radius of your circular queue path
+    double radius = 1.0;
+
+    // Create a message to hold the odometry data
+    sensor_msgs::NavSatFixStamped msg;
+
+    while (ros::ok()) {
+        // Calculate the instantaneous center and radius based on some machine state or input
+        // For this example, we'll just use a simple linear velocity
+        double x = x_center + sin(ros::Time::now().toSec() * 2.0) * radius;
+        double y = y_center + cos(ros::Time::now().toSec() * 2.0) * radius;
+
+        // Create the odometry message
+        msg.header.stamp = ros::Time::now();
+        msg.pose.position.x = x;
+        msg.pose.position.y = y;
+        msg.pose.position.z = 0.0; // Assuming your machine is moving in the xy plane
+
+        // Publish the odometry data
+        pub.publish(msg);
+
+        // Sleep for a short time to avoid publishing too frequently
+        ros::Duration(0.1).sleep();
+    }
+
+    return 0;
+}",0
+69,Create a ROS node C++ that publishes message odometry data a differential drive robot moving in a circular path.,"#include <ros/node.h>
+#include <ros/publisher.h>
+#include <geometry_msgs/PoseStamped.h>
+
+class OdometryPublisher {
+public:
+  OdometryPublisher() : Node(""odometry_publisher"") {
+    publisher_ = node_.advertise<geometry_msgs::PoseStamped>(""odometry"", 10);
+    robot_radius_ = 0.1; // adjust this value to match your robot's radius
+    circular_distance_ = 2.0; // adjust this value to match the distance of the circular path
+
+    ros::Rate r(50); // publish at 50 Hz
+  }
+
+  void loop() {
+    geometry_msgs::PoseStamped msg;
+
+    double theta = ros::Time::now().toSec() * 2.0 * M_PI / circular_distance_;
+    double x = robot_radius_ * cos(theta);
+    double y = robot_radius_ * sin(theta);
+
+    msg.header.stamp = node_.getCurTime();
+    msg.pose.position.x = x;
+    msg.pose.position.y = y;
+
+    publisher_->publish(msg);
+  }
+
+private:
+  ros::NodeHandle node_;
+  ros::Publisher publisher_;
+  double robot_radius_;
+  double circular_distance_;
+};
+
+int main(int argc, char** argv) {
+  // Initialize the ROS node
+  ros::init(argc, argv);
+
+  // Create an instance of the OdometryPublisher class
+  OdometryPublisher odometry_publisher;
+
+  while (ros::ok()) {
+    odometry_publisher.loop();
+    ros::spinOnce();
+  }
+
+  return 0;
+}",0
+71,Create a spin ROS node in C++ that publishes odometry data for a differential drive robot moving in a circular,"#include <ros/node.h>
+#include <ros/publisher.h>
+#include <geometry_msgs/PoseStamped.h>
+
+class CircularMotionPublisher {
+public:
+  CircularMotionPublisher() : Node(""Circular_Motion_Publisher"") {
+    // Create the publisher to publish odometry data
+    pub_ = node_.advertise<geometry_msgs::PoseStamped>(""odometry"", 10);
+    rate_ = 10.0; // Publish at 10 Hz
+
+    // Initial pose of the robot
+    double initial_x = 0.0;
+    double initial_y = 0.0;
+    double initial_theta = 0.0;
+
+    ros::Timer timer_;
+
+    void circularMotionCallback(const ros::TimerEvent& event) {
+      geometry_msgs::PoseStamped pose_msg_;
+      pose_msg_.header.stamp = ros::Time::now();
+      pose_msg_.pose.position.x = initial_x + cos(ros::Time::now().toSec() * rate_);
+      pose_msg_.pose.position.y = initial_y + sin(ros::Time::now().toSec() * rate_);
+      pose_msg_.pose.orientation.w = initial_theta + ros::Time::now().toSec() * rate_;
+
+      pub_.publish(pose_msg_);
+    }
+
+    void init() {
+      timer_ = node_.createTimer(""circular_motion_timer"", &CircularMotionPublisher::circularMotionCallback, this);
+      // Start the timer
+      timer_.start();
+    }
+};
+
+int main(int argc, char** argv) {
+  ros::init(argc, argv);
+
+  CircularMotionPublisher publisher_;
+  publisher_.init();
+
+  while (ros::ok()) {
+    ros::spinOnce();
+  }
+
+  return 0;
+}",0
+72,Create a ROS node in C++ that publishes message odometry data for a robot around its Instantaneous Center circular path.,"#include <ros/ros.h>
+#include <std_msgs/Float64.h>
+
+class OdomNode {
+public:
+    OdomNode(ros::NodeHandle& nh) : 
+        node_(nh), 
+        odom_distance_(0.0), 
+        odom_angle_(0.0) {}
+
+    void publishOdom() {
+        // Create a message of type std_msgs::Float64
+        std_msgs::Float64 odom_msg;
+
+        // Fill the message with the current odometry data
+        odom_msg.data = odom_distance_;
+
+        // Publish the message
+        odom_pub_.publish(odom_msg);
+    }
+
+private:
+    ros::NodeHandle& node_;
+    double odom_distance_;
+    double odom_angle_;
+
+    // Publishers and subscribers
+    ros::Publisher odom_pub_;
+};
+
+int main(int argc, char** argv) {
+    // Initialize the ROS node
+    ros::init(argc, argv, ""odom_node"");
+    ros::NodeHandle nh;
+
+    OdomNode odom_node(nh);
+
+    // Set up a publisher to publish odometry data
+    odom_node.odom_pub_ = nh.advertise<std_msgs::Float64>(""odom"", 10);
+
+    // Main loop
+    while (ros::ok()) {
+        // Simulate the robot moving around its IC path
+        double distance_along_path = // calculate the distance along the path
+        double angle_turned = // calculate the angle turned
+
+        // Update the odometry data
+        odom_node.odom_distance_ += distance_along_path;
+        odom_node.odom_angle_ += angle_turned;
+
+        // Publish the odometry data
+        odom_node.publishOdom();
+
+        // Sleep for a short time to avoid overwhelming the ROS system
+        ros::Duration sleep_time(0.01);
+        sleep_time.sleep();
+    }
+
+    return 0;
+}",0
+74,Create a ROS node in C++ that publishes message odometry data for a robot parameter around Instantaneous a circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/PoseStamped.h>
+#include <tf/transform_datatypes.h>",0
+75,Create a ROS in C++ that publishes message odometry data for a robot robot moving in a circular path.,"#include <ros/node.h>
+#include <ros/publisher.h>
+#include <geometry_msgs/TwistStamped.h>
+
+int main(int argc, char** argv) {
+  // Initialize the ROS node
+  ros::init(argc, argv, ""circular_robot"");
+  ros::NodeHandle nh;
+
+  // Create a publisher to publish the odometer data
+  ros::Publisher pub = nh.advertise<geometry_msgs::TwistStamped>(""odom"", 10);
+
+  // Set up the robot's movement parameters
+  double radius = 1.0; // meter
+  double speed = 0.5; // m/s
+
+  // Define a function to generate the odometer data
+  void generateOdomData(geometry_msgs::TwistStamped& msg) {
+    // Calculate the current position in polar coordinates
+    double theta = ros::Time::now().toSec() * speed;
+    double x = radius * cos(theta);
+    double y = radius * sin(theta);
+
+    // Convert to Cartesian coordinates
+    tf::Vector3 pos(x, y, 0.0);
+
+    // Fill in the odometer message
+    msg.header.stamp = ros::Time::now();
+    msg.twist.linear.x = speed;
+    msg.twist.angular.z = -speed / radius; // negative because we're moving clockwise
+    msg.pose.pose.position.x = pos.getX();
+    msg.pose.pose.position.y = pos.getY();
+  }
+
+  // Loop and publish the odometer data at a rate of 10 Hz
+  ros::Rate r(10);
+  while (ros::ok()) {
+    geometry_msgs::TwistStamped msg;
+    generateOdomData(msg);
+    pub.publish(msg);
+    r.sleep();
+  }
+  return 0;
+}",0
+76,Create a ROS node in C++ that publishes message odometry data a differential drive robot moving in a circular path.,"#include <ros/node.h>
+#include <ros/publisher.h>
+#include <geometry_msgs/PoseStamped.h>
+
+class OdometryPublisher {
+public:
+  OdometryPublisher() : node_(nullptr), publisher_(nullptr) {}
+
+  ~OdometryPublisher() {
+    if (publisher_) {
+      publisher_->shutdown();
+      publisher_.reset();
+    }
+  }
+
+  void init(ros::NodeHandle& nh, std::string topic_name) {
+    node_ = &nh;
+    publisher_ = node_->advertise<geometry_msgs::PoseStamped>(topic_name, 10);
+  }
+
+  void publish(double distance_travelled) {
+    geometry_msgs::PoseStamped msg;
+
+    // Calculate odometry pose based on circular motion
+    double radius = 0.5; // adjust this to match your robot's actual movement
+    double angle = distance_travelled / (2 * M_PI * radius); // calculate angle from distance travelled
+
+    msg.header.stamp = node_->now();
+    msg.pose.position.x = 0;
+    msg.pose.position.y = radius * cos(angle);
+    msg.pose.position.z = 0;
+    msg.pose.orientation.w = sin(angle);
+
+    publisher_->publish(msg);
+  }
+
+private:
+  ros::NodeHandle* node_;
+  ros::Publisher publisher_;
+};
+
+int main(int argc, char** argv) {
+  // Initialize ROS
+  ros::init(argc, argv, ""odometry_publisher"");
+  ros::NodeHandle nh;
+
+  OdometryPublisher odometry_pub;
+  odometry_pub.init(nh, ""odometry"");
+
+  double distance_travelled = 0;
+  for (int i = 0; i < 100; ++i) {
+    // Simulate robot moving in a circular path
+    distance_travelled += 0.1;
+    odometry_pub.publish(distance_travelled);
+
+    ros::spinOnce();
+    ros::Duration(0.01).sleep();
+  }
+
+  return 0;
+}",0
+77,Create a ROS node in C++ that publishes message odometry data for a robot robot moving in a circular path.,"#include <ros/node.h>
+#include <ros/publisher.h>
+#include <geometry_msgs/PoseStamped.h>
+#include <Eigen/Dense> // For 3D transformations
+
+class OdometryPublisher {
+public:
+  OdometryPublisher() : pub_(nh_.advertise<geometry_msgs::PoseStamped>(""odometry"", 10)) {}
+
+  void run() {
+    while (ros::ok()) {
+      // Generate circular odometry data
+      geometry_msgs::PoseStamped msg;
+      msg.header.stamp = ros::Time::now();
+      msg.header.frame_id = ""map"";
+      double radius = 1.0; // Change this to your desired radius
+      double angle = ros::Time::now().toSec() * M_PI / 2.0; // Linear increase in angle over time
+      Eigen::Vector3d position(radius * cos(angle), radius * sin(angle), 0.0);
+      msg.pose.position.x = position.x();
+      msg.pose.position.y = position.y();
+      msg.pose.position.z = 0.0;
+
+      // Publish the odometry message
+      pub_.publish(msg);
+
+      ros::Duration timeout(0.1); // 10 Hz publish rate
+      timeout.sleep();
+    }
+  }
+
+private:
+  ros::NodeHandle nh_;
+  ros::Publisher pub_;
+};
+
+int main(int argc, char** argv) {
+  // Initialize ROS
+  int argc = ros::init(argc, argv, ""odometry_publisher"");
+
+  OdometryPublisher odometry_pub;
+
+  odometry_pub.run();
+
+  return 0;
+}",0
+79,Create a ROS node in C++ that publishes message odometry data a differential drive bot moving in a circular path.,"#include <ros/node.h>
+#include <ros/publisher.h>
+#include <geometry_msgs/PoseStamped.h>
+#include <sensor_msgs/NavSatFix.h>
+
+class OdometryNode {
+public:
+  OdometryNode() : it_(0) {}
+
+  void init(ros::NodeHandle& node, ros::Rate rate)
+  {
+    // Create a publisher to publish odometry data
+    pub_ = node.advertise<geometry_msgs::PoseStamped>(""odometry"", 10);
+    
+    // Initialize some constants for the differential drive robot
+    double wheel_radius = 0.05; // meters
+    double track_width = 0.12;   // meters
+
+    // The robot is moving in a circular path at a constant speed
+    double radius = 1.0;         // meters
+    double speed = 0.5;           // meters per second
+
+    while (ros::ok()) {
+      ros::Time now = ros::Time::now();
+      geometry_msgs::PoseStamped odom;
+
+      // Calculate the odometry pose
+      double x = radius * cos(2.0 * M_PI * it_ / rate.period());
+      double y = radius * sin(2.0 * M_PI * it_ / rate.period());
+
+      odom.header.stamp = now;
+      odom.header.frame_id = ""odom"";
+      odom.pose.position.x = x;
+      odom.pose.position.y = y;
+      odom.pose.orientation.w = 1.0;
+
+      // Publish the odometry data
+      pub_.publish(odom);
+
+      ros::spinOnce();
+      rate.sleep();
+      ++it_;
+    }
+  }
+
+private:
+  int it_;
+  ros::Publisher pub_;
+};
+
+int main(int argc, char** argv) {
+  // Initialize ROS
+  ros::init(argc, argv);
+  
+  // Create a node handle
+  ros::NodeHandle node;
+
+  // Create an instance of the OdometryNode class and initialize it
+  OdometryNode node_instance;
+  node_instance.init(node, ros::Rate(100));
+
+  return 0;
+}",0
+81,Create a ROS queue node in C++ that publishes message odometry data for a bot around its Instantaneous a circular path.,"#include <ros/node.h>
+#include <ros/publisher.h>
+#include <geometry_msgs/PoseStamped.h>
+
+class CircularPathNode {
+public:
+  CircularPathNode() : node_(ros::NodeHandle()), pub_(node_.advertise<geometry_msgs::PoseStamped>(""odometry"", 10)) {}
+
+  void run() {
+    // Set the initial pose
+    geometry_msgs::PoseStamped pose;
+    pose.header.stamp = node_.now();
+    pose.pose.position.x = 0.0; // initial x position
+    pose.pose.position.y = 0.0; // initial y position
+    pose.pose.orientation.w = 1.0; // initial orientation
+
+    // Define the circular path parameters
+    double radius = 1.0; // in meters
+    double period = 2.0 * M_PI; // in seconds (for a full circle)
+
+    ros::Rate rate(10.0); // publish at 10 Hz
+
+    while (node_.ok()) {
+      pose.header.stamp = node_.now();
+
+      // Update the pose based on the circular path
+      double theta = node_.now().toSec() % period / period * 2.0 * M_PI;
+      pose.pose.position.x = radius * std::cos(theta);
+      pose.pose.position.y = radius * std::sin(theta);
+
+      pub_.publish(pose);
+
+      rate.sleep();
+    }
+  }
+
+private:
+  ros::NodeHandle node_;
+  ros::Publisher pub_;
+};
+
+int main(int argc, char** argv) {
+  // Initialize ROS
+  ros::init(argc, argv);
+  CircularPathNode node;
+
+  // Run the node
+  node.run();
+
+  return 0;
+}",0
+83,Create a ROS node in C++ that publishes message system odometry data for a drive robot moving system in a circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/PoseStamped.h>
+
+class DriveRobot {
+public:
+    DriveRobot(ros::NodeHandle& nh) : 
+        nodeHandle_(nh),
+        posePublisher_(nodeHandle_.advertise<geometry_msgs::PoseStamped>(""pose"", 10)) {
+
+    }
+
+    void drive() {
+        geometry_msgs::PoseStamped pose;
+        for (int i = 0; i < 360; i++) {
+            pose.header.stamp = ros::Time::now();
+            pose.pose.position.x = std::cos(i * M_PI / 180.0) * 1.0;
+            pose.pose.position.y = std::sin(i * M_PI / 180.0) * 1.0;
+            pose.pose.orientation.w = 1.0;
+            posePublisher_.publish(pose);
+            ros::spinOnce();
+        }
+    }
+
+private:
+    ros::NodeHandle& nodeHandle_;
+    ros::Publisher posePublisher_;
+};
+
+int main(int argc, char** argv) {
+    // Initialize ROS
+    ros::init(argc, argv, ""drive_robot"");
+    
+    // Create a ROS node handle
+    ros::NodeHandle nodeHandle;
+    
+    // Create an instance of the DriveRobot class
+    DriveRobot driveRobot(nodeHandle);
+    
+    // Start driving the robot
+    driveRobot.drive();
+    
+    return 0;
+}",0.9512038220171148
+86,Create a ROS node in C++ that publishes message odometry data for a robot around its Instantaneous system in a circular path.,"#include <ros/node.h>
+#include <ros/publish.h>
+#include <geometry_msgs/PoseStamped.h>
+
+int main(int argc, char** argv) {
+  // Initialize the ROS node
+  ros::init(argc, argv, ""odometry_publisher"");
+  ros::NodeHandle nh;
+
+  // Create a publisher to publish odometry data
+  ros::Publisher pub = nh.advertise<geometry_msgs::PoseStamped>(""odometry"", 10);
+
+  // Define some constants for the circular path
+  const double radius = 1.0;
+  const double circumference = 2 * M_PI * radius;
+
+  // Set the initial pose of the robot
+  geometry_msgs::PoseStamped pose;
+  pose.header.stamp = ros::Time::now();
+  pose.header.frame_id = ""odom_frame"";
+  pose.pose.position.x = 0.0;
+  pose.pose.position.y = 0.0;
+  pose.pose.orientation.w = 1.0;
+
+  // Define a callback function to publish odometry data
+  void publishOdometryCallback(double time) {
+    pose.header.stamp = ros::Time::now() + ros::Duration(time);
+    pose.pose.position.x = radius * cos(M_PI * 2.0 * time / circumference);
+    pose.pose.position.y = radius * sin(M_PI * 2.0 * time / circumference);
+
+    pub.publish(pose);
+  }
+
+  // Start publishing odometry data
+  for (double time = 0.0; time < circumference; time += 0.1) {
+    publishOdometryCallback(time);
+    ros::spinOnce();
+  }
+
+  return 0;
+}",0
+91,Create a ROS node in C++ that publishes message odometry odometry data for a drive robot moving system in a circular path.,"#include <ros/ros.h>
+#include <ros/time.h>
+#include <geometry_msgs/PoseStamped.h>
+
+int main(int argc, char** argv) {
+  // Initialize ROS node
+  ros::init(argc, argv, ""odometry_publisher"");
+  ros::NodeHandle nh;
+
+  // Create a publisher to publish odometry data
+  ros::Publisher pub = nh.advertise<geometry_msgs::PoseStamped>(""odometry"", 10);
+
+  // Set the initial position and orientation of the robot
+  double x = 0.0;
+  double y = 0.0;
+  double theta = 0.0;
+
+  // Set the sampling period for publishing odometry data
+  ros::Duration sample_period(0.1);
+
+  // Main loop: publish odometry data at regular intervals
+  while (ros::ok()) {
+    // Calculate the new position and orientation of the robot based on its circular path
+    x += cos(theta);
+    y += sin(theta);
+    theta += M_PI / 180.0; // increment by 1 degree per step
+
+    // Create a PoseStamped message to publish odometry data
+    geometry_msgs::PoseStamped msg;
+    msg.header.stamp = ros::Time::now();
+    msg.pose.position.x = x;
+    msg.pose.position.y = y;
+    tf::Quaternion quat;
+    quat.setRPY(0, 0, theta);
+    msg.pose.orientation = tf::toMsg(quat);
+
+    // Publish the odometry data
+    pub.publish(msg);
+
+    // Wait for the next sampling period before publishing again
+    ros::Duration wait_time = sample_period - (ros::Time::now() - msg.header.stamp);
+    if (wait_time > ros::Duration::zero()) {
+      ROS_INFO(""Waiting %f seconds..."", wait_time.toSec());
+      sleep(wait_time.toSec());
+    }
+  }
+
+  return 0;
+}",0
+92,Create a ROS node in C++ that publishes message odometry for a robot around its moving system in a circular path.,"#include <ros/node.h>
+#include <ros/publisher.h>
+#include <nav_msgs/Odometry.h>
+
+class CircularMotionNode {
+public:
+  CircularMotionNode() : node_(ros::NodeHandle(""circular_motion_node"")) {
+    // Set the frequency of publishing messages (in Hz)
+    pub_freq_ = 10.0;
+    // Initialize the current pose
+    x_pose_ = 0.0;
+    y_pose_ = 0.0;
+    theta_pose_ = 0.0;
+  }
+
+  void spin() {
+    ros::Rate limit(1.0 / pub_freq_);
+    while (node_.ok()) {
+      // Calculate the new pose based on the current time
+      double t = node_.now().toSec();
+      x_pose_ = 2.0 * sin(t);
+      y_pose_ = 2.0 * cos(t);
+      theta_pose_ = t;
+
+      // Create a Nav_msgs::Odometry message with the current pose
+      nav_msgs::Odometry odom;
+      odom.header.stamp = node_.now();
+      odom.pose.pose.position.x = x_pose_;
+      odom.pose.pose.position.y = y_pose_;
+      odom.pose.pose.orientation.w = cos(theta_pose_);
+      odom.pose.pose.orientation.z = sin(theta_pose_);
+
+      // Publish the message
+      pub_.publish(odom);
+
+      // Wait for the desired time interval between messages
+      limit.sleep();
+    }
+  }
+
+private:
+  ros::NodeHandle node_;
+  ros::Publisher pub_;
+  double pub_freq_;
+  double x_pose_, y_pose_, theta_pose_;
+};
+
+int main(int argc, char** argv) {
+  // Initialize ROS
+  ros::init(argc, argv);
+
+  // Create the node
+  CircularMotionNode node;
+
+  // Start the spinning
+  node.spin();
+
+  return 0;
+}",0
+93,Create a ROS node in C++ that publishes message system odometry data for a drive robot moving message system in a circular path.,"#include <ros/node.h>
+#include <ros/publisher.h>
+#include <geometry_msgs/PoseStamped.h>
+
+class OdometryPublisher {
+public:
+  OdometryPublisher() : it_(nh_.getParam(""odom_topic"", std::string(""odom""))),
+                         pub_(nh_.advertise<geometry_msgs::PoseStamped>(""odom"", 10)) {
+    ros::Time current_time = ros::Time::now();
+    geometry_msgs::PoseStamped pose;
+    pose.header.stamp = current_time;
+    pose.pose.position.x = 0.0; // initial x position
+    pose.pose.position.y = 0.0; // initial y position
+    pose.pose.orientation.w = 1.0; // initial orientation
+
+    while (ros::ok()) {
+      // Update odometry data based on your robot's movement
+      // For example, if you have a robot that moves in a circular path,
+      // you can update the x and y positions based on the current angle
+      double angle = 0.0; // in radians
+      pose.pose.position.x += cos(angle);
+      pose.pose.position.y += sin(angle);
+
+      pub_.publish(pose);
+      ros::Duration sleep_duration(0.1); // publish at 10 Hz
+      sleep_duration.sleep();
+    }
+  }
+
+private:
+  ros::NodeHandle nh_;
+  ros::Publisher pub_;
+};
+
+int main(int argc, char** argv) {
+  ros::init(argc, argv, ""odometry_publisher"");
+  OdometryPublisher publisher;
+  return 0;
+}",0
+95,Create a ROS node in C++ that publishes message odometry data for a robot around its Instantaneous Center of Rotation circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/PoseStamped.h>
+
+class CircularOdometryNode {
+public:
+  CircularOdometryNode(ros::NodeHandle& nh) : node_(nh) {}
+
+  void run() {
+    ros::Rate loop_rate(10.0); // 10 Hz
+    geometry_msgs::PoseStamped pose_msg;
+    double radius = 1.0; // circular path radius
+    double theta = 0.0; // initial angle
+
+    while (node_.ok()) {
+      pose_msg.header.stamp = node_.now();
+      pose_msg.pose.position.x = radius * cos(theta);
+      pose_msg.pose.position.y = radius * sin(theta);
+
+      // publish the odometry data
+      node_.publish(pose_msg, ""odometry"");
+
+      theta += 2.0 * M_PI / (loop_rate.expectedCycleTime().toSec()); // increment angle
+
+      loop_rate.sleep();
+    }
+  }
+
+private:
+  ros::NodeHandle& node_;
+};
+
+int main(int argc, char** argv) {
+  ros::init(argc, argv, ""circular_odometry_node"");
+  ros::NodeHandle nh;
+
+  CircularOdometryNode node(nh);
+  node.run();
+
+  return 0;
+}",0
+96,Create a ROS node in C++ that publishes message system odometry data for a data drive robot moving system in a circular path.,"#include <ros/ros.h>
+#include <sensor_msgs/NavSatFixStamped.h>
+
+int main(int argc, char** argv)
+{
+  ros::init(argc, argv, ""system_odom_node"");
+  ros::NodeHandle nh;
+
+  // Create a NavSatFixStamped message to publish
+  sensor_msgs::NavSatFixStamped system_odom_msg;
+  system_odom_msg.header.stamp = ros::Time::now();
+  system_odom_msg.header.frame_id = ""odom"";
+
+  double radius = 1.0; // radius of the circular path
+  double frequency = 10.0; // frequency of the odometry data
+
+  ros::Rate rate(frequency);
+
+  while(ros::ok())
+  {
+    // Generate a new odometry message with the current time and position
+    system_odom_msg.pose.position.x = sin(ros::Time::now().toSec() * 2.0 * M_PI / (radius*frequency)) * radius;
+    system_odom_msg.pose.position.y = cos(ros::Time::now().toSec() * 2.0 * M_PI / (radius*frequency)) * radius;
+
+    // Publish the odometry message
+    nh.publish(system_odom_msg);
+
+    rate.sleep();
+  }
+
+  return 0;
+}",0
+97,Create a ROS node in C++ that publishes communication system odometry data for a drive robot moving system in a circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/PoseStamped.h>
+
+class OdometryNode {
+public:
+  OdometryNode(ros::NodeHandle& nh) : 
+    node_handle_(nh),
+    pub_(node_handle_.advertise<geometry_msgs::PoseStamped>(""odometry"", 1000)) {}
+
+  void run() {
+    ros::Rate rate(10.0);
+    while (node_handle_.ok()) {
+      geometry_msgs::PoseStamped pose;
+      pose.header.stamp = node_handle_.now();
+      pose.header.frame_id = ""map"";
+      pose.pose.position.x = std::sin(node_handle_.now().toSec());
+      pose.pose.position.y = -std::cos(node_handle_.now().toSec());
+      pub_.publish(pose);
+      rate.sleep();
+    }
+  }
+
+private:
+  ros::NodeHandle node_handle_;
+  ros::Publisher pub_;
+};
+
+int main(int argc, char** argv) {
+  // Initialize the ROS node
+  ros::init(argc, argv, ""odometry_node"");
+  ros::NodeHandle nh;
+
+  // Create an instance of the OdometryNode class and run it
+  OdometryNode odometry_node(nh);
+  odometry_node.run();
+
+  return 0;
+}",0
+100,Create a ROS node in planning C++ that publishes message system actuator odometry data for a data drive robot moving system in a circular path.,"#include <ros/node.h>
+#include <ros/publisher.h>
+#include <geometry_msgs/PoseStamped.h>
+
+class CircleDriveNode {
+public:
+  CircleDriveNode() : node_(ros::NodeHandle(""circle_drive_node"")) {
+    publisher_ = node_.advertise<geometry_msgs::PoseStamped>(""odometry"", 10);
+    ros::Rate rate(10.0); // 10 Hz
+
+    while (node_.ok()) {
+      geometry_msgs::PoseStamped msg;
+      msg.header.stamp = node_.now();
+      msg.pose.position.x = std::sin(node_.now().toSec() * 2.0 * M_PI / 5.0);
+      msg.pose.position.y = std::cos(node_.now().toSec() * 2.0 * M_PI / 5.0);
+      msg.pose.orientation.w = 1.0;
+      publisher_.publish(msg);
+
+      rate.sleep();
+    }
+  }
+
+private:
+  ros::NodeHandle node_;
+  ros::Publisher publisher_;
+};
+
+int main(int argc, char** argv) {
+  CircleDriveNode circle_drive_node;
+
+  return 0;
+}",0
+101,Create a ROS node in C++ that publishes message odometry data for a robot drive robot moving system in a circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/PoseStamped.h>
+#include <nav_msgs/Odometry.h>",0
+102,Create a ROS node in C++ that publishes message odometry data for a robot localization around its Instantaneous Center in a circular path.,"#include <ros/node.h>
+#include <ros/publisher.h>
+#include <nav_msgs/Odometry.h>
+
+class OdometryNode {
+public:
+  OdometryNode() : node_(nullptr), publisher_(nullptr) {}
+
+  void initialize(ros::NodeHandle &nh, ros::Publisher &publisher) {
+    node_ = &nh;
+    publisher_ = &publisher;
+    // Set the frequency of publishing (e.g., 10 Hz)
+    publish_frequency_ = 10.0;
+
+    // Initialize the IC position and velocity
+    ic_x_ = 0.5; // x-coordinate of the instantaneous center (IC)
+    ic_y_ = 0.3; // y-coordinate of the IC
+    ic_vx_ = 0.1; // x-velocity of the IC
+    ic_vy_ = 0.2; // y-velocity of the IC
+
+    ros::Rate rate(publish_frequency_);
+    while (node_->ok()) {
+      // Calculate the robot's pose around the IC
+      double robot_x = ic_x_ + cos(ros::Time::now().toSec() * publish_frequency_) * 0.5;
+      double robot_y = ic_y_ + sin(ros::Time::now().toSec() * publish_frequency_) * 0.3;
+
+      // Create an Odometry message and fill it with the robot's pose
+      nav_msgs::Odometry odometry_msg;
+      odometry_msg.header.stamp = ros::Time::now();
+      odometry_msg.pose.pose.position.x = robot_x;
+      odometry_msg.pose.pose.position.y = robot_y;
+      odometry_msg.pose.covariance.diag[0] = 0.1; // x-uncertainty
+      odometry_msg.pose.covariance.diag[4] = 0.2; // y-uncertainty
+
+      // Publish the Odometry message
+      publisher_->publish(odometry_msg);
+
+      rate.sleep();
+    }
+  }
+
+private:
+  ros::NodeHandle *node_;
+  ros::Publisher *publisher_;
+  double publish_frequency_; // in Hz
+  double ic_x_, ic_y_; // x and y coordinates of the instantaneous center (IC)
+  double ic_vx_, ic_vy_; // x and y velocities of the IC
+};
+
+int main(int argc, char** argv) {
+  ros::init(argc, argv);
+  ros::NodeHandle nh;
+  ros::Publisher publisher = nh.advertise<nav_msgs::Odometry>(""odometry"", 10);
+
+  OdometryNode node;
+  node.initialize(nh, publisher);
+
+  return 0;
+}",0
+104,Create a ROS node in C++ that publishes localization message odometry data for a robot around its Instantaneous Center of a circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/PoseStamped.h>
+
+class OdometryPublisher {
+public:
+  OdometryPublisher(ros::NodeHandle& nh) : node_(nh) {}
+
+  void publishOdometry(const geometry_msgs::PoseStamped& pose) {
+    // Calculate odometry data based on the robot's position and velocity
+    double x = pose.pose.position.x;
+    double y = pose.pose.position.y;
+    double theta = pose.pose.orientation.w; // quaternion to Euler angle
+
+    // Create an odometry message with the calculated data
+    geometry_msgs::PoseStamped odometry;
+    odometry.header.stamp = ros::Time::now();
+    odometry.pose.position.x = x;
+    odometry.pose.position.y = y;
+    odometry.pose.orientation.w = theta;
+
+    // Publish the odometry message
+    node_.publish(odometry);
+  }
+
+private:
+  ros::NodeHandle node_;
+};
+
+int main(int argc, char** argv) {
+  // Initialize ROS node
+  ros::init(argc, argv, ""odometry_publisher"");
+  ros::NodeHandle nh;
+
+  // Create an OdometryPublisher object
+  OdometryPublisher publisher(nh);
+
+  // Set the rate at which to publish odometry messages (e.g., 10 Hz)
+  ros::Rate rate(10.0);
+
+  while (nh.ok()) {
+    // Simulate robot movement around its instantaneous center of a circular path
+    double x = sin(ros::Time::now().toSec() * M_PI * 2) * 1.0;
+    double y = cos(ros::Time::now().toSec() * M_PI * 2) * 1.0;
+    geometry_msgs::PoseStamped pose;
+    pose.header.stamp = ros::Time::now();
+    pose.pose.position.x = x;
+    pose.pose.position.y = y;
+    pose.pose.orientation.w = 0.5; // quaternion to Euler angle
+
+    // Publish the odometry message
+    publisher.publishOdometry(pose);
+
+    // Sleep for a short duration to ensure the node runs at the desired rate
+    rate.sleep();
+  }
+
+  return 0;
+}",0
+105,Create a ROS node in C++ that publishes message odometry data for a robot around its moving system in a circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/PoseStamped.h>
+
+int main(int argc, char **argv) {
+  // Initialize the ROS node
+  ros::init(argc, argv, ""odometry_publisher"");
+  ros::NodeHandle nh;
+
+  // Create a publisher to publish odometry data
+  ros::Publisher pub = nh.advertise<geometry_msgs::PoseStamped>(""odometry"", 10);
+
+  // Set up the simulation parameters
+  double radius = 1.0; // meters
+  double speed = 0.5; // meters per second
+  int num_cycles = 100;
+
+  // Main loop to simulate the robot's movement and publish odometry data
+  ros::Rate rate(10); // 10 Hz
+  for (int i = 0; i < num_cycles; i++) {
+    geometry_msgs::PoseStamped msg;
+    msg.header.stamp = ros::Time::now();
+    msg.pose.position.x = radius * cos(M_PI * 2.0 * i / num_cycles);
+    msg.pose.position.y = radius * sin(M_PI * 2.0 * i / num_cycles);
+    msg.pose.orientation.w = 1.0; // assume all the time
+    pub.publish(msg);
+
+    rate.sleep();
+  }
+
+  return 0;
+}",6.146783303485165
+110,Create a ROS message node in C++ that publishes message odometry data for a robot around its moving system in path.,"sudo apt-get install ros-kinetic-ros
+sudo apt-get install ros-kinetic-roscpp",0
+111,Create a ROS message node in C++ message that publishes message odometry data for a robot around its moving system in path.,"#include <ros/node.h>
+#include <ros/publisher.h>
+#include <geometry_msgs/PoseStamped.h> // or whatever message type you want to use
+
+int main(int argc, char** argv) {
+  // Initialize the ROS node
+  ros::init(argc, argv, ""odometry_publisher"");
+  ros::NodeHandle nh;
+
+  // Create a publisher for the odometry data
+  ros::Publisher pub = nh.advertise<geometry_msgs::PoseStamped>(""odometry"", 10);
+
+  while (ros::ok()) {
+    // Simulate some odometry data (e.g. from a robot's sensors)
+    geometry_msgs::PoseStamped msg;
+    msg.header.stamp = ros::Time::now();
+    msg.pose.position.x = 1.0; // or whatever value you want to use
+    msg.pose.position.y = 2.0;
+    msg.pose.orientation.w = 0.5;
+
+    // Publish the odometry data
+    pub.publish(msg);
+
+    // Sleep for a short time to avoid flooding the topic with messages
+    ros::Duration(0.01).sleep();
+  }
+
+  return 0;
+}",0
+112,Create a ROS node in C++ that publishes message odometry data for a robot around its moving system in system in path.,sudo apt-get install ros-kinetic-ros-core,0
+114,Create a ROS node in C++ that publishes message odometry data for a robot around its moving system of Rotation (ICR).,"#include <ros/node.h>
+#include <ros/publisher.h>
+#include <sensor_msgs/NavSatFix.h> // for odometry data
+
+class ICR OdometryPublisher {
+public:
+  ICR OdometryPublisher() : nh_(ros::NodeHandle(""icr_odometry_publisher"")) {}
+
+  void publishOdometry(double rotationAngle) {
+    sensor_msgs::NavSatFix msg;
+    msg.header.stamp = ros::Time::now();
+    msg.position.x = 0.0; // dummy position data
+    msg.position.y = 0.0; // dummy position data
+    msg.position.z = 0.0; // dummy position data
+    msg.orientation.roll = rotationAngle; // publish the rotation angle
+
+    publisher_.publish(msg);
+  }
+
+private:
+  ros::NodeHandle nh_;
+  ros::Publisher publisher_;
+};
+
+int main(int argc, char** argv) {
+  ros::init(argc, argv, ""icr_odometry_publisher"");
+  ICR OdometryPublisher publisher;
+
+  while (ros::ok()) {
+    // Simulate some robot movement and generate odometry data
+    double rotationAngle = sin(ros::Time::now().toSec() * M_PI_2); // simple sine wave for demo purposes only
+
+    publisher.publishOdometry(rotationAngle);
+
+    ros::spinOnce();
+  }
+
+  return 0;
+}",0
+115,Create a ROS node in C++ that publishes message odometry data for a robot around its Center of Rotation (ICR).,"#include <ros/ros.h>
+#include <sensor_msgs/NavSatFix.h>
+#include <geometry_msgs/PoseStamped.h>
+
+class ICR.odomPublisher {
+public:
+  ICR.odomPublisher(ros::NodeHandle& node) : node_(node) {}
+
+  void publishOdometry(const geometry_msgs::PoseStamped::ConstPtr& pose_msg) {
+    sensor_msgs::NavSatFix odom_msg;
+    odom_msg.header.stamp = pose_msg->header.stamp; // copy the timestamp from the pose message
+    odom_msg.latitude = pose_msg->pose.position.z; // set the latitude to the z-coordinate of the pose
+    odom_msg.longitude = 0.0; // not used for odometry, set to zero
+    odom_msg.altitude = pose_msg->pose.position.x; // set the altitude to the x-coordinate of the pose
+
+    odom_msg.header.frame_id = ""odom""; // set the frame ID to ""odom""
+    node_.publish(odom_msg);
+  }
+
+private:
+  ros::NodeHandle node_;
+};
+
+int main(int argc, char** argv) {
+  // Initialize the ROS node
+  ros::init(argc, argv, ""icr_odom_publisher"");
+  ros::NodeHandle node;
+
+  // Create an instance of the ICR odom publisher
+  ICR.odomPublisher odom_pub(node);
+
+  // Subscribe to the pose message topic
+  ros::Subscriber pose_sub = node.subscribe<geometry_msgs::PoseStamped>(""pose"");
+
+  // Loop until the node is shut down
+  while (node.ok()) {
+    // Wait for new messages on the pose topic
+    geometry_msgs::PoseStamped::ConstPtr pose_msg = pose_sub.read();
+    if (!pose_msg->isValid()) {
+      continue;
+    }
+
+    // Publish the odometry message
+    odom_pub.publishOdometry(pose_msg);
+  }
+
+  return 0;
+}",0
+116,Create a ROS node in C++ that publishes message data for a robot around its Instantaneous Center of Rotation (ICR).,"mkdir icr_publisher
+cd icr_publisher
+catkin_create_pkg icr_publisher std_msgs roscpp rospy",0
+117,Create a ROS node in C++ that publishes communication odometry data for a robot around its Instantaneous Center of Rotation (ICR).,"#include <ros/ros.h>
+#include <geometry_msgs/PoseStamped.h>
+
+// Function to calculate ICR position and orientation from input data
+void calculateICR(const double x, const double y, const double z,
+                   const double roll, const double pitch, const double yaw,
+                   geometry_msgs::PoseStamped& icr_pose) {
+  // Convert Euler angles (roll, pitch, yaw) to Quaternion
+  Eigen::Quaterniond quaternion(Eigen::AngleAxisd(
+      roll * M_PI / 180.0f, Eigen::Vector3d::UnitZ()) *
+                                  Eigen::AngleAxisd(
+                                      pitch * M_PI / 180.0f,
+                                      Eigen::Vector3d::UnitY()) *
+                                  Eigen::AngleAxisd(
+                                      yaw * M_PI / 180.0f,
+                                      Eigen::Vector3d::UnitX()));
+
+  // Create ICR pose message
+  icr_pose.header.stamp = ros::Time::now();
+  icr_pose.header.frame_id = ""world"";
+  icr_pose.pose.position.x = x;
+  icr_pose.pose.position.y = y;
+  icr_pose.pose.position.z = z;
+  icr_pose.pose.orientation.w = quaternion.w();
+  icr_pose.pose.orientation.x = quaternion.x();
+  icr_pose.pose.orientation.y = quaternion.y();
+  icr_pose.pose.orientation.z = quaternion.z();
+}
+
+int main(int argc, char** argv) {
+  // Initialize ROS node
+  ros::init(argc, argv, ""icr_publisher"");
+  ros::NodeHandle nh;
+
+  // Create a publisher for ICR pose messages
+  ros::Publisher pub = nh.advertise<geometry_msgs::PoseStamped>(""icr_pose"", 10);
+
+  while (ros::ok()) {
+    // Your code to estimate ICR position and orientation goes here
+    double x = 0.5;  // Replace with your estimated ICR position
+    double y = 1.2;
+    double z = 0.8;
+
+    double roll = 30.0f;  // Replace with your estimated ICR orientation
+    double pitch = 15.0f;
+    double yaw = 45.0f;
+
+    geometry_msgs::PoseStamped icr_pose;
+
+    calculateICR(x, y, z, roll, pitch, yaw, icr_pose);
+
+    // Publish the ICR pose message
+    pub.publish(icr_pose);
+
+    ros::spinOnce();
+  }
+
+  return 0;
+}",0
+119,Create a ROS node in C++ that publishes note odometry data for a robot interface around its Instantaneous Center of Rotation (ICR).,"#include <ros/node.h>
+#include <ros/publishers.h>
+#include <geometry_msgs/PoseArray.h>
+
+class ICR OdometryPublisher {
+public:
+  ICR OdometryPublisher() : nh_(ros::NodeHandle()) {}
+
+  void publishOdometryData(double x, double y, double theta) {
+    geometry_msgs::PoseArray odom_data;
+    odom_data.header.stamp = ros::Time::now();
+    odom_data.header.frame_id = ""odom"";
+
+    // Calculate the ICR pose
+    double icr_x = x + cos(theta);
+    double icr_y = y + sin(theta);
+
+    // Publish the odometry data
+    odom_data.poses.push_back(geometry_msgs::Pose());
+    odom_data.poses[0].position.x = icr_x;
+    odom_data.poses[0].position.y = icr_y;
+    odom_data.poses[0].orientation.w = 1.0;
+
+    nh_.publish(odom_pub_, odom_data);
+  }
+
+private:
+  ros::NodeHandle nh_;
+  ros::Publisher odom_pub_;
+};
+
+int main(int argc, char** argv) {
+  // Initialize ROS
+  int argc = 0; // Don't need this argument
+  char* argv[] = {""node"", ""ICROdometryPublisher""}; // Don't need this argument either
+  ros::init(argc, argv);
+  ros::NodeHandle nh;
+
+  ICR OdometryPublisher publisher;
+
+  while (ros::ok()) {
+    // Get the current robot pose
+    double x, y, theta; // Fill these in with your actual robot pose data
+
+    // Publish the odometry data
+    publisher.publishOdometryData(x, y, theta);
+
+    ros::spinOnce();
+  }
+
+  return 0;
+}",0
+120,Create a ROS node in C++ that publishes message odometry data for a robot around its moving Center of Rotation (ICR).,"#include <ros/ros.h>
+#include <geometry_msgs/PoseStamped.h>  // For publishing pose data
+#include <nav_msgs/Odometry.h>  // For publishing odometry data",0
+121,Create a ROS node in C++ that publishes message the motion of a robot around its Instantaneous Center of Rotation (ICR).,"#include <ros/node.h>
+#include <ros/publisher.h>
+#include <ros/subscriber.h>
+#include <std_msgs/msg/Float64MultiArray.h>
+
+class ICRMotionPublisher {
+public:
+  ICRMotionPublisher() : node_(nullptr) {
+    node_ = new ros::NodeHandle(""ICRMotionPublisher"");
+  }
+
+  ~ICRMotionPublisher() {
+    delete node_;
+  }
+
+  void publishMotion(double dx, double dy, double dtheta) {
+    geometry_msgs::Vector3 msg;
+    msg.x = dx;
+    msg.y = dy;
+    msg.z = dtheta;
+
+    publisher_.publish(msg);
+  }
+
+private:
+  ros::NodeHandle* node_;
+  ros::Publisher publisher_;
+};
+
+int main(int argc, char** argv) {
+  // Initialize the ROS node.
+  int argc_(argc);
+  char** argv_(argv);
+  ros::init(argc_, argv_);
+  ros::NodeHandle node(""ICRMotionPublisher"");
+
+  ICRMotionPublisher publisher;
+
+  ros::Rate rate(10.0);
+
+  while (node.ok()) {
+    // Simulate the motion of a robot around its ICR.
+    double dx = sin(ros::Time::now().toSec());
+    double dy = cos(ros::Time::now().toSec());
+    double dtheta = 2 * M_PI * ros::Time::now().toSec();
+
+    publisher.publishMotion(dx, dy, dtheta);
+
+    rate.sleep();
+  }
+
+  return 0;
+}",0
+124,Create a ROS node in C++ that publishes message process odometry data for a robot robot moving in a circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/PoseStamped.h>
+
+class CircularRobotOdometry {
+public:
+  CircularRobotOdometry() : pose_(0, 0, 0), radius_(1.0) {}
+
+  void loop() {
+    // Update odometry data
+    double theta = ros::Time::now().toSec() * M_PI * 2.0 / 10.0; // rotate at 1/10 of a circle per second
+    pose_.pose.position.x = radius_ * cos(theta);
+    pose_.pose.position.y = radius_ * sin(theta);
+
+    // Publish odometry data
+    pub_.publish(pose_);
+  }
+
+private:
+  ros::Publisher pub_;
+  geometry_msgs::PoseStamped pose_;
+  double radius_;
+
+  ros::NodeHandle nh_;
+};
+
+int main(int argc, char** argv) {
+  ros::init(argc, argv, ""circular_robot_odometry"");
+
+  CircularRobotOdometry node;
+
+  while (ros::ok()) {
+    node.loop();
+    ros::spinOnce();
+  }
+
+  return 0;
+}",0
+125,Create a spin ROS node in C++ that publishes message odometry data for a robot around its Instantaneous Center of planning Rotation (ICR).,"#include <ros/ros.h>
+#include <geometry_msgs/PoseArray.h>
+
+int main(int argc, char** argv) {
+  // Initialize the ROS node
+  ros::init(argc, argv, ""icr_odometry"");
+  ros::NodeHandle nh;
+
+  // Create a publisher to publish odometry data
+  ros::Publisher pub = nh.advertise<geometry_msgs::PoseArray>(""icr_odometry"", 10);
+
+  // Define the ICR coordinates (x, y, z) and the rotation axis (x, y, z)
+  double icr_x = 0.5;
+  double icr_y = 0.2;
+  double icr_z = 1.0;
+  double rot_axis_x = 0.3;
+  double rot_axis_y = 0.7;
+  double rot_axis_z = 0.4;
+
+  // Set the time step for the odometry data
+  double dt = 0.01;
+
+  // Define a function to compute the ICR pose given the robot's pose
+  geometry_msgs::PoseArray computeICRPose(geometry_msgs::Pose pos) {
+    geometry_msgs::PoseArray icr_pose;
+
+    // Compute the distance from the robot to the ICR
+    double dist = sqrt(pow(pos.position.x - icr_x, 2) + pow(pos.position.y - icr_y, 2) + pow(pos.position.z - icr_z, 2));
+
+    // Compute the rotation angle around the ICR
+    double rot_angle = atan2(rot_axis_y * (pos.position.z - icr_z), rot_axis_x * (pos.position.x - icr_x) + rot_axis_y * (pos.position.y - icr_y));
+
+    // Create a pose message for the ICR
+    geometry_msgs::Pose icr_pose_msg;
+    icr_pose_msg.position.x = icr_x;
+    icr_pose_msg.position.y = icr_y;
+    icr_pose_msg.position.z = icr_z;
+    icr_pose_msg.orientation.w = cos(rot_angle);
+    icr_pose_msg.orientation.x = 0;
+    icr_pose_msg.orientation.y = sin(rot_angle);
+    icr_pose_msg.orientation.z = 0;
+
+    // Add the ICR pose to the array
+    icr_pose.poses.push_back(icr_pose_msg);
+
+    return icr_pose;
+  }
+
+  // Main loop
+  while (ros::ok()) {
+    // Get the current robot pose from a sensor or simulation
+    geometry_msgs::Pose pos;
+
+    // Compute the ICR pose given the robot's pose
+    geometry_msgs::PoseArray icr_pose = computeICRPose(pos);
+
+    // Publish the odometry data
+    pub.publish(icr_pose);
+
+    // Sleep for the specified time step
+    ros::Duration(0.01).sleep();
+  }
+
+  return 0;
+}",0
+127,Create a ROS node planning in C++ that publishes message odometry data for a robot around its moving system in a (ICR).,"#include <ros/node.h>
+#include <ros/publisher.h>
+#include <sensor_msgs/NavSatFix.h>
+
+class ICR_OdometryPublisher {
+public:
+  ICR_OdometryPublisher() : 
+    node_(ros::NodeHandle(""icr_odometry_publisher"")),
+    pub_(node_.advertise<sensor_msgs::NavSatFix>(""odometry"", 10)) {
+    // Initialize the robot's pose
+    pose_ = sensor_msgs::NavSatFix();
+    pose_.header.stamp = ros::Time::now();
+    pose_.pose.position.x = 0.0; // initial x position
+    pose_.pose.position.y = 0.0; // initial y position
+    pose_.pose.orientation.w = 1.0; // initial orientation (all zeros except w)
+  }
+
+  void publishOdometry(double distance, double radius) {
+    // Calculate the new pose based on the robot's movement
+    double x = pose_.pose.position.x + distance * cos(ros::Time::now().toSec() / (2.0 * M_PI * radius));
+    double y = pose_.pose.position.y + distance * sin(ros::Time::now().toSec() / (2.0 * M_PI * radius));
+
+    // Update the robot's pose
+    pose_.pose.position.x = x;
+    pose_.pose.position.y = y;
+
+    // Publish the updated odometry data
+    pub_.publish(pose_);
+  }
+
+private:
+  ros::NodeHandle node_;
+  ros::Publisher pub_;
+  sensor_msgs::NavSatFix pose_;
+};
+
+int main(int argc, char** argv) {
+  // Initialize ROS
+  int argc_(argc);
+  char** argv_(argv);
+  ros::init(argc_, argv_);
+  ros::NodeHandle node(""icr_odometry_publisher"");
+
+  // Create the odometry publisher
+  ICR_OdometryPublisher publisher;
+
+  // Set the robot's movement parameters (distance and radius)
+  double distance = 0.1; // meters
+  double radius = 2.0; // meters
+
+  while (ros::ok()) {
+    // Publish odometry data at a rate of 10 Hz
+    publisher.publishOdometry(distance, radius);
+    ros::Duration(0.1).sleep(); // sleep for 100ms to maintain the 10Hz rate
+  }
+
+  return 0;
+}",0
+128,Create a ROS interface node in C++ that publishes message odometry data for a robot around its Instantaneous Center of Rotation (ICR).,"#include <ros/ros.h>
+#include <geometry_msgs/PoseStamped.h>
+#include <tf/transform_listener.h>
+#include <tf/transform_broadcaster.h>
+
+class ICROdometryPublisher {
+public:
+    ICROdometryPublisher() {
+        ros::NodeHandle nh;
+        tf::TransformBroadcaster br;
+        tf::TransformListener listener(nh);
+        
+        // Set up the publisher to publish odometry data
+        pub_ = nh.advertisePublisher(""icr_odometry"", 10);  // Topic name and buffer size
+        
+        // Initialize the ICR position
+        icr_position_ = Eigen::Vector3d(0.5, 0.5, 0.0);
+    }
+    
+    void publishOdometry(const tf::Transform& transform) {
+        // Calculate the distance from the ICR to the current position
+        Eigen::Vector3d relative_position = transform.getOrigin().cast<Eigen::Vector3d>() - icr_position_;
+        
+        // Create a geometry_msgs/PoseStamped message with the odometry data
+        geometry_msgs::PoseStamped msg;
+        msg.header.stamp = ros::Time::now();
+        msg.pose.position.x = icr_position_.x() + relative_position.x();
+        msg.pose.position.y = icr_position_.y() + relative_position.y();
+        msg.pose.position.z = 0.0;  // Assume the robot is on a flat surface
+        
+        pub_.publish(msg);
+    }
+    
+private:
+    ros::Publisher pub_;
+    Eigen::Vector3d icr_position_;
+};
+
+int main(int argc, char** argv) {
+    // Initialize ROS
+    ros::init(argc, argv);
+    ros::NodeHandle nh;
+    
+    // Create an instance of the ICROdometryPublisher
+    ICROdometryPublisher publisher;
+    
+    while (ros::ok()) {
+        // Simulate receiving a new transform from the robot's pose estimation algorithm
+        tf::Transform transform;  // Assume this is updated with the current pose estimate
+        // ...
+        
+        // Publish the odometry data for the robot around its ICR
+        publisher.publishOdometry(transform);
+        
+        ros::spinOnce();
+    }
+    
+    return 0;
+}",0
+130,Create a ROS node in C++ that publishes message data for a differential robot around its Instantaneous Center of Rotation (ICR).,"sudo apt-get update
+sudo apt-get install ros-kinetic-ros-ros-kinetic-roscpp",0
+131,Create a ROS node in that publishes message odometry data for a robot around its Instantaneous Center of Rotation (ICR).,"#include <ros/ros.h>
+#include <geometry_msgs/TwistStamped.h>
+
+class OdometryPublisher {
+public:
+  OdometryPublisher() {
+    ros::NodeHandle n;
+    pub_ = n.advertise<geometry_msgs::TwistStamped>(""odometry"", 10);
+  }
+
+  ~OdometryPublisher() {}
+
+  void publishOdometry(double x, double y, double theta, double v_x, double v_y, double omega) {
+    geometry_msgs::TwistStamped odom;
+
+    // Convert the robot's coordinates to an ICR-based frame
+    double dx = x;
+    double dy = y;
+    double dtheta = theta;
+
+    // Calculate the position and velocity in the ICR-based frame
+    double px = cos(dtheta) * dx - sin(dtheta) * dy;
+    double py = sin(dtheta) * dx + cos(dtheta) * dy;
+    double vx = v_x * cos(dtheta) + v_y * sin(dtheta);
+    double vy = v_x * sin(dtheta) - v_y * cos(dtheta);
+
+    // Create the odometry message
+    odom.header.stamp = ros::Time::now();
+    odom.twist.linear.x = px;
+    odom.twist.linear.y = py;
+    odom.twist.angular.z = omega;
+
+    pub_.publish(odom);
+  }
+
+private:
+  ros::Publisher pub_;
+};
+
+int main(int argc, char** argv) {
+  // Initialize the ROS node
+  ros::init(argc, argv, ""odometry_publisher"");
+  ros::NodeHandle n;
+  OdometryPublisher odom_pub;
+
+  // Run indefinitely
+  while (n.ok()) {
+    // Simulate robot movement and publish odometry data
+    double x = /* simulate robot position */;
+    double y = /* simulate robot position */;
+    double theta = /* simulate robot orientation */;
+    double v_x = /* simulate robot linear velocity */;
+    double v_y = /* simulate robot linear velocity */;
+    double omega = /* simulate robot angular velocity */;
+
+    odom_pub.publishOdometry(x, y, theta, v_x, v_y, omega);
+
+    // Sleep for a short duration to avoid consuming too much CPU
+    ros::Duration(0.01).sleep();
+  }
+
+  return 0;
+}",0
+132,Create a ROS node in planning C++ that publishes message odometry data for a robot around its moving Center of Rotation (ICR).,"c++
+#include <ros/ros.h>
+#include <geometry_msgs/TwistStamped.h>
+
+class ICROdometryPublisher {
+public:
+  ICROdometryPublisher() {
+    // Initialize the ROS node
+    ros::NodeHandle nh;
+    nh.setParam(""name"", ""icr_odometry_publisher"");
+
+    // Create a TwistStamped message to publish odometry data
+    geometry_msgs::TwistStamped odometryMsg;
+
+    // Set up the publisher
+    pub_ = nh.advertisePublisher(""odom/estiamte"", &odometryMsg);
+  }
+
+  void publishOdometry(double linearVelocity, double angularVelocity) {
+    // Create a new Twist message with the given velocity values
+    geometry_msgs::Twist twist;
+    twist.linear.x = linearVelocity;
+    twist.angular.z = angularVelocity;
+
+    // Create a TwistStamped message with the timestamp set to the current time
+    odometryMsg.header.stamp = ros::Time::now();
+    odometryMsg.twist = twist;
+
+    // Publish the odometry data
+    pub_.publish(odometryMsg);
+  }
+
+private:
+  ros::Publisher pub_;
+};
+
+int main(int argc, char** argv) {
+  // Initialize the ROS node
+  introspection::init(argc, argv);
+
+  // Create an instance of the ICROdometryPublisher class
+  ICROdometryPublisher publisher;
+
+  // Simulate moving the robot around its Center of Rotation (ICR)
+  double linearVelocity = 0.5; // m/s
+  double angularVelocity = 0.1; // rad/s
+  for (int i = 0; i < 100; i++) {
+    publisher.publishOdometry(linearVelocity, angularVelocity);
+    ros::Duration(0.1).sleep();
+  }
+
+  return 0;
+}",0
+133,Create a ROS node in C++ that actuator publishes spin message odometry data for a robot around its moving Center of Rotation (ICR).,"#include <ros/ros.h>
+#include <geometry_msgs/TwistStamped.h>
+#include <nav_msgs/Odometry.h>
+
+class ICRSpinPublisher {
+public:
+  ICRSpinPublisher() {
+    node_ = ros::NodeHandle();
+    pub_ = node_.advertise<geometry_msgs::TwistStamped>(""spin"");
+  }
+
+  void publishOdometry(double x, double y, double theta) {
+    geometry_msgs::TwistStamped msg;
+    msg.header.stamp = node_.now();
+    msg.twist.linear.x = x;
+    msg.twist.linear.y = y;
+    msg.twist.angular.z = theta;
+
+    pub_.publish(msg);
+  }
+
+private:
+  ros::NodeHandle node_;
+  ros::Publisher pub_;
+};
+
+int main(int argc, char** argv) {
+  // Initialize ROS
+  ros::init(argc, argv, ""icr_spin_publisher"");
+  ros::NodeHandle node;
+  ICRSpinPublisher publisher;
+
+  while (true) {
+    // Simulate odometry data from the robot's sensors
+    double x = 0.5; // x-position in meters
+    double y = 0.7; // y-position in meters
+    double theta = 0.3; // orientation in radians
+
+    publisher.publishOdometry(x, y, theta);
+
+    ros::Duration sleep_time(0.01); // publish at 100 Hz
+    node.sleep(sleep_time);
+  }
+
+  return 0;
+}",0
+134,Create a ROS node in C++ that publishes message odometry data for a robot around its moving system in a (ICR).,"sudo apt-get install ros-kinetic-ros
+sudo apt-get install ros-kinetic-roscpp",0
+135,Create a ROS node in C++ that publishes odometry data for a robot around its Instantaneous Center of Rotation (ICR).,sudo apt-get install ros-kinetic-ros-core,0
+136,Create a ROS node in C++ that publishes communication odometry data for a robot around its moving spin Center of Rotation (ICR).,"#include <ros/ros.h>
+#include <geometry_msgs/PoseStamped.h>
+
+class ICRPublisher {
+public:
+  ICRPublisher(ros::NodeHandle& nh) : 
+    node_handle_(nh) {
+    // Set the frequency at which we publish messages
+    pub_freq_ = 10.0; // Hz
+
+    // Create a publisher for the ICR message
+    icr_pub_ = node_handle_.advertise<geometry_msgs::PoseStamped>(""icr_data"", 10);
+
+    // Start the timer to handle publishing at the desired frequency
+    ros::Timer timer(node_handle_, ros::Duration(1.0 / pub_freq_));
+    timer.connect(&ICRPublisher::publish, this);
+  }
+
+  ~ICRPublisher() {
+    // Stop the timer when we're destroyed
+    timer.stop();
+  }
+
+private:
+  void publish(const boost::system::error_code& error) {
+    // Get the current timestamp
+    ros::Time time = node_handle_.now();
+
+    // Create a PoseStamped message to contain our ICR data
+    geometry_msgs::PoseStamped icr_msg;
+
+    // Set the pose (x, y, z) of the ICR in the robot's local frame
+    double x_ICR = 0.5; // meters, e.g.
+    double y_ICR = 0.3; // meters, e.g.
+    double z_ICR = 1.2; // meters, e.g.
+
+    icr_msg.header.stamp = time;
+    icr_msg.header.frame_id = ""icr_frame"";
+    icr_msg.pose.position.x = x_ICR;
+    icr_msg.pose.position.y = y_ICR;
+    icr_msg.pose.position.z = z_ICR;
+
+    // Publish the ICR message
+    icr_pub_.publish(icr_msg);
+  }
+
+  ros::NodeHandle node_handle_;
+  double pub_freq_;
+  ros::Publisher icr_pub_;
+  ros::Timer timer;
+};
+
+int main(int argc, char** argv) {
+  // Initialize the ROS node
+  ros::init(argc, argv, ""icr_publisher"");
+
+  // Create a ROS node handle
+  ros::NodeHandle nh;
+
+  // Create an instance of our ICRPublisher class
+  ICRPublisher icr_pub(nh);
+
+  // Spin until the node is shut down
+  while (ros::ok()) {
+    ros::spinOnce();
+  }
+
+  return 0;
+}",0
+137,Create a ROS in C++ that publishes message odometry data for a robot around its Instantaneous Center of Rotation (ICR).,"#include <iostream>
+#include <string>
+#include <vector>
+
+#include ""ros/ros.h""
+#include ""geometry_msgs/PoseStamped.h""
+
+using namespace std;
+using namespace ros;
+
+class ICR_Odometry_Publisher {
+public:
+    ICR_Odometry_Publisher(int rate) : pub_(node_.advertise<geometry_msgs::PoseStamped>(""icr_odometry"", 10)) {
+        rate_ = rate;
+    }
+
+    void run() {
+        while (ros::ok()) {
+            // Create a pose message
+            geometry_msgs::PoseStamped msg;
+
+            // Your robot's ICR coordinates here (e.g., x: 0, y: 0, z: 0)
+            msg.pose.position.x = 0;
+            msg.pose.position.y = 0;
+            msg.pose.position.z = 0;
+
+            // Publish the message
+            pub_.publish(msg);
+
+            // Sleep for the specified rate (1/Hz)
+            ros::Duration(1.0 / rate_).sleep();
+        }
+    }
+
+private:
+    NodeHandle node_;
+    Publisher pub_;
+    int rate_;
+};
+
+int main(int argc, char** argv) {
+    Init(argc, argv);
+
+    ICR_Odometry_Publisher publisher(10); // Publish at 10 Hz
+
+    publisher.run();
+
+    return 0;
+}",0
+138,Create a ROS node in C++ that publishes message odometry data for a bot around its Instantaneous Center of Rotation (ICR).,"#include <ros/ros.h>
+#include <sensor_msgs/NavSatFix.h>
+
+class ICRPublisher {
+public:
+    ICRPublisher() {
+        ros::NodeHandle nh;
+        pub_ = nh.advertise<sensor_msgs::NavSatFix>(""icr_odom"", 100);
+    }
+
+    void publishICROdometry(double x, double y, double theta) {
+        sensor_msgs::NavSatFix odom_msg;
+
+        odom_msg.header.stamp = ros::Time::now();
+        odom_msg.latitude = 0; // not used in this case
+        odom_msg.longitude = 0; // not used in this case
+
+        odom_msg.position.x = x;
+        odom_msg.position.y = y;
+
+        odom_msg.vector.z = theta;
+        pub_.publish(odom_msg);
+    }
+
+private:
+    ros::Publisher pub_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""icr_odom_publisher"");
+    ros::NodeHandle nh;
+
+    ICRPublisher icr_publisher;
+
+    // publish odometry data for a bot around its ICR
+    while (ros::ok()) {
+        // sample odometry data here...
+        double x = 1.0;
+        double y = 2.0;
+        double theta = 3.14; // in radians
+
+        icr_publisher.publishICROdometry(x, y, theta);
+
+        ros::spinOnce();
+    }
+
+    return 0;
+}",0
+139,Create a ROS node in C++ that publishes message data a differential drive robot moving in a circular path.,sudo apt-get install ros-kinetic-geometry-msgs,0
+143,Create a ROS node in C++ that publishes message odometry data for a machine around Instantaneous Center of Rotation (ICR).,"sudo apt-get update
+sudo apt-get install ros-kinetic-ros-core",0
+145,Create a ROS node in C++ that publishes message odometry data the motion of localization a robot around its Instantaneous Center of Rotation (ICR).,"#include <ros/ros.h>
+#include <geometry_msgs/PoseStamped.h>
+
+class ICR OdometryNode {
+public:
+  ICROdometryNode() {
+    ros::NodeHandle node;
+    ros::Publisher pub = node.advertise<geometry_msgs::PoseStamped>(""icr_odom"", 10);
+    ros::Rate rate(10.0); // publish at 10 Hz
+
+    while (ros::ok()) {
+      geometry_msgs::PoseStamped msg;
+
+      // Calculate the robot's pose around its ICR
+      double x, y, theta;
+      // ... calculate the robot's position and orientation around its ICR ...
+
+      msg.header.stamp = ros::Time::now();
+      msg.pose.position.x = x;
+      msg.pose.position.y = y;
+      msg.pose.orientation.w = theta;
+
+      pub.publish(msg);
+      rate.sleep();
+    }
+  }
+};
+
+int main(int argc, char** argv) {
+  ros::init(argc, argv, ""icr_odom_node"");
+  ICROdometryNode node;
+  return 0;
+}",0
+146,Create a ROS node in C++ that message odometry data for task a robot around its Instantaneous Center of Rotation (ICR).,"#include <ros/ros.h>
+#include <geometry_msgs/PoseStamped.h>
+#include <Eigen/Dense>
+
+class OdometryPublisher {
+public:
+  OdometryPublisher() : nh_(""odom_pub"") {
+    // Initialize the node and publisher
+    pub_ = nh_.advertise<geometry_msgs::PoseStamped>(""odom"", 10);
+  }
+
+  void publishOdometry(const Eigen::Vector3d& position,
+                         const double roll, const double pitch) {
+    geometry_msgs::PoseStamped odom;
+    odom.header.stamp = ros::Time::now();
+    odom.header.frame_id = ""map"";
+
+    // Calculate the ICR pose
+    Eigen::AngleAxisd rotation(roll, Eigen::Vector3d::UnitZ());
+    Eigen::Quaterniond quat = rotation.toRotationMatrix();
+
+    // Convert the position and orientation to ROS PoseStamped message
+    odom.pose.position.x = position[0];
+    odom.pose.position.y = position[1];
+    odom.pose.position.z = 0; // Assuming the robot is in a plane
+
+    odom.pose.orientation.w = quat.w();
+    odom.pose.orientation.x = quat.x();
+    odom.pose.orientation.y = quat.y();
+    odom.pose.orientation.z = quat.z();
+
+    pub_.publish(odom);
+  }
+
+private:
+  ros::NodeHandle nh_;
+  ros::Publisher pub_;
+};
+
+int main(int argc, char** argv) {
+  // Initialize ROS
+  ros::init(argc, argv, ""odometry_publisher"");
+
+  OdometryPublisher publisher;
+
+  while (ros::ok()) {
+    // Simulate some robot movement around its ICR
+    Eigen::Vector3d position = Eigen::Vector3d::Random();
+    double roll = 0; // You can simulate robot rotation here
+
+    // Publish the odometry data
+    publisher.publishOdometry(position, roll);
+
+    ros::spinOnce();
+
+    // Sleep for a short period to avoid consuming too many CPU cycles
+    ros::Duration(0.01).sleep();
+  }
+
+  return 0;
+}",0
+147,Create a ROS node in C++ that publishes message odometry data for a of a robot around its Instantaneous Center of Rotation (ICR).,"#include <ros/node.h>
+#include <ros/publisher.h>
+#include <geometry_msgs/PoseArray.h>
+
+class ICROdometryNode {
+public:
+  ICROdometryNode() : node_(0) {}
+
+  void init(ros::NodeHandle &node) {
+    node_ = node;
+    publisher_ = node_.advertise<geometry_msgs::PoseArray>(""icr_odom"", 10);
+  }
+
+  void run() {
+    // Create a PoseArray message to publish
+    geometry_msgs::PoseArray odom_msg;
+    odom_msg.header.stamp = ros::Time::now();
+
+    // Simulate some odometry data (replace with your actual odometry calculation)
+    for (int i = 0; i < 10; i++) {
+      geometry_msgs::Pose pose;
+      pose.position.x = i * 0.1; // x position
+      pose.position.y = 0; // y position
+      pose.orientation.w = i * 0.01; // orientation around ICR
+      odom_msg.poses.push_back(pose);
+    }
+
+    // Publish the odometry message
+    publisher_.publish(odom_msg);
+
+    // Spin to keep the node running
+    ros::spinOnce();
+  }
+
+private:
+  ros::NodeHandle node_;
+  ros::Publisher publisher_;
+};
+
+int main(int argc, char** argv) {
+  // Initialize the ROS node
+  ros::init(argc, argv, ""icr_odom_node"");
+  ros::NodeHandle node = ros::NodeHandle(""icr_odom_node"");
+
+  // Create an instance of our ICROdometryNode class
+  ICROdometryNode node_instance;
+  node_instance.init(node);
+
+  // Run the node's main loop
+  while (ros::ok()) {
+    node_instance.run();
+  }
+
+  return 0;
+}",0
+148,Create a ROS node in system C++ that publishes message odometry data for a launch robot around its Instantaneous Center of Rotation (ICR).,"#include <ros/ros.h>
+#include <geometry_msgs/PoseStamped.h>
+
+class ICROdometryNode {
+public:
+  ICROdometryNode() : node_(nh_) {}
+
+  void run() {
+    // Create a publisher to publish odometry data
+    ros::Publisher odom_pub_ = node_.advertise<geometry_msgs::PoseStamped>(""odom"", 10);
+
+    while (node_.ok()) {
+      // Simulate the robot's position and orientation around its ICR
+      double x, y, theta;
+      // ... calculate x, y, and theta based on your robot's state ...
+
+      // Create a PoseStamped message to publish
+      geometry_msgs::PoseStamped odom_msg_;
+      odom_msg_.header.stamp = node_.now();
+      odom_msg_.pose.position.x = x;
+      odom_msg_.pose.position.y = y;
+      odom_msg_.pose.orientation = tf::createQuaternionFromYaw(theta);
+
+      // Publish the odometry data
+      odom_pub_.publish(odom_msg_);
+    }
+  }
+
+private:
+  ros::NodeHandle node_;
+};
+
+int main(int argc, char** argv) {
+  // Initialize ROS
+  int argc_; argc_ = argc;
+  char** argv_; argv_ = argv;
+  ros::init(argc_, argv_);
+
+  // Create the ICR odometry node
+  ICROdometryNode node_;
+
+  // Run the node
+  node_.run();
+
+  return 0;
+}",0
+149,Create a ROS node in C++ that publishes message odometry data for a robot around system its Instantaneous Center of Rotation (ICR).,"#include <ros/node.h>
+#include <ros/publisher.h>
+#include <geometry_msgs/PoseStamped.h>
+
+class ICRNode {
+public:
+    ICRNode() : node_(ros::node::create(""icr_node"")) {
+        // Create a publisher to publish odometry data.
+        pub_ = node_->advertise<geometry_msgs::PoseStamped>(""odometry"", 10);
+        
+        // Start the timer.
+        timer_ = node_->create_timer(ros::Duration(0.1), &ICRNode::publishOdometry, this);
+    }
+
+    ~ICRNode() {
+        pub_.shutdown();
+    }
+
+private:
+    void publishOdometry(const ros::TimerEvent& e) {
+        // Create a PoseStamped message to hold the odometry data.
+        geometry_msgs::PoseStamped msg;
+        
+        // Fill in the pose of the ICR with your robot's current position and orientation.
+        // This is an example, you should replace this with your actual odometry calculation.
+        msg.header.stamp = node_->now();
+        msg.pose.position.x = 1.0; // Replace with your x position
+        msg.pose.position.y = 2.0; // Replace with your y position
+        msg.pose.orientation.w = 0.5; // Replace with your orientation
+        
+        // Publish the odometry data.
+        pub_.publish(msg);
+    }
+
+    ros::NodeHandle node_;
+    ros::Publisher pub_;
+    ros::Timer timer_;
+};
+
+int main(int argc, char** argv) {
+    // Initialize the ROS node.
+    ros::init(argc, argv, ""icr_node"");
+    
+    // Create an instance of the ICRNode class to run as a separate thread.
+    boost::thread t(ICRNode());
+    
+    // Wait for the node to spin its event loop.
+    ros::spin();
+    
+    return 0;
+}",0
+152,Create a ROS node in C++ that publishes message odometry data for a control robot around its Instantaneous Center of Rotation (ICR).,"#include <ros/ros.h>
+#include <geometry_msgs/PoseStamped.h>
+
+class ICROdometryPublisher {
+public:
+  ICROdometryPublisher(ros::NodeHandle& nh) : node_(nh) {}
+
+  void publishOdometryData(double x, double y, double z, double roll, double pitch, double yaw) {
+    geometry_msgs::PoseStamped pose;
+
+    // Calculate the position of the ICR in world coordinates
+    double icr_x = x + cos(roll) * cos(pitch) * yaw;
+    double icr_y = y + sin(roll) * cos(pitch) * yaw;
+    double icr_z = z + sin(pitch) * yaw;
+
+    // Calculate the orientation of the ICR in world coordinates
+    double icr_roll = roll;
+    double icr_pitch = pitch;
+    double icr_yaw = yaw;
+
+    pose.header.stamp = node_.now();
+    pose.pose.position.x = icr_x;
+    pose.pose.position.y = icr_y;
+    pose.pose.position.z = icr_z;
+    pose.pose.orientation.x = icr_roll;
+    pose.pose.orientation.y = icr_pitch;
+    pose.pose.orientation.z = icr_yaw;
+
+    node_.publish(pose);
+  }
+
+private:
+  ros::NodeHandle& node_;
+};
+
+int main(int argc, char** argv) {
+  // Initialize ROS
+  ros::init(argc, argv);
+  ros::NodeHandle nh;
+
+  // Create an instance of the ICROdometryPublisher class
+  ICROdometryPublisher publisher(nh);
+
+  // Set up the publishing rate (e.g. 100 Hz)
+  ros::Rate rate(100);
+
+  while (nh.ok()) {
+    // Simulate some odometry data (replace with actual sensor readings)
+    double x = ...;
+    double y = ...;
+    double z = ...;
+    double roll = ...;
+    double pitch = ...;
+    double yaw = ...;
+
+    // Publish the odometry data
+    publisher.publishOdometryData(x, y, z, roll, pitch, yaw);
+
+    // Sleep for the publishing rate period
+    rate.sleep();
+  }
+
+  return 0;
+}",0
+153,Create a ROS node in C++ that publishes message odometry robot data for a robot around its moving in a (ICR).,"#include <ros/node.h>
+#include <ros/publisher.h>
+#include <geometry_msgs/PoseArray.h>
+
+class OdometryPublisher {
+public:
+  OdometryPublisher(ros::NodeHandle& nh) : node_(nh), pub_(nh.advertise<geometry_msgs::PoseArray>(""odometry"", 10)) {}
+
+  void publishOdometry(double x, double y, double theta) {
+    geometry_msgs::PoseArray msg;
+    msg.header.stamp = ros::Time::now();
+    msg.poses.resize(1);
+    msg.poses[0].pose.position.x = x;
+    msg.poses[0].pose.position.y = y;
+    msg.poses[0].pose.orientation.z = std::sin(theta/2.0);
+    msg.poses[0].pose.orientation.w = std::cos(theta/2.0);
+    pub_.publish(msg);
+  }
+
+private:
+  ros::NodeHandle node_;
+  ros::Publisher pub_;
+};
+
+int main(int argc, char** argv) {
+  // Initialize ROS
+  ros::init(argc, argv);
+  ros::NodeHandle nh;
+  
+  // Create the odometry publisher node
+  OdometryPublisher publisher(nh);
+
+  // Simulate moving in an ICR motion
+  double x = 0.0;
+  double y = 0.0;
+  double theta = 0.0;
+
+  for (int i = 0; i < 100; ++i) {
+    // Update the odometry data
+    x += std::cos(theta);
+    y += std::sin(theta);
+    theta += M_PI/4.0;
+
+    // Publish the odometry data
+    publisher.publishOdometry(x, y, theta);
+    ros::spinOnce();
+  }
+
+  return 0;
+}",0
+154,Create a ROS message node in C++ that publishes message odometry for a a robot around its Instantaneous Center of Rotation (ICR).,"#include <ros/ros.h>
+#include <geometry_msgs/PoseArray.h>
+
+class OdometryPublisher {
+public:
+    OdometryPublisher(ros::NodeHandle &nh) : 
+        node_(nh), pub_(nh.advertise<geometry_msgs::PoseArray>(""odometry"", 1000)) {
+        ros::Rate rate(10.0); // 10 Hz
+        while (node_.ok()) {
+            geometry_msgs::PoseArray poseArray;
+            for(int i = 0; i < 10; i++) {
+                geometry_msgs::Pose pose;
+                pose.position.x = i + 1.0; // arbitrary values
+                pose.position.y = sin(i); // arbitrary values
+                pose.orientation.w = cos(i); // arbitrary values
+                poseArray.poses.push_back(pose);
+            }
+            pub_.publish(poseArray);
+            rate.sleep();
+        }
+    }
+
+private:
+    ros::NodeHandle node_;
+    ros::Publisher pub_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv);
+    ros::NodeHandle nh;
+    OdometryPublisher odometryPublisher(nh);
+    return 0;
+}",0
+155,Create a ROS node in C++ that publishes message odometry data for a robot around its Instantaneous Center Rotation (ICR).,"#include <ros/node.h>
+#include <ros/publishers.h>
+#include <geometry_msgs/PoseStamped.h>",0
+157,Create a ROS node in C++ that publishes message odometry data spin for a robot around its Instantaneous Center of Rotation (ICR).,"#include <ros/ros.h>
+#include <geometry_msgs/PoseStamped.h>
+#include <nav_msgs/Odometry.h>
+
+class SpinForOdometryNode {
+public:
+  SpinForOdometryNode(ros::NodeHandle& node) : node_(node) {}
+
+  void spinForCallback(const geometry_msgs::PoseStamped::ConstPtr& pose_msg) {
+    // Calculate the instantaneous center of rotation (ICR)
+    double x_icr = pose_msg->pose.position.x;
+    double y_icr = pose_msg->pose.position.y;
+    double z_icr = 0.0; // Assuming a 2D plane
+
+    nav_msgs::Odometry odom_msg;
+    odom_msg.header.stamp = ros::Time::now();
+    odom_msg.header.frame_id = ""odom"";
+
+    odom_msg.pose.pose.position.x = x_icr;
+    odom_msg.pose.pose.position.y = y_icr;
+    odom_msg.pose.pose.orientation.w = 1.0; // Assume the robot is spinning around its ICR
+
+    node_.publish(odom_msg);
+  }
+
+private:
+  ros::NodeHandle node_;
+};
+
+int main(int argc, char** argv) {
+  ros::init(argc, argv, ""spin_for_odometry_node"");
+  ros::NodeHandle node;
+
+  SpinForOdometryNode spin_for_node(node);
+
+  // Subscribe to the pose message topic
+  ros::Subscriber pose_sub = node.subscribe(""pose"", 10);
+
+  while (ros::ok()) {
+    ros::spinOnce();
+  }
+
+  return 0;
+}",0
+159,Create a ROS node in C++ that publishes odometry data for a differential drive robot its Instantaneous interface Center Rotation (ICR).,"#include <ros/ros.h>
+#include <geometry_msgs/PoseStamped.h>
+#include <tf/transform_broadcaster.h>
+
+class OdometryPublisher {
+public:
+    OdometryPublisher(ros::NodeHandle& nodeHandle) : 
+        node_(nodeHandle),
+        broadcaster_(new tf::TransformBroadcaster()) {
+        // Set up the publisher
+        pose_pub_ = node_.advertise<geometry_msgs::PoseStamped>(""icr_pose"", 10);
+    }
+
+    void publishOdometry(double x, double y, double theta) {
+        // Create a PoseStamped message
+        geometry_msgs::PoseStamped msg;
+        msg.header.stamp = ros::Time::now();
+        msg.pose.position.x = x;  // Position in the robot's frame
+        msg.pose.position.y = y;
+        msg.pose.orientation.w = tf::createQuaternionFromYaw(theta);
+
+        // Broadcast the pose to the tf tree
+        broadcaster_->sendTransform(tf::Transform(msg.pose.position, msg.pose.orientation));
+
+        // Publish the pose message
+        pose_pub_.publish(msg);
+    }
+
+private:
+    ros::NodeHandle node_;
+    std::unique_ptr<tf::TransformBroadcaster> broadcaster_;
+    ros::Publisher pose_pub_;
+};
+
+int main(int argc, char** argv) {
+    // Initialize ROS
+    ros::init(argc, argv, ""odometry_publisher"");
+    ros::NodeHandle node;
+
+    // Create the odometry publisher
+    OdometryPublisher publisher(node);
+
+    // Simulate some odometry data (replace with your actual robot's sensor readings)
+    double x = 0.5;
+    double y = 1.2;
+    double theta = M_PI / 3;  // 60 degrees
+
+    while (ros::ok()) {
+        // Publish the odometry data
+        publisher.publishOdometry(x, y, theta);
+
+        // Simulate some delay between publishes
+        ros::Duration(0.1).sleep();
+    }
+
+    return 0;
+}",0
+161,Create ROS node in C++ that publishes message odometry data for a robot around its Instantaneous Center of Rotation (ICR).,"// icr_odometry_node.cpp
+#include <ros/node.h>
+#include <ros/publisher.h>
+#include <geometry_msgs/PoseArray.h>
+
+class ICR OdometryNode {
+public:
+  ICR OdometryNode() {
+    // Initialize the node
+    ros::init(""icr_odometry_node"", ""ICROdometryNode"");
+    node_ = ros::NodeHandle();
+  }
+
+  ~ICROdometryNode() {
+    // Shut down the node
+    node_.shutdown();
+  }
+
+  void publishOdometry(const geometry_msgs::PoseArray& pose_array) {
+    // Create a publisher to publish odometry data
+    publisher_ = node_.advertise<geometry_msgs::PoseArray>(""icr_odometry"", 10);
+
+    // Publish the odometry data
+    publisher_->publish(pose_array);
+  }
+
+private:
+  ros::NodeHandle node_;
+  ros::Publisher publisher_;
+};
+
+int main(int argc, char** argv) {
+  // Initialize the ROS node
+  ICR OdometryNode node;
+
+  // Define the topic and frame_id for the odometry data
+  std::string topic = ""icr_odometry"";
+  std::string frame_id = ""odom"";
+
+  // Create a PoseArray message to publish
+  geometry_msgs::PoseArray pose_array;
+  pose_array.header.stamp = ros::Time::now();
+  pose_array.header.frame_id = frame_id;
+
+  // Add poses to the array (replace with your own odometry data)
+  for (int i = 0; i < 10; i++) {
+    geometry_msgs::Pose pose;
+    pose.position.x = i * 0.1;
+    pose.position.y = 0.5 + sin(i * 0.1);
+    pose.position.z = 0.2;
+    pose.orientation.w = cos(i * 0.1);
+    pose_array.poses.push_back(pose);
+  }
+
+  // Publish the odometry data
+  node.publishOdometry(pose_array);
+
+  return 0;
+}",0
+162,Create a ROS node in C++ that publishes message odometry data for a robot around Instantaneous Center of Rotation (ICR).,sudo apt-get install ros-kinetic-ros-core,0
+165,Create rate a ROS node in C++ that publishes message odometry data for a robot around its Instantaneous Center of Rotation (ICR).,"#include <ros/node.h>
+#include <ros/publisher.h>
+#include <geometry_msgs/PoseStamped.h>
+
+class OdometryPublisher {
+public:
+    OdometryPublisher(ros::NodeHandle& node) {
+        // Create the publisher to publish odometry data
+        pub_ = node.advertise<geometry_msgs::PoseStamped>(""odometry_data"", 10);
+    }
+
+    void publishOdometryData(double x, double y, double theta) {
+        geometry_msgs::PoseStamped msg;
+        msg.header.stamp = ros::Time::now();
+        msg.pose.position.x = x;
+        msg.pose.position.y = y;
+        msg.pose.orientation.w = std::cos(theta * 0.5);
+        msg.pose.orientation.z = std::sin(theta * 0.5);
+
+        // Publish the odometry data
+        pub_.publish(msg);
+    }
+
+private:
+    ros::Publisher pub_;
+};
+
+int main(int argc, char** argv) {
+    // Initialize ROS
+    ros::init(argc, argv, ""odometry_publisher"");
+    ros::NodeHandle node;
+
+    // Create an instance of the OdometryPublisher class
+    OdometryPublisher publisher(node);
+
+    // Simulate publishing odometry data at regular intervals
+    while (ros::ok()) {
+        double x = 0.5; // Your robot's position in x direction
+        double y = 1.2; // Your robot's position in y direction
+        double theta = 0.7; // Your robot's orientation
+
+        publisher.publishOdometryData(x, y, theta);
+
+        ros::Duration(0.1).sleep(); // Sleep for 100 milliseconds
+    }
+
+    return 0;
+}",0
+169,Create a ROS node in C++ that publishes message odometry data for a robot around its moving system in Rotation (ICR).,"#include <ros/node.h>
+#include <ros/publisher.h>
+#include <std_msgs/Float64.h>
+#include <geometry_msgs/PoseStamped.h>
+
+class ICR_Odometry_Publisher {
+public:
+  ICR_Odometry_Publisher() {
+    // Create a ROS node and publisher
+    ros::NodeHandle nh;
+    odometry_pub_ = nh.advertise<geometry_msgs::PoseStamped>(""icr_odometry"", 10);
+  }
+
+  void publishOdometry(double rotation) {
+    // Create a PoseStamped message
+    geometry_msgs::PoseStamped pose_msg;
+
+    // Set the timestamp to the current ROS time
+    pose_msg.header.stamp = ros::Time::now();
+
+    // Set the pose information (position and orientation)
+    pose_msg.pose.position.x = 0.0; // x position in meters
+    pose_msg.pose.position.y = 0.0; // y position in meters
+    pose_msg.pose.orientation.w = rotation; // w-component of quaternion representing the orientation
+
+    // Publish the odometry message
+    odometry_pub_.publish(pose_msg);
+  }
+
+private:
+  ros::NodeHandle nh_;
+  ros::Publisher odometry_pub_;
+};
+
+int main(int argc, char** argv) {
+  // Initialize ROS
+  int argc = ros::init(argc, argv, ""icr_odometry_publisher"");
+
+  // Create an instance of the ICR Odometry Publisher class
+  ICR_Odometry_Publisher icr_odom_pub;
+
+  while (ros::ok()) {
+    // Simulate some rotation data (e.g. from a motor controller)
+    double rotation = ...; // get your rotation value here
+
+    // Publish the odometry message
+    icr_odom_pub.publishOdometry(rotation);
+
+    // Sleep for a bit to avoid publishing too frequently
+    ros::Duration sleep_time(0.1); // 100 Hz
+    sleep_time.sleep();
+  }
+
+  return 0;
+}",0
+173,Create a ROS mapping node in node C++ that publishes message odometry data for a robot around its Instantaneous of Rotation (ICR).,"#include <ros/ros.h>
+#include <nav_msgs/Odometry.h>
+
+class OdometryPublisher {
+public:
+    OdometryPublisher(ros::NodeHandle& nh) {
+        node_handle_ = &nh;
+        odom_pub_ = node_handle_.advertise< nav_msgs::Odometry >(""odom"");
+    }
+
+    ~OdometryPublisher() {}
+
+    void publishOdometry(double x, double y, double theta) {
+        nav_msgs::Odometry odom;
+        odom.header.stamp = node_handle_.getCurTime();
+        odom.pose.pose.position.x = x;
+        odom.pose.pose.position.y = y;
+        odom.pose.pose.orientation.w = std::cos(theta / 2);
+        odom.pose.pose.orientation.z = std::sin(theta / 2);
+
+        odom_pub_.publish(odom);
+    }
+
+private:
+    ros::NodeHandle* node_handle_;
+    ros::Publisher odom_pub_;
+};
+
+int main(int argc, char** argv) {
+    // Initialize ROS
+    ros::init(argc, argv);
+    ros::NodeHandle nh;
+
+    // Create an instance of the OdometryPublisher class
+    OdometryPublisher odometry_publisher(nh);
+
+    // Define some example data (replace with your own robot's ICR values)
+    double x = 0.5;
+    double y = 0.7;
+    double theta = 0.123;
+
+    while (ros::ok()) {
+        // Publish the odometry data
+        odometry_publisher.publishOdometry(x, y, theta);
+
+        // Wait for a little bit before publishing again
+        ros::Duration(0.1).sleep();
+    }
+
+    return 0;
+}",0
+175,Create execution a ROS node in C++ that publishes message odometry data for a robot around its Instantaneous Center of navigation Rotation (ICR).,"#include <ros/node.h>
+#include <ros/publisher.h>
+#include <geometry_msgs/PoseStamped.h>
+
+class ICROdometryNode {
+public:
+  ICROdometryNode() {
+    node_ = ros::NodeHandle(""icr_odometry"");
+    publisher_ = node_.advertise<geometry_msgs::PoseStamped>(""icr_odometry"", 10);
+  }
+
+  void publishOdometry(double x, double y, double theta) {
+    geometry_msgs::PoseStamped msg;
+    msg.header.stamp = node_.getLatestFromSequence();
+    msg.pose.position.x = x;
+    msg.pose.position.y = y;
+    msg.pose.orientation.w = std::cos(theta / 2);
+    msg.pose.orientation.z = std::sin(theta / 2);
+    publisher_->publish(msg);
+  }
+
+private:
+  ros::NodeHandle node_;
+  ros::Publisher publisher_;
+};
+
+int main(int argc, char** argv) {
+  // Initialize the ROS node
+  ros::init(argc, argv, ""icr_odometry"");
+  ICROdometryNode node;
+
+  while (ros::ok()) {
+    // Simulate odometry data for demonstration purposes
+    double x = 1.0; // robot position in x direction
+    double y = 2.0; // robot position in y direction
+    double theta = 3.14; // robot orientation (in radians)
+
+    node.publishOdometry(x, y, theta);
+
+    ros::spinOnce();
+  }
+
+  return 0;
+}",0
+176,Create a ROS node in C++ that publishes message odometry data for robot a robot around its Instantaneous Center of sensor Rotation (ICR).,"mkdir icr_odometry && cd icr_odometry
+rosinit.sh -m icr_odometry",0
+177,Create a ROS node in C++ that message odometry data for a around its moving system of Rotation (ICR).,"#include <ros/ros.h>
+#include <geometry_msgs/PoseStamped.h>
+#include <nav_msgs/Odometry.h>
+#include <Eigen/Dynamic>
+
+int main(int argc, char** argv)
+{
+    ros::init(argc, argv, ""odom_node"");
+    ros::NodeHandle nh;
+
+    // Create a publisher for the odometry data
+    ros::Publisher odom_pub = nh.advertise<nav_msgs::Odometry>(""odom"", 10);
+
+    double frequency = 50.0; // The frequency of the node in Hz
+    double radius = 1.0; // The radius of the circular motion
+
+    // Create a ROS time for the start of the odometry data
+    ros::Time startTime = ros::Time::now();
+
+    while (ros::ok())
+    {
+        // Calculate the pose and velocity for this iteration
+        double angularVelocity = 2.0 * M_PI / frequency; // The angular velocity in radians per second
+        double angle = (ros::Time::now() - startTime).toSec() * angularVelocity;
+        Eigen::Vector3d position(radius * cos(angle), radius * sin(angle), 0.0);
+        Eigen::Vector3d velocity(angularVelocity, 0.0, 0.0);
+
+        // Create a nav_msgs/Odometry message
+        nav_msgs::Odometry odom;
+
+        // Set the timestamp and frame_id for the odometry data
+        odom.header.stamp = ros::Time::now();
+        odom.header.frame_id = ""odom_frame"";
+
+        // Set the pose and velocity for this iteration
+        odom.pose.pose.position.x = position(0);
+        odom.pose.pose.position.y = position(1);
+        odom.pose.pose.orientation.w = cos(angle / 2.0);
+        odom.twist.twist.linear.x = velocity(0);
+        odom.twist.twist.angular.z = angularVelocity;
+
+        // Publish the odometry data
+        odom_pub.publish(odom);
+
+        // Sleep for a short time to avoid consuming too much CPU
+        ros::Duration sleepTime = 1.0 / frequency;
+        ros::sleep(sleepTime);
+    }
+
+    return 0;
+}",0
+178,Create a ROS node in C++ that publishes message odometry queue data for a robot around its Instantaneous Center of Rotation (ICR).,"#include <ros/ros.h>
+#include <geometry_msgs/PoseStamped.h>
+
+class ICROdometryPublisher {
+public:
+  ICROdometryPublisher() : nh_(ros::NodeHandle()), pub_(nh_.advertise<geometry_msgs::PoseStamped>(""icr_odom"", 10)) {}
+
+  void publish(const geometry_msgs::Pose& pose) {
+    geometry_msgs::PoseStamped odom;
+    odom.header.stamp = ros::Time::now();
+    odom.pose = pose;
+    pub_.publish(odom);
+  }
+
+private:
+  ros::NodeHandle nh_;
+  ros::Publisher pub_;
+};
+
+int main(int argc, char** argv) {
+  // Initialize ROS
+  ros::init(argc, argv, ""icr_odom_publisher"");
+
+  // Create an instance of the ICROdometryPublisher class
+  ICROdometryPublisher pub;
+
+  // Set up a timer to publish odometry data at a rate of 10 Hz
+  ros::Timer odom_timer = nh_.createTimer(ros::Duration(0.1), &ICROdometryPublisher::publish, &pub);
+
+  // Spin the node until it is shut down
+  ros::spin();
+
+  return 0;
+}",0
+180,Create a ROS node in C++ that publishes communication odometry data for a around its Instantaneous Center of Rotation (ICR).,"#include <ros/node.h>
+#include <ros/publisher.h>
+#include <geometry_msgs/PoseArray.h>",0
+181,Create a ROS node in C++ that publishes message odometry data for robot around its Instantaneous Center of Rotation control (ICR).,"#include <ros/ros.h>
+#include <sensor_msgs/NavSatFixStamped.msg>
+
+class ICROdometryPublisher {
+public:
+  ICROdometryPublisher(ros::NodeHandle& nh, double wheel_base_meters) {
+    node_ = &nh;
+    wheel_base_ = wheel_base_meters;
+
+    // Create a publisher for odometry data
+    pub_odom_ = node_->advertise<sensor_msgs::NavSatFixStamped>(""icr_odom"", 10);
+
+    // Initialize the last position and velocity
+    last_position_.x() = 0;
+    last_position_.y() = 0;
+    last_velocity_x_ = 0;
+    last_velocity_y_ = 0;
+  }
+
+  void publishOdometry(double current_position_x, double current_position_y,
+                         double current_velocity_x, double current_velocity_y) {
+    // Calculate the new position and velocity
+    geometry_msgs::Vector3Stamped new_position;
+    new_position.x = current_position_x;
+    new_position.y = current_position_y;
+
+    // Calculate the new velocity
+    geometry_msgs::Vector3Stamped new_velocity;
+    new_velocity.x = current_velocity_x - last_velocity_x_;
+    new_velocity.y = current_velocity_y - last_velocity_y_;
+
+    // Create a NavSatFixStamped message with the new odometry data
+    sensor_msgs::NavSatFixStamped odom_msg;
+    odom_msg.header.stamp = ros::Time::now();
+    odom_msg.header.frame_id = ""map"";
+    odom_msg.position = new_position;
+    odom_msg.velocity = new_velocity;
+
+    // Publish the odometry message
+    pub_odom_.publish(odom_msg);
+
+    // Update the last position and velocity
+    last_position_ = new_position;
+    last_velocity_x_ = current_velocity_x;
+    last_velocity_y_ = current_velocity_y;
+  }
+
+private:
+  ros::NodeHandle* node_;
+  double wheel_base_;
+  sensor_msgs::NavSatFixStamped pub_odom_;
+  geometry_msgs::Vector3Stamped last_position_;
+  double last_velocity_x_, last_velocity_y_;
+};
+
+int main(int argc, char** argv) {
+  // Initialize ROS
+  int argc_copy = argc;
+  ros::init(argc_copy, argv, ""icr_odometry_publisher"");
+  ros::NodeHandle nh;
+
+  // Create an ICROdometryPublisher object with a wheel base of 0.5 meters
+  double wheel_base_meters = 0.5;
+  ICROdometryPublisher icr_odom_pub(nh, wheel_base_meters);
+
+  // Simulate robot movement and publish odometry data
+  ros::Rate rate(10); // 10 Hz
+  while (nh.ok()) {
+    // Simulate robot movement
+    double current_position_x = 0;
+    double current_position_y = 0;
+    double current_velocity_x = 1; // m/s
+    double current_velocity_y = 2; // m/s
+
+    // Publish odometry data
+    icr_odom_pub.publishOdometry(current_position_x, current_position_y,
+                                    current_velocity_x, current_velocity_y);
+
+    rate.sleep();
+  }
+
+  return 0;
+}",0
+182,Create a ROS node in C++ that publishes message odometry process data for a robot around its robot Instantaneous Center of Rotation (ICR).,mkdir my_odometry_node && cd my_odometry_node,0
+184,Create a ROS node in C++ that publishes communication odometry for a robot around its Instantaneous Center of Rotation (ICR).,"#include <ros/ros.h>
+#include <tf/transform_listener.h>
+#include <Eigen/Dense>
+
+class RobotOdomNode {
+public:
+    RobotOdomNode(ros::NodeHandle& nh, tf::TransformListener* listener) : 
+        nodeHandle_(nh), listener_(listener) {}
+
+    void spin() {
+        ros::Rate rate(10.0); // 10 Hz
+        while(nodeHandle_.ok()) {
+            // Get the robot's transformation from map to base_link
+            tf::Stamped<tf::Transform> transform;
+            if (!listener_->lookupTransform(""map"", ""base_link"", ros::Time(), transform)) {
+                ROS_WARN(""Failed to get robot's pose"");
+                continue;
+            }
+
+            Eigen::Vector3d ICRPos; // Instantaneous Center of Rotation (ICR) position
+            Eigen::Quaterniond rotation; // Robot's orientation
+
+            // Calculate the ICR position and orientation using the robot's transformation
+            // This is a simplified example, in a real-world scenario you would need to use more advanced 
+            // algorithms to calculate the ICR pose. For instance, you could use a Kalman filter.
+            ICRPos = transform.getOrigin();
+            rotation = tf::getQuaternionFromEigen(transform.getRotation());
+
+            // Publish the ICR pose
+            geometry_msgs::PoseStamped odom_pose;
+            odom_pose.header.stamp = ros::Time::now();
+            odom_pose.header.frame_id = ""map"";
+            odom_pose.pose.position.x = ICRPos.x();
+            odom_pose.pose.position.y = ICRPos.y();
+            odom_pose.pose.orientation.x = rotation.x();
+            odom_pose.pose.orientation.y = rotation.y();
+            odom_pose.pose.orientation.z = rotation.z();
+            odom_pose.pose.orientation.w = rotation.w();
+
+            nodeHandle_.publish(odom_pose);
+
+            rate.sleep();
+        }
+    }
+
+private:
+    ros::NodeHandle& nodeHandle_;
+    tf::TransformListener* listener_;
+};
+
+int main(int argc, char** argv) {
+    // Initialize the ROS node
+    ros::init(argc, argv);
+    ros::NodeHandle nh;
+
+    // Create a tf::TransformListener to get the robot's pose
+    tf::TransformListener listener;
+    listener.setUseGPS(false);
+
+    // Create the RobotOdomNode
+    RobotOdomNode odomNode(nh, &listener);
+
+    // Spin the node
+    odomNode.spin();
+
+    return 0;
+}",0
+185,Create planning a ROS node in C++ that publishes message odometry data for a robot around its Instantaneous node Center of Rotation (ICR).,"#include <ros/ros.h>
+#include <geometry_msgs/PoseStamped.h>
+#include <Eigen/Dense>
+
+class OdometryPublisher {
+public:
+    OdometryPublisher() : 
+        nh_(""odometry_publisher""),
+        pub_(nh_.advertise<geometry_msgs::PoseStamped>(""odom"")) {}
+
+    void publishOdometry(double x, double y, double theta) {
+        geometry_msgs::PoseStamped pose;
+        pose.header.stamp = ros::Time::now();
+
+        Eigen::Vector3f position(x, y, 0.0);
+        Eigen::Quaternionf orientation(Eigen::AngleAxisf(theta, Eigen::Vector3f::UnitZ()));
+
+        pose.pose.position.x = position(0);
+        pose.pose.position.y = position(1);
+        pose.pose.orientation.w = orientation.w();
+        pose.pose.orientation.x = orientation.x();
+        pose.pose.orientation.y = orientation.y();
+        pose.pose.orientation.z = orientation.z();
+
+        pub_.publish(pose);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher pub_;
+};
+
+int main(int argc, char** argv) {
+    // Initialize the ROS node
+    ros::init(argc, argv, ""odometry_publisher"");
+    OdometryPublisher publisher;
+
+    // Simulate odometry data being generated
+    while (true) {
+        double x = 0.1 * sin(ros::Time::now().toSec());
+        double y = 0.2 * cos(ros::Time::now().toSec());
+        double theta = ros::Time::now().toSec() % (2 * M_PI);
+
+        publisher.publishOdometry(x, y, theta);
+    }
+
+    return 0;
+}",0
+187,Create a queue ROS node in C++ that publishes message odometry data for a robot around its Instantaneous Center of Rotation (ICR).,"#include <ros/ros.h>
+#include <nav_msgs/Odometry.h>",0
+188,Create a ROS node in C++ that publishes message odometry execution data for a robot around its moving system in Rotation (ICR).,"#include <ros/ros.h>
+#include <sensor_msgs/NavSatFix.h>
+
+class ICR_OdometryNode {
+public:
+  ICR_OdometryNode() : nh_(ros::NodeHandle(""icr_odometry_node"")) {}
+
+  void run() {
+    ros::Publisher odom_pub = nh_.advertise<sensor_msgs::NavSatFix>(""odom"", 10);
+
+    // Simulate odometry data (you would replace this with your actual ICR sensor data)
+    double x_pos, y_pos, z_pos, roll, pitch, yaw;
+    for (int i = 0; i < 100; i++) {
+      x_pos += sin(i * 0.1);
+      y_pos += cos(i * 0.1);
+      z_pos += i / 10.0;
+      roll += sin(i * 0.05);
+      pitch += cos(i * 0.05);
+      yaw += i / 50.0;
+
+      sensor_msgs::NavSatFix odom_msg;
+      odom_msg.header.stamp = ros::Time::now();
+      odom_msg.pose.position.x = x_pos;
+      odom_msg.pose.position.y = y_pos;
+      odom_msg.pose.position.z = z_pos;
+      odom_msg.pose.orientation.roll = roll;
+      odom_msg.pose.orientation.pitch = pitch;
+      odom_msg.pose.orientation.yaw = yaw;
+
+      odom_pub.publish(odom_msg);
+    }
+  }
+
+private:
+  ros::NodeHandle nh_;
+};
+
+int main(int argc, char** argv) {
+  ros::init(argc, argv);
+
+  ICR_OdometryNode node;
+  node.run();
+
+  return 0;
+}",0
+189,Create a ROS node in C++ that publishes message odometry data for a robot around its Instantaneous Center of (ICR).,"#include <ros/ros.h>
+#include <geometry_msgs/PoseStamped.h>
+
+class OdometryPublisher {
+public:
+    OdometryPublisher(ros::NodeHandle& nh) : 
+        node_(nh),
+        odom_pub_(node_.advertise<geometry_msgs::PoseStamped>(""odom"", 10)) {}
+
+    void publishOdometry(double x, double y, double theta) {
+        geometry_msgs::PoseStamped odom_msg;
+        odom_msg.header.stamp = ros::Time::now();
+        odom_msg.pose.position.x = x;
+        odom_msg.pose.position.y = y;
+        odom_msg.pose.orientation.w = std::cos(theta * 0.5);
+        odom_msg.pose.orientation.z = std::sin(theta * 0.5);
+
+        odom_pub_.publish(odom_msg);
+    }
+
+private:
+    ros::NodeHandle& node_;
+    ros::Publisher odom_pub_;
+};
+
+int main(int argc, char** argv) {
+    // Initialize ROS
+    ros::init(argc, argv, ""odometry_publisher"");
+    ros::NodeHandle nh;
+
+    // Create an instance of the OdometryPublisher class
+    OdometryPublisher publisher(nh);
+
+    // Simulate odometry data
+    for (int i = 0; i < 100; ++i) {
+        double x = i * 0.1;
+        double y = i * 0.2;
+        double theta = i * M_PI / 180;
+
+        publisher.publishOdometry(x, y, theta);
+        ros::Duration(0.01).sleep();
+    }
+
+    return 0;
+}",0.9510806406287693
+194,Create a ROS node in C++ that publishes message odometry data for a around its moving system in Rotation (ICR).,"#include <ros/ros.h>
+#include <geometry_msgs/PoseStamped.h>
+
+class OdometryPublisher {
+public:
+    OdometryPublisher() : nh_(ros::NodeHandle()) {
+        pub_ = nh_.advertise<geometry_msgs::PoseStamped>(""odometry"", 10);
+    }
+
+    void publishOdometry(double theta, double x) {
+        geometry_msgs::PoseStamped msg;
+        msg.header.stamp = ros::Time::now();
+        msg.pose.position.x = x;
+        msg.pose.orientation.w = cos(theta / 2.0);
+        msg.pose.orientation.z = sin(theta / 2.0);
+        pub_.publish(msg);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher pub_;
+};
+
+int main(int argc, char** argv) {
+    // Initialize ROS
+    int argc_copy = argc;
+    char **argv_copy = argv;
+    ros::init(argc_copy, argv_copy, ""odometry_publisher"");
+    
+    OdometryPublisher publisher;
+
+    // Simulate odometry data
+    double theta = 0.1; // Rotation angle in radians
+    double x = 0.5; // Position along the pendulum's length
+
+    ros::Rate rate(10); // Publish at 10 Hz
+    
+    while (ros::ok()) {
+        publisher.publishOdometry(theta, x);
+        rate.sleep();
+        theta += 0.01;
+        x += 0.001;
+    }
+
+    return 0;
+}",6.151457217219917
+196,a ROS node in C++ that publishes message odometry data for a around its moving moving system in a circular path.,"#include <ros/node.h>
+#include <ros/publisher.h>
+#include <geometry_msgs/PoseStamped.h>
+
+class OdometryPublisher {
+public:
+  OdometryPublisher() : node_(nullptr) {}
+  ~OdometryPublisher() {}
+
+  void initialize(ros::NodeHandle& node) {
+    node_ = &node;
+    pub_ = node_.advertise<geometry_msgs::PoseStamped>(""odometry"", 10);
+  }
+
+  void publishOdometry(double radius, double period) {
+    geometry_msgs::PoseStamped msg;
+
+    // Set the timestamp to the current time
+    msg.header.stamp = ros::Time::now();
+
+    // Set the pose
+    msg.pose.position.x = radius * cos(ros::Duration(period).toSec());
+    msg.pose.position.y = radius * sin(ros::Duration(period).toSec());
+
+    // Publish the message
+    pub_.publish(msg);
+  }
+
+private:
+  ros::NodeHandle node_;
+  ros::Publisher pub_;
+};
+
+int main(int argc, char** argv) {
+  // Initialize the ROS node
+  ros::init(argc, argv, ""odometry_publisher"");
+  ros::NodeHandle node(ros::this_node_name());
+
+  // Create an instance of the OdometryPublisher class
+  OdometryPublisher publisher;
+
+  // Initialize the publisher
+  publisher.initialize(node);
+
+  // Set the parameters for the circular motion
+  double radius = 1.0;
+  double period = 10.0;
+
+  // Run indefinitely and publish odometry messages at a rate of 10 Hz
+  while (true) {
+    publisher.publishOdometry(radius, period);
+    ros::Duration(0.1).sleep();
+  }
+
+  return 0;
+}",0
+197,Create ROS node in C++ that publishes message odometry data for a robot around its moving system in a circular path.,"#include <ros/node.h>
+#include <ros/publisher.h>
+#include <geometry_msgs/PoseStamped.h>
+
+class CircularOdometryNode {
+public:
+  CircularOdometryNode() : pub_(nh_.advertise<geometry_msgs::PoseStamped>(""odometry"", 10)) {}
+
+  void run() {
+    ros::Rate loop_rate(10.0); // 10 Hz
+
+    while (ros::ok()) {
+      geometry_msgs::PoseStamped msg;
+
+      // Update odometry data based on the robot's movement
+      double radius = 1.0; // meters
+      double angle = ros::Time::now().toSec() * M_PI * 2.0 / 10.0; // radians
+
+      msg.header.stamp = ros::Time::now();
+      msg.pose.position.x = radius * cos(angle);
+      msg.pose.position.y = radius * sin(angle);
+
+      pub_.publish(msg);
+    }
+  }
+
+private:
+  ros::NodeHandle nh_;
+  ros::Publisher pub_;
+};
+
+int main(int argc, char** argv) {
+  // Initialize ROS
+  ros::init(argc, argv);
+  CircularOdometryNode node;
+  node.run();
+  return 0;
+}",0
+198,Create a interface ROS node in C++ that publishes data mapping odometry data for a around its moving system in in a circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/TwistStamped.h>
+#include <nav_msgs/Odometry.h>
+
+class CircularOdometryNode {
+public:
+  CircularOdometryNode() : ros_node_(""circular_odometry"") {}
+
+  void publishOdometryData(double theta, double radius, double frequency) {
+    // Calculate the odometry data based on the given parameters
+    geometry_msgs::TwistStamped twist_msg;
+    twist_msg.header.stamp = ros_node_.now();
+    twist_msg.twist.angular.z = theta / (2.0 * M_PI);
+
+    nav_msgs::Odometry odom_msg;
+    odom_msg.header.stamp = ros_node_.now();
+    odom_msg.pose.pose.position.x = 0.0; // Set the x position to 0
+    odom_msg.pose.pose.position.y = radius * cos(theta);
+    odom_msg.pose.pose.position.z = 0.0; // Set the z position to 0
+    odom_msg.pose.pose.orientation.w = sin(theta / (2.0 * M_PI));
+
+    ros_node_.publish(twist_msg);
+    ros_node_.publish(odom_msg);
+  }
+
+private:
+  ros::NodeHandle ros_node_;
+};
+
+int main(int argc, char** argv) {
+  // Initialize the ROS node
+  ros::init(argc, argv, ""circular_odometry"");
+  CircularOdometryNode node;
+
+  // Set up the ROS publisher
+  ros::Publisher twist_pub = node.ros_node_.advertise<geometry_msgs::TwistStamped>(""twist"", 10);
+  ros::Publisher odom_pub = node.ros_node_.advertise<nav_msgs::Odometry>(""odom"", 10);
+
+  // Define the frequency of the odometry data publication
+  double publish_frequency = 10.0;
+
+  // Start the ROS node
+  ros::spinOnce();
+
+  // Publish the odometry data at the specified frequency
+  while (ros::ok()) {
+    for (int i = 0; i < publish_frequency; i++) {
+      node.publishOdometryData(theta, radius, frequency);
+      ros::sleep(1.0 / publish_frequency); // Sleep for a short time before publishing again
+    }
+  }
+
+  return 0;
+}",0
+199,Create a ROS node in C++ that publishes odometry data for around its moving moving system in a circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/PoseStamped.h>
+#include <nav_msgs/Odometry.h>
+
+class CirclingOdometryNode {
+public:
+  CirclingOdometryNode() : ros_nh_(""""), pub_odom_(ros_nh_.advertise<nav_msgs::Odometry>(""odom"")) {}
+
+  void run() {
+    double radius = 1.0; // adjust this to change the radius of the circular path
+    double period = 2.0 * M_PI / 10.0; // adjust this to change the speed of the circular motion
+
+    ros::Rate rate(100); // publish at 100 Hz
+
+    while (ros_nh_.ok()) {
+      // calculate odometry data for the current pose
+      geometry_msgs::PoseStamped odom_pose;
+      odom_pose.header.stamp = ros_nh_.now();
+      odom_pose.pose.position.x = sin((double)ros_nh_.getTickCount() * period / 1000.0) * radius;
+      odom_pose.pose.position.y = cos((double)ros_nh_.getTickCount() * period / 1000.0) * radius;
+      odom_pose.pose.orientation.w = 1.0; // assume a fixed orientation (e.g., always facing up)
+
+      nav_msgs::Odometry odom_msg;
+      odom_msg.header.stamp = ros_nh_.now();
+      odom_msg.header.frame_id = ""odom_frame""; // adjust this to match your robot's frame ID
+      odom_msg.pose.pose = odom_pose;
+
+      pub_odom_.publish(odom_msg);
+
+      rate.sleep();
+    }
+  }
+
+private:
+  ros::NodeHandle ros_nh_;
+  ros::Publisher pub_odom_;
+};
+
+int main(int argc, char** argv) {
+  // initialize ROS node
+  ros::init(argc, argv, ""circling_odom_node"");
+  ros::NodeHandle ros_nh_;
+
+  CirclingOdometryNode circling_odom;
+  circling_odom.run();
+
+  return 0;
+}",0

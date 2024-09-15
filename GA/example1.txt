@@ -1,4 +1,4 @@
-Generate a ROS C++ node that calculates and publishes differential drive wheel velocities based on robot parameters.
-Create a C++ ROS controller for a two-wheeled robot that publishes velocity commands.
-Implement a ROS node for computing and broadcasting wheel speeds of a differential drive robot.
-Write a C++ program using ROS to calculate and publish wheel velocities for a two-wheeled mobile platform.
+Create a ROS node in C++ that publishes odometry data for a differential drive robot moving in a circular path.
+Write a ROS C++ program that simulates and publishes the motion of a robot around its Instantaneous Center of Rotation (ICR).
+Generate a ROS C++ node that calculates and publishes odometry and TF data for a robot moving with constant angular velocity.
+Implement a ROS C++ publisher that simulates circular robot motion and broadcasts odometry and transform data.

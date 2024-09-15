@@ -1,0 +1,6227 @@
+generation,prompt,code,fitness
+0,Create a ROS node in C++ that publishes odometry data for a differential drive robot moving in a circular path.,"#include <ros/ros.h>
+#include <nav_msgs/Odometry.h>
+#include <tf/transform_broadcaster.h>
+
+class CircularPathOdometryNode {
+public:
+    CircularPathOdometryNode() : nh_(""~"") {
+        // Initialize parameters
+        nh_.param<std::string>(""odom_frame_id"", odom_frame_id_, ""odom"");
+        nh_.param<std::string>(""base_frame_id"", base_frame_id_, ""base_link"");
+
+        // Initialize publishers
+        odom_pub_ = nh_.advertise<nav_msgs::Odometry>(""odom"", 10);
+
+        // Set loop rate
+        loop_rate_ = ros::Rate(10); // 10 Hz
+    }
+
+    void run() {
+        while (ros::ok()) {
+            publishOdometry();
+            loop_rate_.sleep();
+        }
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher odom_pub_;
+    ros::Rate loop_rate_;
+    std::string odom_frame_id_;
+    std::string base_frame_id_;
+
+    void publishOdometry() {
+        nav_msgs::Odometry odom;
+        odom.header.stamp = ros::Time::now();
+        odom.header.frame_id = odom_frame_id_;
+        odom.child_frame_id = base_frame_id_;
+        
+        // Set the pose information for a circular path
+        double radius = 1.0; // meters
+        double angular_velocity = 0.5; // rad/s
+        double linear_velocity = radius * angular_velocity;
+        double theta = angular_velocity * odom.header.stamp.toSec();
+        
+        odom.pose.pose.position.x = radius * cos(theta);
+        odom.pose.pose.position.y = radius * sin(theta);
+        odom.pose.pose.position.z = 0.0;
+        
+        odom.pose.pose.orientation = tf::createQuaternionMsgFromYaw(theta);
+
+        // Set the twist information
+        odom.twist.twist.linear.x = linear_velocity;
+        odom.twist.twist.linear.y = 0.0;
+        odom.twist.twist.angular.z = angular_velocity;
+
+        // Publish the odometry message
+        odom_pub_.publish(odom);
+    }
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""circular_path_odometry_node"");
+
+    CircularPathOdometryNode node;
+    node.run();
+
+    return 0;
+}",0
+0,Write a ROS C++ program that simulates and publishes the motion of a robot around its Instantaneous Center of Rotation (ICR).,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class ICRMotionSimulator {
+public:
+    ICRMotionSimulator() {
+        cmd_vel_sub_ = nh_.subscribe(""cmd_vel"", 1, &ICRMotionSimulator::cmdVelCallback, this);
+        icr_pub_ = nh_.advertise<geometry_msgs::Twist>(""icr_pose"", 1);
+    }
+
+    void cmdVelCallback(const geometry_msgs::Twist& cmd_vel) {
+        // Calculate linear and angular velocities about the ICR
+        double icr_linear_vel = cmd_vel.linear.x;
+        double icr_angular_vel = cmd_vel.angular.z;
+
+        // Publish the calculated velocities
+        geometry_msgs::Twist icr_twist;
+        icr_twist.linear.x = icr_linear_vel;
+        icr_twist.angular.z = icr_angular_vel;
+        icr_pub_.publish(icr_twist);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Subscriber cmd_vel_sub_;
+    ros::Publisher icr_pub_;
+};
+
+int main(int argc, char **argv) {
+    ros::init(argc, argv, ""icr_motion_simulator"");
+    ICRMotionSimulator icr_motion_simulator;
+
+    ros::spin();
+
+    return 0;
+}",1.4500261747562444
+0,Generate a ROS C++ node that calculates and publishes odometry and TF data for a robot moving with constant angular velocity.,"#include <ros/ros.h>
+#include <tf/transform_broadcaster.h>
+#include <nav_msgs/Odometry.h>
+#include <geometry_msgs/Quaternion.h>
+
+class ConstantVelocityOdometry {
+public:
+    ConstantVelocityOdometry() {
+        ros::NodeHandle nh;
+        
+        odom_pub = nh.advertise<nav_msgs::Odometry>(""odom"", 10);
+        
+        current_time = ros::Time::now();
+        last_time = ros::Time::now();
+        
+        // Initial position and orientation
+        x = 0.0;
+        y = 0.0;
+        theta = 0.0;
+        
+        // Constant angular velocity
+        angular_vel = 0.1; // rad/sec
+        
+        // Timer for the control loop
+        timer = nh.createTimer(ros::Duration(0.1), &ConstantVelocityOdometry::updateOdometry, this);
+    }
+
+    void updateOdometry(const ros::TimerEvent&) {
+        ros::Time current_time = ros::Time::now();
+        double dt = (current_time - last_time).toSec();
+        
+        // Update robot position and orientation
+        x = x + cos(theta) * angular_vel * dt;
+        y = y + sin(theta) * angular_vel * dt;
+        theta = theta + angular_vel * dt;
+        
+        // Publish odometry data
+        nav_msgs::Odometry odom;
+        odom.header.stamp = current_time;
+        odom.header.frame_id = ""odom"";
+        odom.child_frame_id = ""base_link"";
+
+        // Position
+        odom.pose.pose.position.x = x;
+        odom.pose.pose.position.y = y;
+        odom.pose.pose.position.z = 0.0;
+
+        // Orientation
+        geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(theta);
+        odom.pose.pose.orientation = odom_quat;
+
+        // Velocity
+        odom.twist.twist.linear.x = 0.0;
+        odom.twist.twist.linear.y = 0.0;
+        odom.twist.twist.angular.z = angular_vel;
+
+        // Publish the message
+        odom_pub.publish(odom);
+
+        // Broadcast odometry transform
+        tf::Transform transform;
+        transform.setOrigin(tf::Vector3(x, y, 0.0));
+        tf::Quaternion q;
+        q.setRPY(0, 0, theta);
+        transform.setRotation(q);
+        tf_broadcaster.sendTransform(tf::StampedTransform(transform, current_time, ""odom"", ""base_link""));
+
+        last_time = current_time;
+    }
+
+private:
+    ros::NodeHandle nh;
+    ros::Publisher odom_pub;
+    ros::Time current_time, last_time;
+    tf::TransformBroadcaster tf_broadcaster;
+    double x, y, theta, angular_vel;
+    ros::Timer timer;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""constant_velocity_odometry"");
+    ConstantVelocityOdometry odometry;
+    ros::spin();
+    return 0;
+}",0
+0,Implement a ROS C++ publisher that simulates circular robot motion and broadcasts odometry and transform data.,"#include <ros/ros.h>
+#include <tf/transform_broadcaster.h>
+#include <nav_msgs/Odometry.h>
+#include <geometry_msgs/Quaternion.h>
+#include <geometry_msgs/TransformStamped.h>
+
+class CircularMotionPublisher {
+public:
+    CircularMotionPublisher() : nh(""~"") {
+        nh.param<double>(""radius"", radius, 1.0);
+        nh.param<double>(""angular_velocity"", angularVelocity, 0.5);
+        
+        odom_pub = nh.advertise<nav_msgs::Odometry>(""odom"", 10);
+        
+        current_time = ros::Time::now();
+        last_time = ros::Time::now();
+        
+        x = 0.0;
+        y = 0.0;
+        theta = 0.0;
+    }
+
+    void publish() {
+        current_time = ros::Time::now();
+        double dt = (current_time - last_time).toSec();
+        
+        theta += angularVelocity * dt;
+        x = radius * cos(theta);
+        y = radius * sin(theta);
+
+        geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(theta);
+
+        // publish transform
+        geometry_msgs::TransformStamped odom_trans;
+        odom_trans.header.stamp = current_time;
+        odom_trans.header.frame_id = ""odom"";
+        odom_trans.child_frame_id = ""base_link"";
+        odom_trans.transform.translation.x = x;
+        odom_trans.transform.translation.y = y;
+        odom_trans.transform.translation.z = 0.0;
+        odom_trans.transform.rotation = odom_quat;
+
+        odom_broadcaster.sendTransform(odom_trans);
+
+        // publish odometry
+        nav_msgs::Odometry odom;
+        odom.header.stamp = current_time;
+        odom.header.frame_id = ""odom"";
+
+        odom.pose.pose.position.x = x;
+        odom.pose.pose.position.y = y;
+        odom.pose.pose.position.z = 0.0;
+        odom.pose.pose.orientation = odom_quat;
+
+        odom_pub.publish(odom);
+
+        last_time = current_time;
+    }
+
+private:
+    ros::NodeHandle nh;
+    ros::Publisher odom_pub;
+    tf::TransformBroadcaster odom_broadcaster;
+    double x, y, theta;
+    double radius, angularVelocity;
+    ros::Time current_time, last_time;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""circular_motion_publisher"");
+    CircularMotionPublisher cmp;
+
+    ros::Rate loop_rate(10);  // 10 Hz
+    while (ros::ok()) {
+        cmp.publish();
+        ros::spinOnce();
+        loop_rate.sleep();
+    }
+
+    return 0;
+}",0
+1,Write a ROS node in C++ that publishes odometry control data for a differential drive robot moving in a circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+#include <nav_msgs/Odometry.h>
+#include <tf/transform_broadcaster.h>
+
+class CircularMotionController {
+public:
+    CircularMotionController() : nh(""~"") {
+        nh.param(""radius"", radius, 1.0);
+        nh.param(""velocity"", velocity, 0.5);
+
+        pub_odom = nh.advertise<nav_msgs::Odometry>(""odom"", 1);
+        sub_cmd_vel = nh.subscribe(""cmd_vel"", 1, &CircularMotionController::cmdVelCallback, this);
+    }
+
+    void cmdVelCallback(const geometry_msgs::Twist::ConstPtr &msg) {
+        // Calculate angular velocity based on the radius and linear velocity
+        double angular_vel = velocity / radius;
+
+        // Publish odometry data
+        ros::Time current_time = ros::Time::now();
+        tf::Transform transform;
+        transform.setOrigin(tf::Vector3(radius, 0.0, 0.0));
+        tf::Quaternion q;
+        q.setRPY(0, 0, 0);
+        transform.setRotation(q);
+
+        tf::StampedTransform stampedTransform(transform, current_time, ""odom"", ""base_link"");
+        tf_broadcaster.sendTransform(stampedTransform);
+
+        nav_msgs::Odometry odom;
+        odom.header.stamp = current_time;
+        odom.header.frame_id = ""odom"";
+        odom.child_frame_id = ""base_link"";
+        odom.pose.pose.position.x = radius;
+        odom.pose.pose.position.y = 0.0;
+        odom.pose.pose.position.z = 0.0;
+        odom.twist.twist.linear.x = velocity;
+        odom.twist.twist.angular.z = angular_vel;
+
+        pub_odom.publish(odom);
+    }
+
+private:
+    ros::NodeHandle nh;
+    ros::Publisher pub_odom;
+    ros::Subscriber sub_cmd_vel;
+    tf::TransformBroadcaster tf_broadcaster;
+    double radius;
+    double velocity;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""circular_motion_controller"");
+    CircularMotionController controller;
+    ros::spin();
+    return 0;
+}",0
+2,Write a ROS C++ program that that publishes odometry data for a differential drive robot moving in a circular path.,"#include ""ros/ros.h""
+#include ""geometry_msgs/Twist.h""
+#include ""nav_msgs/Odometry.h""
+#include <tf/transform_broadcaster.h>
+
+class CircularOdometryPublisher {
+public:
+    CircularOdometryPublisher() : nh_(""""), private_nh_(""~"") {
+        private_nh_.param<double>(""linear_speed"", linear_speed_, 0.1);
+        private_nh_.param<double>(""angular_speed"", angular_speed_, 0.1);
+        
+        odom_pub_ = nh_.advertise<nav_msgs::Odometry>(""odom"", 10);
+        cmd_vel_sub_ = nh_.subscribe(""cmd_vel"", 10, &CircularOdometryPublisher::cmdVelCallback, this);
+        
+        x_ = 0.0;
+        y_ = 0.0;
+        theta_ = 0.0;
+        vx_ = 0.0;
+        vy_ = 0.0;
+        vth_ = 0.0;
+        current_time_ = ros::Time::now();
+        last_time_ = ros::Time::now();
+    }
+
+    void run() {
+        ros::Rate loop_rate(10); // 10 Hz
+        
+        while (ros::ok()) {
+            current_time_ = ros::Time::now();
+            double dt = (current_time_ - last_time_).toSec();
+
+            // Calculate new position based on circular path
+            x_ += (vx_ * cos(theta_) - vy_ * sin(theta_)) * dt;
+            y_ += (vx_ * sin(theta_) + vy_ * cos(theta_)) * dt;
+            theta_ += vth_ * dt;
+
+            // Publish the odometry message
+            publishOdometry();
+            last_time_ = current_time_;
+
+            ros::spinOnce();
+            loop_rate.sleep();
+        }
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::NodeHandle private_nh_;
+    ros::Publisher odom_pub_;
+    ros::Subscriber cmd_vel_sub_;
+
+    double linear_speed_;
+    double angular_speed_;
+    
+    double x_, y_, theta_;
+    double vx_, vy_, vth_;
+    
+    ros::Time current_time_;
+    ros::Time last_time_;
+
+    void cmdVelCallback(const geometry_msgs::Twist::ConstPtr& msg) {
+        vx_ = msg->linear.x;
+        vy_ = msg->linear.y;
+        vth_ = msg->angular.z;
+    }
+
+    void publishOdometry() {
+        nav_msgs::Odometry odom;
+        odom.header.stamp = current_time_;
+        odom.header.frame_id = ""odom"";
+        odom.child_frame_id = ""base_link"";
+
+        // Position
+        odom.pose.pose.position.x = x_;
+        odom.pose.pose.position.y = y_;
+        odom.pose.pose.position.z = 0.0;
+        odom.pose.pose.orientation = tf::createQuaternionMsgFromYaw(theta_);
+
+        // Velocity
+        odom.twist.twist.linear.x = vx_;
+        odom.twist.twist.linear.y = vy_;
+        odom.twist.twist.angular.z = vth_;
+
+        odom_pub_.publish(odom);
+    }
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""circular_odometry_publisher"");
+    
+    CircularOdometryPublisher odometry_publisher;
+    odometry_publisher.run();
+    
+    ros::spin();
+    
+    return 0;
+}",0.9194566249200622
+3,Write a ROS C++ program that simulates and publishes the motion a differential drive robot moving in a circular path.,"#include ""ros/ros.h""
+#include ""geometry_msgs/Twist.h""
+
+class CircularMotionSimulator {
+public:
+    CircularMotionSimulator() {
+        cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>(""cmd_vel"", 10);
+        timer_ = nh_.createTimer(ros::Duration(0.1), &CircularMotionSimulator::timerCallback, this);
+        linear_speed_ = 0.1; // linear speed in m/s
+        angular_speed_ = 0.5; // angular speed in rad/s
+    }
+
+    void timerCallback(const ros::TimerEvent& event) {
+        geometry_msgs::Twist msg;
+        msg.linear.x = linear_speed_;
+        msg.angular.z = angular_speed_;
+        cmd_vel_pub_.publish(msg);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher cmd_vel_pub_;
+    ros::Timer timer_;
+    double linear_speed_;
+    double angular_speed_;
+};
+
+int main(int argc, char **argv) {
+    ros::init(argc, argv, ""circular_motion_simulation"");
+    CircularMotionSimulator circular_motion_simulator;
+
+    ros::spin();
+
+    return 0;
+}",6.646514178257629
+6,Write a ROS C++ program that simulates and publishes motion and broadcasts odometry and transform data.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+#include <nav_msgs/Odometry.h>
+#include <tf2_ros/transform_broadcaster.h>
+#include <tf2/LinearMath/Quaternion.h>
+
+class MotionSimulator {
+public:
+    MotionSimulator() : nh_(""~"") {
+        cmd_vel_sub_ = nh_.subscribe(""cmd_vel"", 10, &MotionSimulator::cmdVelCallback, this);
+        odom_pub_ = nh_.advertise<nav_msgs::Odometry>(""odom"", 10);
+        tf_broadcaster_ = new tf2_ros::TransformBroadcaster();
+        createTimer();
+    }
+
+    void createTimer() {
+        timer_ = nh_.createTimer(ros::Duration(0.1), &MotionSimulator::timerCallback, this);
+    }
+
+    void cmdVelCallback(const geometry_msgs::Twist::ConstPtr& msg) {
+        // Simulate motion based on twist message
+        // Add your motion simulation logic here
+    }
+
+    void timerCallback(const ros::TimerEvent& event) {
+        // Publish odometry message
+        // Create and publish odometry message
+        // Add your odometry calculation logic here
+
+        // Broadcast transform data
+        geometry_msgs::TransformStamped odom_trans;
+        // Populate transform message
+        // Add your transform logic here
+        tf_broadcaster_->sendTransform(odom_trans);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Subscriber cmd_vel_sub_;
+    ros::Publisher odom_pub_;
+    ros::Timer timer_;
+    tf2_ros::TransformBroadcaster* tf_broadcaster_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""motion_simulator_node"");
+    MotionSimulator motion_simulator;
+
+    ros::spin();
+
+    return 0;
+}",0
+9,Write a ROS C++ program that simulates publishes the motion a queue differential drive robot moving in a of Rotation spin (ICR).,"#include ""ros/ros.h""
+#include ""geometry_msgs/Twist.h""
+
+class ICRMotionPublisher {
+public:
+    ICRMotionPublisher() : nh_(""~"") {
+        nh_.param<std::string>(""robot_frame"", robot_frame_, ""base_link"");
+        nh_.param<double>(""angular_speed"", angular_speed_, 0.5); // rad/s
+        twist_pub_ = nh_.advertise<geometry_msgs::Twist>(""cmd_vel"", 10);
+        
+        ros::Rate loop_rate(10); // Publishing rate
+
+        while(ros::ok()) {
+            publishICRMotion();
+            ros::spinOnce();
+            loop_rate.sleep();
+        }
+    }
+
+    void publishICRMotion() {
+        geometry_msgs::Twist twist_msg;
+        
+        twist_msg.linear.x = 0.2; // Linear velocity (m/s)
+        twist_msg.angular.z = angular_speed_; // Angular velocity (rad/s)
+
+        twist_pub_.publish(twist_msg);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher twist_pub_;
+    std::string robot_frame_;
+    double angular_speed_;
+};
+
+int main(int argc, char **argv) {
+    ros::init(argc, argv, ""icr_motion_publisher"");
+    ICRMotionPublisher icr_motion_publisher;
+
+    return 0;
+}",6.150428447389952
+10,Write a ROS C++ program that simulates and publishes the motion a differential drive robot moving in a of Rotation spin (ICR).,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class DifferentialDriveController {
+public:
+    DifferentialDriveController() : nh_(""~"") {
+        nh_.param<std::string>(""cmd_vel_topic"", cmd_vel_topic_, ""/cmd_vel"");
+
+        cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>(cmd_vel_topic_, 1);
+
+        // Set the initial linear and angular velocities
+        vel_msg_.linear.x = 0.2;  // Linear velocity in m/s
+        vel_msg_.angular.z = 0.5; // Angular velocity in rad/s
+
+        // Set the update rate
+        ros_rate_ = nh_.param(""update_rate"", 10);
+
+        timer_ = nh_.createTimer(ros::Duration(1.0 / ros_rate_), &DifferentialDriveController::timerCallback, this);
+    }
+
+    void timerCallback(const ros::TimerEvent&) {
+        cmd_vel_pub_.publish(vel_msg_);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher cmd_vel_pub_;
+    ros::Timer timer_;
+    geometry_msgs::Twist vel_msg_;
+    std::string cmd_vel_topic_;
+    double ros_rate_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""differential_drive_controller"");
+
+    DifferentialDriveController controller;
+
+    ros::spin();
+
+    return 0;
+}",6.648029617965289
+11,Write a ROS C++ program actuator that simulates and publishes the motion a differential drive robot moving in a circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class CircularMotionController {
+public:
+    CircularMotionController() {
+        cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>(""cmd_vel"", 10);
+        
+        // Define the linear velocity and angular velocity for circular motion
+        linear_vel_ = 0.2; // m/s
+        angular_vel_ = 0.5; // rad/s
+    }
+
+    void startCircularMotion() {
+        ros::Rate loop_rate(10); // Loop rate in Hz
+
+        while (ros::ok()) {
+            geometry_msgs::Twist cmd_vel_msg;
+            cmd_vel_msg.linear.x = linear_vel_;
+            cmd_vel_msg.angular.z = angular_vel_;
+            cmd_vel_pub_.publish(cmd_vel_msg);
+
+            ros::spinOnce();
+            loop_rate.sleep();
+        }
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher cmd_vel_pub_;
+    double linear_vel_;
+    double angular_vel_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""actuator"");
+
+    CircularMotionController controller;
+    controller.startCircularMotion();
+
+    return 0;
+}",5.898924019593439
+12,Write a ROS C++ program that simulates and publishes the motion a differential drive moving in a circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class DifferentialDriveSimulator {
+public:
+    DifferentialDriveSimulator() : nh_(""~"") {
+        nh_.param(""linear_speed"", linear_speed_, 0.2);
+        nh_.param(""angular_speed"", angular_speed_, 0.5);
+        nh_.param(""radius"", radius_, 1.0);
+
+        cmd_pub_ = nh_.advertise<geometry_msgs::Twist>(""cmd_vel"", 10);
+    }
+
+    void moveInCircularPath() {
+        ros::Rate loop_rate(10);
+
+        while (ros::ok()) {
+            geometry_msgs::Twist msg;
+            msg.linear.x = linear_speed_;
+            msg.angular.z = angular_speed_;
+
+            cmd_pub_.publish(msg);
+
+            ros::spinOnce();
+            loop_rate.sleep();
+        }
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher cmd_pub_;
+    double linear_speed_;
+    double angular_speed_;
+    double radius_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""differential_drive_simulator_node"");
+
+    DifferentialDriveSimulator simulator;
+
+    simulator.moveInCircularPath();
+
+    return 0;
+}",6.148149353705687
+14,Write a ROS C++ program that simulates and publishes the motion a odometry and transform data.,"#include <ros/ros.h>
+#include <tf/transform_broadcaster.h>
+#include <nav_msgs/Odometry.h>
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""odometry_publisher"");
+    ros::NodeHandle nh;
+
+    tf::TransformBroadcaster odom_broadcaster;
+    ros::Publisher odom_pub = nh.advertise<nav_msgs::Odometry>(""odom"", 50);
+
+    double x = 0.0;
+    double y = 0.0;
+    double theta = 0.0;
+    double vx = 0.1; // x velocity
+    double vy = 0.0;
+    double vth = 0.1; // angular velocity
+
+    ros::Rate loop_rate(10); // Publishing at 10Hz
+
+    while (ros::ok()) {
+        // Update position
+        x += vx;
+        y += vy;
+        theta += vth;
+
+        // Publish transform
+        geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(theta);
+        geometry_msgs::TransformStamped odom_trans;
+        odom_trans.header.stamp = ros::Time::now();
+        odom_trans.header.frame_id = ""odom"";
+        odom_trans.child_frame_id = ""base_link"";
+        odom_trans.transform.translation.x = x;
+        odom_trans.transform.translation.y = y;
+        odom_trans.transform.translation.z = 0.0;
+        odom_trans.transform.rotation = odom_quat;
+        odom_broadcaster.sendTransform(odom_trans);
+
+        // Publish odometry
+        nav_msgs::Odometry odom;
+        odom.header.stamp = ros::Time::now();
+        odom.header.frame_id = ""odom"";
+        odom.pose.pose.position.x = x;
+        odom.pose.pose.position.y = y;
+        odom.pose.pose.position.z = 0.0;
+        odom.pose.pose.orientation = odom_quat;
+        odom.child_frame_id = ""base_link"";
+        odom.twist.twist.linear.x = vx;
+        odom.twist.twist.linear.y = vy;
+        odom.twist.twist.angular.z = vth;
+        odom_pub.publish(odom);
+
+        ros::spinOnce();
+        loop_rate.sleep();
+    }
+
+    return 0;
+}",0
+15,Write a ROS C++ interface program that simulates and publishes the motion a differential drive robot moving in a circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class CircularMotionNode {
+public:
+    CircularMotionNode() : nh_(""~"") {
+        nh_.param(""linear_vel"", linear_vel_, 0.5);
+        nh_.param(""angular_vel"", angular_vel_, 1.0);
+
+        vel_pub_ = nh_.advertise<geometry_msgs::Twist>(""/cmd_vel"", 10);
+    }
+
+    void startMotion() {
+        ros::Rate rate(10); // 10Hz loop rate
+        while (ros::ok()) {
+            geometry_msgs::Twist vel_msg;
+            vel_msg.linear.x = linear_vel_;
+            vel_msg.angular.z = angular_vel_;
+
+            vel_pub_.publish(vel_msg);
+
+            rate.sleep();
+        }
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher vel_pub_;
+    double linear_vel_;
+    double angular_vel_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""circular_motion_node"");
+    CircularMotionNode circular_motion_node;
+
+    circular_motion_node.startMotion();
+
+    return 0;
+}",6.146652860075724
+16,Write a ROS C++ program that simulates and publishes the motion a queue differential drive robot moving in a circular path.,"#include ""ros/ros.h""
+#include ""geometry_msgs/Twist.h""
+
+class DifferentialDriveRobot {
+public:
+    DifferentialDriveRobot() : nh(""~"") {
+        nh.param(""linear_speed"", linear_speed_, 0.2);
+        nh.param(""angular_speed"", angular_speed_, 0.5);
+        
+        cmd_vel_pub_ = nh.advertise<geometry_msgs::Twist>(""cmd_vel"", 10);
+        
+        ros::Rate loop_rate(10);
+
+        while (ros::ok()) {
+            moveInCircle();
+            ros::spinOnce();
+            loop_rate.sleep();
+        }
+    }
+
+    void moveInCircle() {
+        geometry_msgs::Twist msg;
+        msg.linear.x = linear_speed_;
+        msg.angular.z = angular_speed_;
+        
+        cmd_vel_pub_.publish(msg);
+    }
+
+private:
+    ros::NodeHandle nh;
+    ros::Publisher cmd_vel_pub_;
+    double linear_speed_;
+    double angular_speed_;
+};
+
+int main(int argc, char **argv) {
+    ros::init(argc, argv, ""differential_drive_robot_node"");
+
+    DifferentialDriveRobot robot;
+
+    ros::spin();
+
+    return 0;
+}",6.149806440075363
+19,Write a ROS C++ program that simulates and publishes the motion a differential drive robot moving in in a circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class DifferentialDriveController {
+public:
+    DifferentialDriveController() : nh(""~"") {
+        nh.param<std::string>(""robot_frame"", robot_frame, ""base_link"");
+
+        cmd_vel_pub = nh.advertise<geometry_msgs::Twist>(""cmd_vel"", 10);
+
+        timer = nh.createTimer(ros::Duration(0.1), &DifferentialDriveController::timerCallback, this);
+    }
+
+private:
+    ros::NodeHandle nh;
+    ros::Publisher cmd_vel_pub;
+    ros::Timer timer;
+    std::string robot_frame;
+
+    void timerCallback(const ros::TimerEvent& event) {
+        geometry_msgs::Twist msg;
+        msg.linear.x = 0.5;  // Constant linear velocity
+        msg.angular.z = 0.5;  // Constant angular velocity
+
+        cmd_vel_pub.publish(msg);
+    }
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""differential_drive_robot_simulation"");
+    DifferentialDriveController controller;
+
+    ros::spin();
+    
+    return 0;
+}",6.647666534702514
+20,Write a ROS C++ program that simulates and publishes the motion a differential drive machine moving in in a circular path.,"#include ""ros/ros.h""
+#include ""geometry_msgs/Twist.h""
+
+class DifferentialDriveCircularMotion
+{
+public:
+    DifferentialDriveCircularMotion()
+    {
+        cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>(""cmd_vel"", 1);
+        timer_ = nh_.createTimer(ros::Duration(1.0 / loop_rate_), &DifferentialDriveCircularMotion::timerCallback, this);
+    }
+
+    void timerCallback(const ros::TimerEvent&)
+    {
+        geometry_msgs::Twist msg;
+        msg.linear.x = linear_velocity_;
+        msg.angular.z = angular_velocity_;
+        cmd_vel_pub_.publish(msg);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher cmd_vel_pub_;
+    ros::Timer timer_;
+
+    const double loop_rate_ = 10;  // Hz
+    const double linear_velocity_ = 1.0;  // m/s
+    const double angular_velocity_ = 1.0;  // rad/s
+};
+
+int main(int argc, char** argv)
+{
+    ros::init(argc, argv, ""differential_drive_circular_motion"");
+    DifferentialDriveCircularMotion node;
+
+    ros::spin();
+
+    return 0;
+}",6.644509868127614
+21,Write a ROS C++ program that simulates and publishes the motion a differential drive moving in in a circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class CircularPathSimulator {
+public:
+    CircularPathSimulator() : nh(""~"") {
+        nh.param<double>(""radius"", radius, 1.0);
+        nh.param<double>(""angular_speed"", angular_speed, 0.5);
+
+        cmd_vel_pub = nh.advertise<geometry_msgs::Twist>(""/cmd_vel"", 10);
+
+        ros_timer = nh.createTimer(ros::Duration(0.1), &CircularPathSimulator::timerCallback, this);
+    }
+
+    void timerCallback(const ros::TimerEvent&) {
+        geometry_msgs::Twist twist_msg;
+        twist_msg.linear.x = 0.0;
+        twist_msg.angular.z = angular_speed;
+
+        cmd_vel_pub.publish(twist_msg);
+    }
+
+private:
+    ros::NodeHandle nh;
+    ros::Publisher cmd_vel_pub;
+    ros::Timer ros_timer;
+    double radius, angular_speed;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""circular_path_simulator_node"");
+
+    CircularPathSimulator circular_path_simulator;
+
+    ros::spin();
+
+    return 0;
+}",6.64481514955658
+24,Write a ROS C++ program that simulates and publishes the motion a differential drive robot moving in in a circular localization path.,"#include ""ros/ros.h""
+#include ""geometry_msgs/Twist.h""
+
+class DifferentialDriveRobot {
+public:
+    DifferentialDriveRobot() : nh_(""~""), linear_speed_(0.2), angular_speed_(0.5) {
+        nh_.param(""linear_speed"", linear_speed_, 0.2);
+        nh_.param(""angular_speed"", angular_speed_, 0.5);
+
+        cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>(""/cmd_vel"", 10);
+    }
+
+    void moveRobot() {
+        ros::Rate loop_rate(10);
+
+        while (ros::ok()) {
+            geometry_msgs::Twist msg;
+            msg.linear.x = linear_speed_;
+            msg.angular.z = angular_speed_;
+
+            cmd_vel_pub_.publish(msg);
+
+            ros::spinOnce();
+            loop_rate.sleep();
+        }
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher cmd_vel_pub_;
+    double linear_speed_;
+    double angular_speed_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""differential_drive_robot"");
+
+    DifferentialDriveRobot robot;
+
+    robot.moveRobot();
+
+    return 0;
+}",6.1470785275992235
+26,Write a ROS C++ program that simulates and publishes the motion a differential drive robot moving in in a rate circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class CircularMotionPublisher {
+public:
+    CircularMotionPublisher() {
+        ros::NodeHandle nh;
+        cmd_vel_pub = nh.advertise<geometry_msgs::Twist>(""/cmd_vel"", 10);
+
+        // Set the linear and angular velocities
+        linear_vel = 0.2;  // m/s
+        angular_vel = 0.5; // rad/s
+
+        // Calculate the radii of the circular path
+        radius = linear_vel / angular_vel;
+    }
+
+    void publishMotion() {
+        ros::Rate rate(10); // 10 Hz
+
+        while (ros::ok()) {
+            geometry_msgs::Twist msg;
+            msg.linear.x = linear_vel;
+            msg.angular.z = angular_vel;
+            cmd_vel_pub.publish(msg);
+
+            ros::spinOnce();
+            rate.sleep();
+        }
+    }
+
+private:
+    ros::NodeHandle nh;
+    ros::Publisher cmd_vel_pub;
+    double linear_vel;
+    double angular_vel;
+    double radius;
+};
+
+int main(int argc, char **argv) {
+    ros::init(argc, argv, ""circular_motion_publisher"");
+
+    CircularMotionPublisher node;
+    node.publishMotion();
+
+    return 0;
+}",6.151758785361334
+27,Write a ROS C++ program robot that simulates and publishes the motion a differential drive robot moving in in a circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class CircularMotionRobot {
+public:
+    CircularMotionRobot() {
+        vel_pub_ = nh_.advertise<geometry_msgs::Twist>(""/cmd_vel"", 1);
+        timer_ = nh_.createTimer(ros::Duration(0.1), &CircularMotionRobot::timerCallback, this);
+        angular_vel_ = 0.5; // Angular velocity (rad/s)
+    }
+
+    void timerCallback(const ros::TimerEvent& event) {
+        geometry_msgs::Twist vel_msg;
+        vel_msg.linear.x = 0.5; // Linear velocity (m/s)
+        vel_msg.angular.z = angular_vel_;
+        vel_pub_.publish(vel_msg);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher vel_pub_;
+    ros::Timer timer_;
+    double angular_vel_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""circular_motion_robot"");
+    CircularMotionRobot robot;
+    ros::spin();
+    return 0;
+}",6.644333916751034
+29,Write planning a ROS C++ program that simulates and publishes the motion execution a differential drive robot moving in a a circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class CircularMotionController {
+public:
+    CircularMotionController() {
+        // Initialize ROS node handle
+        nh = ros::NodeHandle();
+
+        // Create a publisher to publish velocity commands
+        vel_pub = nh.advertise<geometry_msgs::Twist>(""/cmd_vel"", 10);
+
+        // Set the angular velocity for circular motion
+        angular_velocity = 0.5;  // Change the angular velocity as needed
+        
+        // Publish the velocity commands
+        publishCircularMotion();
+    }
+
+    void publishCircularMotion() {
+        // Create a Twist message to publish velocity commands
+        geometry_msgs::Twist twist_msg;
+
+        twist_msg.linear.x = 0.5;  // Forward linear velocity
+        twist_msg.angular.z = angular_velocity;  // Angular velocity for turning
+
+        // Set the publishing rate
+        ros::Rate loop_rate(10);  // 10 Hz
+
+        while (ros::ok()) {
+            // Publish the Twist message
+            vel_pub.publish(twist_msg);
+
+            ros::spinOnce();
+            loop_rate.sleep();
+        }
+    }
+
+private:
+    ros::NodeHandle nh;
+    ros::Publisher vel_pub;
+    double angular_velocity;
+};
+
+int main(int argc, char **argv) {
+    // Initialize the ROS node
+    ros::init(argc, argv, ""circular_motion_node"");
+
+    // Create an instance of the CircularMotionController class
+    CircularMotionController motionController;
+
+    // Spin to handle callbacks
+    ros::spin();
+
+    return 0;
+}",5.750744349284247
+32,Write a ROS C++ program that simulates and publishes the motion a differential drive robot moving in in a execution circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class CircularMotion
+{
+public:
+    CircularMotion()
+    {
+        // Initialize ROS node handle
+        nh_ = ros::NodeHandle();
+
+        // Create a publisher to publish velocity commands
+        cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>(""cmd_vel"", 10);
+
+        // Set loop rate (10 Hz)
+        loop_rate_ = ros::Rate(10);
+
+        // Initialize linear and angular velocity
+        vel_msg_.linear.x = 0.5; // linear velocity = 0.5 m/s
+        vel_msg_.angular.z = 0.5; // angular velocity = 0.5 rad/s
+    }
+
+    void moveRobot()
+    {
+        while (ros::ok())
+        {
+            cmd_vel_pub_.publish(vel_msg_);
+            loop_rate_.sleep();
+        }
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher cmd_vel_pub_;
+    ros::Rate loop_rate_;
+    geometry_msgs::Twist vel_msg_;
+};
+
+int main(int argc, char** argv)
+{
+    ros::init(argc, argv, ""circular_motion_node"");
+
+    CircularMotion circularMotion;
+    circularMotion.moveRobot();
+
+    return 0;
+}",0
+34,Write a ROS C++ program simulates and publishes the motion a differential drive robot moving in in a circular path.,"#include ""ros/ros.h""
+#include ""geometry_msgs/Twist.h""
+
+class CircleMotionRobot {
+public:
+    CircleMotionRobot() : nh_(""~"") {
+        nh_.param(""radius"", radius_, 1.0);
+        nh_.param(""angular_velocity"", angular_velocity_, 0.5);
+
+        vel_pub_ = nh_.advertise<geometry_msgs::Twist>(""cmd_vel"", 10);
+
+        ros::Rate loop_rate(10);
+
+        while (ros::ok()) {
+            geometry_msgs::Twist vel_msg;
+            vel_msg.linear.x = 0.0;
+            vel_msg.angular.z = angular_velocity_;
+
+            vel_pub_.publish(vel_msg);
+
+            ros::spinOnce();
+            loop_rate.sleep();
+        }
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher vel_pub_;
+    double radius_;
+    double angular_velocity_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""circle_motion_robot"");
+
+    CircleMotionRobot robot;
+
+    ros::spin();
+
+    return 0;
+}",6.1471836587474264
+35,Write a ROS sensor C++ program that simulates and publishes the motion a differential drive robot moving in in circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class DifferentialDriveRobot {
+public:
+    DifferentialDriveRobot() {
+        cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>(""/cmd_vel"", 10);
+        timer_ = nh_.createTimer(ros::Duration(0.1), &DifferentialDriveRobot::timerCallback, this);
+        angle_ = 0.0;
+        angular_speed_ = 0.2;
+    }
+
+    void start() {
+        ros::spin();
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher cmd_vel_pub_;
+    ros::Timer timer_;
+    double angle_;
+    double angular_speed_;
+
+    void timerCallback(const ros::TimerEvent& event) {
+        geometry_msgs::Twist msg;
+        msg.linear.x = 0.2; // linear velocity
+        msg.angular.z = angular_speed_; // angular velocity
+        
+        cmd_vel_pub_.publish(msg);
+
+        angle_ += angular_speed_ * 0.1; // 0.1 is the timer duration
+        if (angle_ >= 2 * M_PI) {
+            angle_ = 0.0;
+        }
+    }
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""differential_drive_robot"");
+    
+    DifferentialDriveRobot robot;
+    
+    robot.start();
+    
+    return 0;
+}",6.1518617503889175
+36,Write a ROS C++ program that simulates and publishes the motion a differential drive robot moving in in a circular mapping path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class CircularMapper {
+public:
+    CircularMapper() : nh_(""~"") {
+        nh_.param(""linear_speed"", linear_speed_, 0.5);
+        nh_.param(""angular_speed"", angular_speed_, 0.5);
+        
+        vel_pub_ = nh_.advertise<geometry_msgs::Twist>(""/cmd_vel"", 10);
+        
+        timer_ = nh_.createTimer(ros::Duration(0.1), &CircularMapper::timerCallback, this);
+    }
+
+    void timerCallback(const ros::TimerEvent& event) {
+        geometry_msgs::Twist vel_msg;
+        vel_msg.linear.x = linear_speed_;
+        vel_msg.angular.z = angular_speed_;
+        
+        vel_pub_.publish(vel_msg);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher vel_pub_;
+    ros::Timer timer_;
+    double linear_speed_;
+    double angular_speed_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""circular_mapper"");
+    
+    CircularMapper circular_mapper;
+    
+    ros::spin();
+    
+    return 0;
+}",6.645732396653971
+37,Write a ROS C++ program that simulates and publishes the motion a differential drive robot moving in a of circular navigation path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class CircularMotionPublisher {
+public:
+    CircularMotionPublisher() : nh_(), linear_speed_(0.5), angular_speed_(0.5) {
+        velocity_pub_ = nh_.advertise<geometry_msgs::Twist>(""/cmd_vel"", 1);
+    }
+
+    void publishCircularMotion() {
+        ros::Rate rate(10);  // 10 Hz control loop rate
+        while (ros::ok()) {
+            geometry_msgs::Twist vel_msg;
+            vel_msg.linear.x = linear_speed_;
+            vel_msg.angular.z = angular_speed_;
+            velocity_pub_.publish(vel_msg);
+            rate.sleep();
+        }
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher velocity_pub_;
+    double linear_speed_;
+    double angular_speed_;
+};
+
+int main(int argc, char **argv) {
+    ros::init(argc, argv, ""circular_motion_publisher"");
+
+    CircularMotionPublisher motion_publisher;
+    motion_publisher.publishCircularMotion();
+
+    return 0;
+}",6.146137432550308
+39,Write a ROS C++ program that execution simulates and publishes the motion a differential drive robot moving in in a circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class CircularMotion {
+public:
+    CircularMotion() : nh_(""~"") { // Constructor
+        nh_.param(""radius"", radius_, 1.0);
+        nh_.param(""angular_speed"", angular_speed_, 1.0);
+
+        // Initialize Twist message
+        twist_msg_.linear.x = 0.0;
+        twist_msg_.linear.y = 0.0;
+        twist_msg_.linear.z = 0.0;
+        twist_msg_.angular.x = 0.0;
+        twist_msg_.angular.y = 0.0;
+        twist_msg_.angular.z = angular_speed_;
+
+        // Create a publisher for publishing twist messages
+        pub_ = nh_.advertise<geometry_msgs::Twist>(""cmd_vel"", 1);
+    }
+
+    void moveRobot() {
+        ros::Rate rate(10); // Set publishing rate to 10 Hz
+        while (ros::ok()) {
+            pub_.publish(twist_msg_); // Publish twist message
+            ros::spinOnce();
+            rate.sleep();
+        }
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher pub_;
+    geometry_msgs::Twist twist_msg_;
+    double radius_;
+    double angular_speed_;
+};
+
+int main(int argc, char **argv) {
+    ros::init(argc, argv, ""circular_motion_node"");
+
+    CircularMotion circular_motion;
+
+    circular_motion.moveRobot();
+
+    return 0;
+}",5.8984571019587335
+43,Write a C++ program that simulates and publishes the launch motion a differential drive robot moving in in a circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class CircularMotionNode {
+public:
+    CircularMotionNode() : nh_(""~"") {
+        nh_.param<double>(""radius"", radius_, 1.0);
+        nh_.param<double>(""angular_velocity"", ang_vel_, 0.5);
+
+        cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>(""/cmd_vel"", 10);
+
+        // Set linear velocity to zero for circular motion
+        twist_msg_.linear.x = 0.0;
+        
+        ros::Rate rate(10); // 10 Hz
+        while (ros::ok()) {
+            twist_msg_.angular.z = ang_vel_;
+            cmd_vel_pub_.publish(twist_msg_);
+            rate.sleep();
+            ros::spinOnce();
+        }
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher cmd_vel_pub_;
+    geometry_msgs::Twist twist_msg_;
+    double radius_;
+    double ang_vel_;
+};
+
+int main(int argc, char **argv) {
+    ros::init(argc, argv, ""circular_motion_node"");
+    
+    CircularMotionNode circular_motion_node;
+
+    ros::spin();
+
+    return 0;
+}",5.897436321896249
+44,Write a ROS C++ program that simulates and publishes the motion a differential drive robot moving in a of Rotation path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+ros::Publisher cmd_vel_pub;
+
+void rotateRobot(double angular_speed, double relative_angle, bool clockwise) {
+    geometry_msgs::Twist vel_msg;
+    if (clockwise) {
+        vel_msg.angular.z = -fabs(angular_speed);
+    } else {
+        vel_msg.angular.z = fabs(angular_speed);
+    }
+    
+    double current_angle = 0.0;
+    double t0 = ros::Time::now().toSec();
+    
+    ros::Rate rate(10);
+    while (current_angle < relative_angle) {
+        cmd_vel_pub.publish(vel_msg);
+        
+        double t1 = ros::Time::now().toSec();
+        current_angle = angular_speed * (t1 - t0);
+        ros::spinOnce();
+        rate.sleep();
+    }
+    
+    vel_msg.angular.z = 0;
+    cmd_vel_pub.publish(vel_msg);
+}
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""rotate_robot_node"");
+    ros::NodeHandle nh;
+    
+    cmd_vel_pub = nh.advertise<geometry_msgs::Twist>(""/cmd_vel"", 10);
+    
+    double angular_speed = M_PI/2;  // 90 degrees/s
+    double relative_angle = M_PI;   // 180 degrees
+    bool clockwise = true;
+    
+    rotateRobot(angular_speed, relative_angle, clockwise);
+    
+    ros::spin();
+    
+    return 0;
+}",0.5514734177080811
+45,Write a ROS C++ program that simulates and publishes the motion a differential drive bot moving in in a circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class DifferentialDriveBot {
+public:
+    DifferentialDriveBot() {
+        cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>(""/cmd_vel"", 10);
+        timer_ = nh_.createTimer(ros::Duration(0.1), &DifferentialDriveBot::timerCallback, this);
+        linear_speed_ = 0.2; // adjust linear speed as needed
+        angular_speed_ = 0.5; // adjust angular speed as needed
+    }
+
+    void timerCallback(const ros::TimerEvent& event) {
+        geometry_msgs::Twist twist_msg;
+        twist_msg.linear.x = linear_speed_;
+        twist_msg.angular.z = angular_speed_;
+        cmd_vel_pub_.publish(twist_msg);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher cmd_vel_pub_;
+    ros::Timer timer_;
+    double linear_speed_;
+    double angular_speed_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""differential_drive_simulator"");
+    DifferentialDriveBot diff_drive_bot;
+
+    ros::spin();
+
+    return 0;
+}",6.6471789788868705
+47,Write a ROS C++ program that simulates and publishes the motion a differential drive robot moving in a a circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class CircularMotionNode {
+public:
+    CircularMotionNode() : nh_(), private_nh_(""~"") {
+        // Initialize parameters
+        private_nh_.param(""linear_speed"", linear_speed_, 0.2);
+        private_nh_.param(""angular_speed"", angular_speed_, 0.5);
+
+        // Setup publisher
+        cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>(""cmd_vel"", 10);
+
+        // Define the initial direction
+        current_twist_.linear.x = linear_speed_;
+        current_twist_.angular.z = angular_speed_;
+
+        // Start publishing
+        timer_ = nh_.createTimer(ros::Duration(0.1), &CircularMotionNode::publishTwistCallback, this);
+    }
+
+    void publishTwistCallback(const ros::TimerEvent&) {
+        cmd_vel_pub_.publish(current_twist_);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::NodeHandle private_nh_;
+    ros::Publisher cmd_vel_pub_;
+    ros::Timer timer_;
+    
+    float linear_speed_;
+    float angular_speed_;
+    geometry_msgs::Twist current_twist_;
+};
+
+int main(int argc, char **argv) {
+    ros::init(argc, argv, ""circular_motion_node"");
+
+    CircularMotionNode circular_motion_node;
+
+    ros::spin();
+
+    return 0;
+}",0
+51,Write a ROS C++ program that simulates and publishes the system motion a differential drive robot moving in a of circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class DifferentialDriveRobotSimulation {
+public:
+    DifferentialDriveRobotSimulation() {
+        cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>(""/cmd_vel"", 1);
+    }
+
+    // Method to publish twist messages to make the robot move in a circular path
+    void publishCircularMotion() {
+        ros::Rate loop_rate(10);
+
+        while (ros::ok()) {
+            geometry_msgs::Twist twist_msg;
+            twist_msg.linear.x = 0.2;  // linear velocity
+            twist_msg.angular.z = 0.5;  // angular velocity for circular motion
+
+            cmd_vel_pub_.publish(twist_msg);
+
+            ros::spinOnce();
+            loop_rate.sleep();
+        }
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher cmd_vel_pub_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""differential_drive_robot_simulation_node"");
+
+    DifferentialDriveRobotSimulation robot_simulation;
+
+    // Publish twist messages for circular motion
+    robot_simulation.publishCircularMotion();
+
+    return 0;
+}",5.747393713231361
+52,a ROS C++ program that simulates and publishes the motion a differential drive robot moving in in a circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class CircleMotionController {
+public:
+    CircleMotionController() {
+        cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>(""/cmd_vel"", 10);
+    }
+
+    void moveInCircle() {
+        ros::Rate loop_rate(10); // Set control loop rate
+
+        geometry_msgs::Twist twist;
+        twist.linear.x = 0.5;  // Linear velocity
+        twist.angular.z = 0.5; // Angular velocity
+
+        while (ros::ok()) {
+            cmd_vel_pub_.publish(twist);
+            ros::spinOnce();
+            loop_rate.sleep();
+        }
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher cmd_vel_pub_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""circle_motion_node"");
+    CircleMotionController controller;
+
+    // Move the robot in a circular path
+    controller.moveInCircle();
+
+    return 0;
+}",6.1457945926122655
+54,Write a ROS C++ program that simulates and publishes the motion a differential drive robot moving in a of circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class DifferentialDriveRobot {
+public:
+    DifferentialDriveRobot() : radius_(1.0), linear_speed_(0.1), angular_speed_(0.2),
+                                current_angle_(0.0), is_cw_(true) {
+        ros::NodeHandle nh;
+        cmd_vel_pub_ = nh.advertise<geometry_msgs::Twist>(""cmd_vel"", 10);
+        timer_ = nh.createTimer(ros::Duration(0.1), &DifferentialDriveRobot::updateMotion, this);
+    }
+
+    void updateMotion(const ros::TimerEvent&) {
+        geometry_msgs::Twist twist_msg;
+        if (is_cw_) {
+            twist_msg.angular.z = angular_speed_;
+        } else {
+            twist_msg.angular.z = -angular_speed_;
+        }
+
+        cmd_vel_pub_.publish(twist_msg);
+        current_angle_ += angular_speed_ * 0.1;
+        if (current_angle_ >= 2 * M_PI) {
+            is_cw_ = !is_cw_;
+            current_angle_ = 0.0;
+        }
+    }
+
+private:
+    ros::Publisher cmd_vel_pub_;
+    ros::Timer timer_;
+    double radius_;
+    double linear_speed_;
+    double angular_speed_;
+    double current_angle_;
+    bool is_cw_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""differential_drive_simulator"");
+    DifferentialDriveRobot robot;
+    ros::spin();
+    return 0;
+}",5.7518026179764785
+55,Write a ROS C++ program that simulates and publishes the motion a differential drive robot moving in in circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class CircularMotionNode {
+public:
+    CircularMotionNode(ros::NodeHandle nh) : nh_(nh) {
+        cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>(""/cmd_vel"", 10);
+        timer_ = nh_.createTimer(ros::Duration(0.1), &CircularMotionNode::timerCallback, this);
+        
+        radius_ = 1.0; // Radius of the circular path
+        linear_vel_ = 0.1; // Linear velocity
+    }
+
+    void timerCallback(const ros::TimerEvent& event) {
+        geometry_msgs::Twist twist_msg;
+        twist_msg.linear.x = linear_vel_;
+        twist_msg.angular.z = linear_vel_ / radius_; // Calculating angular velocity for a circular path
+        cmd_vel_pub_.publish(twist_msg);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher cmd_vel_pub_;
+    ros::Timer timer_;
+
+    double radius_;
+    double linear_vel_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""circular_motion_node"");
+    ros::NodeHandle nh;
+
+    CircularMotionNode circular_motion_node(nh);
+
+    ros::spin();
+
+    return 0;
+}",6.147818610922672
+56,Write a ROS C++ program that simulates and publishes the motion a differential drive robot moving in a a path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class DifferentialDriveRobot {
+public:
+    DifferentialDriveRobot() {
+        cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>(""/cmd_vel"", 1);
+        path_ = {{1.0, 0.0}, {0.0, 1.0}, {-1.0, 0.0}, {0.0, -1.0}};
+        current_idx_ = 0;
+    }
+
+    void run() {
+        ros::Rate rate(1); // 1 Hz
+        while (ros::ok()) {
+            moveTowards(path_[current_idx_][0], path_[current_idx_][1]);
+            current_idx_ = (current_idx_ + 1) % path_.size();
+            rate.sleep();
+        }
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher cmd_vel_pub_;
+    std::vector<std::vector<double>> path_;
+    int current_idx_;
+
+    void moveTowards(double linear_speed, double angular_speed) {
+        geometry_msgs::Twist msg;
+        msg.linear.x = linear_speed;
+        msg.angular.z = angular_speed;
+        cmd_vel_pub_.publish(msg);
+    }
+};
+
+int main(int argc, char **argv) {
+    ros::init(argc, argv, ""differential_drive_robot"");
+    DifferentialDriveRobot robot;
+    robot.run();
+    return 0;
+}",6.149969933519577
+57,Write a ROS C++ program that simulates interface and publishes the motion a differential drive robot moving in in a circular path.,"#include ""ros/ros.h""
+#include ""geometry_msgs/Twist.h""
+
+class CircularMotionController
+{
+public:
+    CircularMotionController()
+    {
+        cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>(""/cmd_vel"", 10);
+        radius_ = 1.0; // define the radius of the circular path
+        linear_vel_ = 0.2; // define the linear velocity
+        angular_vel_ = linear_vel_ / radius_; // calculate the angular velocity to achieve circular motion
+    }
+
+    void moveRobotInCircle()
+    {
+        geometry_msgs::Twist cmd_vel;
+        cmd_vel.linear.x = linear_vel_;
+        cmd_vel.angular.z = angular_vel_;
+
+        cmd_vel_pub_.publish(cmd_vel);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher cmd_vel_pub_;
+    double radius_;
+    double linear_vel_;
+    double angular_vel_;
+};
+
+int main(int argc, char **argv)
+{
+    ros::init(argc, argv, ""circular_motion_node"");
+
+    CircularMotionController controller;
+
+    ros::Rate loop_rate(10); // define the control loop rate
+
+    while (ros::ok())
+    {
+        controller.moveRobotInCircle();
+        ros::spinOnce();
+        loop_rate.sleep();
+    }
+
+    return 0;
+}",6.148901880976608
+60,Write a parameter ROS C++ program that simulates and and publishes the motion a differential drive robot moving in in circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class DifferentialDriveSimulator {
+public:
+    DifferentialDriveSimulator() : nh_(""~"") {
+        nh_.getParam(""radius"", radius_);
+        nh_.getParam(""angular_velocity"", angular_velocity_);
+
+        cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>(""/cmd_vel"", 10);
+
+        timer_ = nh_.createTimer(ros::Duration(0.1), &DifferentialDriveSimulator::timerCallback, this);
+    }
+
+    void timerCallback(const ros::TimerEvent &) {
+        geometry_msgs::Twist cmd_vel;
+        cmd_vel.linear.x = 0.0;
+        cmd_vel.linear.y = 0.0;
+        cmd_vel.linear.z = 0.0;
+        cmd_vel.angular.x = 0.0;
+        cmd_vel.angular.y = 0.0;
+        cmd_vel.angular.z = angular_velocity_;
+
+        cmd_vel_pub_.publish(cmd_vel);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher cmd_vel_pub_;
+    ros::Timer timer_;
+    double radius_;
+    double angular_velocity_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""differential_drive_simulator"");
+    DifferentialDriveSimulator diff_drive_simulator;
+
+    ros::spin();
+
+    return 0;
+}",6.649100351659998
+61,Write a parameter ROS C++ program that simulates and and publishes the motion a differential drive robot a of Rotation spin (ICR).,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class DiffDriveRobotICR {
+public:
+    DiffDriveRobotICR() : nh(""~"") {
+        nh.param(""angular_speed"", angular_speed, 0.5); // default angular speed
+        nh.param(""linear_speed"", linear_speed, 0.0); // default linear speed
+
+        cmd_vel_pub = nh.advertise<geometry_msgs::Twist>(""/cmd_vel"", 10);
+    }
+
+    void rotateAroundICR() {
+        ros::Rate loop_rate(10); // 10 Hz
+        while (ros::ok()) {
+            geometry_msgs::Twist twist_msg;
+
+            twist_msg.angular.z = angular_speed;
+            twist_msg.linear.x = linear_speed;
+
+            cmd_vel_pub.publish(twist_msg);
+
+            ros::spinOnce();
+            loop_rate.sleep();
+        }
+    }
+
+private:
+    ros::NodeHandle nh;
+    ros::Publisher cmd_vel_pub;
+    double angular_speed;
+    double linear_speed;
+};
+
+int main(int argc, char **argv) {
+    ros::init(argc, argv, ""diff_drive_robot_icr_node"");
+
+    DiffDriveRobotICR diff_drive_robot_icr;
+
+    diff_drive_robot_icr.rotateAroundICR();
+
+    return 0;
+}",6.146874864185767
+62,Write a parameter ROS node C++ program that simulates publishes the motion a differential drive robot moving in a of Rotation spin (ICR).,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+#include <dynamic_reconfigure/server.h>
+#include <your_package_name/RobotParamsConfig.h>
+
+class DifferentialDriveRobot {
+public:
+    DifferentialDriveRobot() : nh_(""~"") {
+        cmd_pub_ = nh_.advertise<geometry_msgs::Twist>(""/cmd_vel"", 10);
+        
+        // Initialize parameters
+        nh_.param(""angular_vel"", angular_vel_, 0.5);  // default angular velocity
+        nh_.param(""update_rate"", update_rate_, 10.0); // default update rate
+        
+        // Dynamic reconfigure setup
+        dynamic_reconfigure::Server<your_package_name::RobotParamsConfig>::CallbackType cb;
+        cb = boost::bind(&DifferentialDriveRobot::reconfigureCallback, this, _1, _2);
+        dr_server_.setCallback(cb);
+    }
+
+    void run() {
+        ros::Rate rate(update_rate_);
+        while (ros::ok()) {
+            // Publish Twist message for moving in a circle with ICR
+            geometry_msgs::Twist twist;
+            twist.linear.x = 0.1;   // linear velocity
+            twist.angular.z = angular_vel_;  // angular velocity for circle motion
+            cmd_pub_.publish(twist);
+            ros::spinOnce();
+            rate.sleep();
+        }
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher cmd_pub_;
+    dynamic_reconfigure::Server<your_package_name::RobotParamsConfig> dr_server_;
+    double angular_vel_;
+    double update_rate_;
+
+    void reconfigureCallback(your_package_name::RobotParamsConfig &config, uint32_t level) {
+        angular_vel_ = config.angular_vel;
+    }
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""differential_drive_robot_node"");
+
+    DifferentialDriveRobot robot;
+    robot.run();
+
+    return 0;
+}",0
+63,Write a ROS C++ program that simulates and publishes the motion execution a differential drive robot moving in a of Rotation spin (ICR).,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+#include <math.h>
+
+class DifferentialDriveRobot {
+public:
+    DifferentialDriveRobot() : nh_(""~"") {
+        // Initialize ROS node handle
+        nh_.param(""linear_vel"", linear_vel_, 0.5); // Default linear velocity
+        nh_.param(""angular_vel"", angular_vel_, 1.0); // Default angular velocity
+
+        // Publisher for twist messages
+        cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>(""cmd_vel"", 10);
+
+        // Timer for motion simulation
+        motion_timer_ = nh_.createTimer(ros::Duration(0.1), &DifferentialDriveRobot::motionCallback, this);
+    }
+
+    void motionCallback(const ros::TimerEvent& event) {
+        // Circle's radius
+        double r = 1.0;
+
+        // Instantaneous Center of Rotation (ICR) coordinates
+        double icr_x = 0.0;
+        double icr_y = r;
+
+        // Calculate linear and angular velocities based on ICR
+        double linear_vel = 2 * M_PI * r; // Constant linear velocity
+        double angular_vel = linear_vel / r;
+
+        // Publish twist message with calculated velocities
+        geometry_msgs::Twist twist_msg;
+        twist_msg.linear.x = linear_vel;
+        twist_msg.angular.z = angular_vel;
+        cmd_vel_pub_.publish(twist_msg);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher cmd_vel_pub_;
+    ros::Timer motion_timer_;
+    double linear_vel_;
+    double angular_vel_;
+};
+
+int main(int argc, char **argv) {
+    // Initialize ROS node
+    ros::init(argc, argv, ""differential_drive_robot_simulator"");
+
+    // Create an instance of the DifferentialDriveRobot class
+    DifferentialDriveRobot robot;
+
+    // Spin ROS
+    ros::spin();
+
+    return 0;
+}",5.899319224147041
+64,Write a factor ROS C++ program that simulates and and the motion a differential drive robot moving of Rotation spin (ICR).,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class DifferentialDriveRobot {
+public:
+    DifferentialDriveRobot() {
+        // Initialize ROS node handle
+        nh_ = ros::NodeHandle();
+
+        // Subscribe to the command velocity topic
+        cmd_vel_sub_ = nh_.subscribe(""cmd_vel"", 1, &DifferentialDriveRobot::cmdVelCallback, this);
+
+        // Initialize robot parameters
+        wheel_base_ = 1.0;  // distance between the two wheels
+        wheel_radius_ = 0.1;  // radius of the wheels
+        linear_vel_ = 0.0;
+        angular_vel_ = 0.0;
+    }
+
+    void cmdVelCallback(const geometry_msgs::Twist::ConstPtr& msg) {
+        // Extract linear and angular velocities from the Twist message
+        linear_vel_ = msg->linear.x;
+        angular_vel_ = msg->angular.z;
+
+        // Calculate left and right wheel velocities based on the ICR rotation
+        double left_vel = linear_vel_ - angular_vel_ * wheel_base_ / 2;
+        double right_vel = linear_vel_ + angular_vel_ * wheel_base_ / 2;
+
+        // Simulate the robot's motion (for demonstration purposes)
+        ROS_INFO(""Left wheel velocity: %f m/s, Right wheel velocity: %f m/s"", left_vel, right_vel);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Subscriber cmd_vel_sub_;
+    double wheel_base_;
+    double wheel_radius_;
+    double linear_vel_;
+    double angular_vel_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""differential_drive_robot_node"");
+    DifferentialDriveRobot robot;
+
+    ros::spin();
+
+    return 0;
+}",0.9457391291486998
+65,Write a parameter ROS C++ that simulates and publishes the motion a differential drive robot moving in a robot of Rotation spin (ICR).,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class DifferentialDriveSimulator {
+public:
+    DifferentialDriveSimulator() : nh(""~"") {
+        nh.param<std::string>(""cmd_vel_topic"", cmdVelTopic, ""/cmd_vel"");
+        nh.param<double>(""angular_velocity"", angularVelocity, 1.0);
+        nh.param<double>(""linear_velocity"", linearVelocity, 0.5);
+        lcm = linearVelocity * angularVelocity;
+        
+        velPub = nh.advertise<geometry_msgs::Twist>(cmdVelTopic, 10);
+        
+        timer = nh.createTimer(ros::Duration(0.1), &DifferentialDriveSimulator::timerCallback, this);
+    }
+
+    void timerCallback(const ros::TimerEvent& event) {
+        double current_time = event.current_real.toSec();
+        double angular_vel = angularVelocity + sin(lcm * current_time);
+        double linear_vel = linearVelocity * cos(angular_vel * current_time);
+        
+        geometry_msgs::Twist twistMsg;
+        twistMsg.linear.x = linear_vel;
+        twistMsg.angular.z = angular_vel;
+        
+        velPub.publish(twistMsg);
+    }
+
+private:
+    ros::NodeHandle nh;
+    ros::Publisher velPub;
+    ros::Timer timer;
+    std::string cmdVelTopic;
+    double angularVelocity;
+    double linearVelocity;
+    double lcm;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""differential_drive_simulator_node"");
+    
+    DifferentialDriveSimulator simulator;
+    
+    ros::spin();
+    
+    return 0;
+}",6.6500022971155115
+66,Write a component ROS C++ program that simulates and and publishes the motion a differential drive robot moving in in circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class DifferentialDriveRobot {
+public:
+    DifferentialDriveRobot() : nh_(""~"") {
+        nh_.param(""angular_speed"", angular_speed_, 1.0);
+        nh_.param(""radius"", radius_, 1.0);
+
+        vel_pub_ = nh_.advertise<geometry_msgs::Twist>(""/cmd_vel"", 1);
+    }
+
+    void run() {
+        ros::Rate loop_rate(10);
+
+        while (ros::ok()) {
+            geometry_msgs::Twist msg;
+            msg.linear.x = angular_speed_ * radius_;
+            msg.angular.z = angular_speed_;
+
+            vel_pub_.publish(msg);
+
+            ros::spinOnce();
+            loop_rate.sleep();
+        }
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher vel_pub_;
+
+    double angular_speed_;
+    double radius_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""differential_drive_robot_node"");
+
+    DifferentialDriveRobot robot;
+    robot.run();
+
+    return 0;
+}",6.1471562701927525
+67,Write a parameter ROS C++ that simulates and publishes the publishes the motion a differential drive robot moving in in circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class CircularMotionNode {
+public:
+    CircularMotionNode() : nh_(""~"") {
+        // Parameters
+        nh_.param(""linear_speed"", linear_speed_, 0.2);  // Linear speed in m/s
+        nh_.param(""angular_speed"", angular_speed_, 0.5);  // Angular speed in rad/s
+        nh_.param(""radius"", radius_, 1.0);  // Radius of the circular path in meters
+
+        // Publisher
+        cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>(""/cmd_vel"", 10);
+
+        // Timer to publish twist commands
+        motion_timer_ = nh_.createTimer(ros::Duration(0.1), &CircularMotionNode::timerCallback, this);
+    }
+
+    void timerCallback(const ros::TimerEvent& event) {
+        geometry_msgs::Twist twist;
+        twist.linear.x = linear_speed_;
+        twist.angular.z = linear_speed_ / radius_;  // v = w * r
+
+        cmd_vel_pub_.publish(twist);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher cmd_vel_pub_;
+    ros::Timer motion_timer_;
+    double linear_speed_;
+    double angular_speed_;
+    double radius_;
+};
+
+int main(int argc, char **argv) {
+    ros::init(argc, argv, ""circular_motion_node"");
+    CircularMotionNode circular_motion_node;
+
+    ros::spin();
+
+    return 0;
+}",6.64689131830449
+68,Write a parameter ROS C++ that simulates and publishes the motion a differential drive differential drive robot moving in in circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class CircularMotionSimulator {
+public:
+    CircularMotionSimulator() : nh(""~"") {
+        nh.param<std::string>(""cmd_vel_topic"", cmd_vel_topic, ""/cmd_vel"");
+        nh.param<double>(""linear_speed"", linear_speed, 0.2);
+        nh.param<double>(""angular_speed"", angular_speed, 0.5);
+
+        cmd_vel_pub = nh.advertise<geometry_msgs::Twist>(cmd_vel_topic, 10);
+
+        ros::Rate loop_rate(10);
+
+        while (ros::ok()) {
+            geometry_msgs::Twist msg;
+            msg.linear.x = linear_speed;
+            msg.angular.z = angular_speed;
+            cmd_vel_pub.publish(msg);
+
+            ros::spinOnce();
+            loop_rate.sleep();
+        }
+    }
+
+private:
+    ros::NodeHandle nh;
+    ros::Publisher cmd_vel_pub;
+    std::string cmd_vel_topic;
+    double linear_speed;
+    double angular_speed;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""circular_motion_simulator"");
+    CircularMotionSimulator circular_motion_simulator;
+
+    return 0;
+}",6.146216663126081
+70,Write a parameter ROS C++ that simulates and publishes the control motion a motion a differential drive robot moving in in circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class CircularMotionController {
+public:
+    CircularMotionController(ros::NodeHandle& nh) : nh_(nh) {
+        cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>(""/cmd_vel"", 10);
+        
+        // Set default values for the parameters
+        nh_.param(""radius"", radius_, 1.0);  // Radius of the circular path
+        nh_.param(""angular_speed"", angular_speed_, 0.5);  // Angular speed of the robot
+        
+        ros::Rate loop_rate(10); // Control loop rate
+        
+        while (ros::ok()) {
+            geometry_msgs::Twist msg;
+            msg.linear.x = 0.0; // Linear velocity
+            msg.angular.z = angular_speed_; // Angular velocity to make the robot move in a circular path
+            
+            cmd_vel_pub_.publish(msg);
+            
+            ros::spinOnce();
+            loop_rate.sleep();
+        }
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher cmd_vel_pub_;
+    
+    double radius_;
+    double angular_speed_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""circular_motion_controller"");
+    ros::NodeHandle nh;
+    
+    CircularMotionController controller(nh);
+    
+    ros::spin();
+    
+    return 0;
+}",5.899304265470894
+72,Write a parameter ROS C++ planning that simulates and publishes the motion process a motion a differential drive moving in in circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class CircularMotionPlanner {
+public:
+    CircularMotionPlanner() : nh_(""~"") {
+        nh_.param<double>(""radius"", radius_, 1.0);
+        nh_.param<double>(""angular_speed"", angular_speed_, 0.5);
+
+        pub_ = nh_.advertise<geometry_msgs::Twist>(""/cmd_vel"", 10);
+    }
+
+    void startMotion() {
+        ros::Rate rate(10); // 10Hz control loop
+
+        while (ros::ok()) {
+            geometry_msgs::Twist twist_msg;
+            twist_msg.linear.x = angular_speed_ * radius_; // linear velocity is the product of angular speed and radius
+            twist_msg.angular.z = angular_speed_; // angular velocity is the angular speed
+
+            pub_.publish(twist_msg);
+
+            rate.sleep();
+        }
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher pub_;
+    double radius_;
+    double angular_speed_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""circular_motion_planner"");
+    CircularMotionPlanner planner;
+
+    planner.startMotion();
+
+    return 0;
+}",6.148435488032538
+73,Write a queue parameter C++ program that simulates and publishes the motion a differential drive robot moving in a of circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class DifferentialDriveRobot {
+public:
+    DifferentialDriveRobot() {
+        // Initialize ROS node handle
+        nh = ros::NodeHandle();
+
+        // Initialize publisher for robot's velocity commands
+        velocity_pub = nh.advertise<geometry_msgs::Twist>(""cmd_vel"", 10);
+
+        // Set the linear and angular velocity parameters
+        nh.param<double>(""linear_velocity"", linear_velocity, 0.2);
+        nh.param<double>(""angular_velocity"", angular_velocity, 0.5);
+    }
+
+    void moveInCircularPath() {
+        // Define the message to publish
+        geometry_msgs::Twist vel_msg;
+
+        // Set the velocities for circular motion
+        vel_msg.linear.x = linear_velocity;
+        vel_msg.angular.z = angular_velocity;
+
+        // Publish the velocity commands to control the robot
+        ROS_INFO(""Moving in a circular path..."");
+        velocity_pub.publish(vel_msg);
+    }
+
+private:
+    ros::NodeHandle nh;
+    ros::Publisher velocity_pub;
+    double linear_velocity, angular_velocity;
+};
+
+int main(int argc, char **argv) {
+    ros::init(argc, argv, ""differential_drive_robot_node"");
+
+    DifferentialDriveRobot robot;
+
+    // Move the robot in a circular path
+    robot.moveInCircularPath();
+
+    ros::spin();
+
+    return 0;
+}",0.6989327622260824
+74,Write a parameter ROS C++ that simulates and publishes and publishes the motion a differential drive robot moving in in circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class CircularMotionPublisher {
+public:
+    CircularMotionPublisher() : nh_(""~"") {
+        nh_.param(""radius"", radius_, 1.0);
+        nh_.param(""angular_speed"", angular_speed_, 0.5);
+
+        vel_pub_ = nh_.advertise<geometry_msgs::Twist>(""cmd_vel"", 10);
+
+        ros::Rate loop_rate(10); // 10 Hz loop rate
+
+        while (ros::ok()) {
+            geometry_msgs::Twist vel_msg;
+            vel_msg.linear.x = 0.0; // Linear velocity is zero for circular motion
+            vel_msg.angular.z = angular_speed_; // Angular velocity for circular motion
+
+            vel_pub_.publish(vel_msg);
+            ros::spinOnce();
+            loop_rate.sleep();
+        }
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher vel_pub_;
+    double radius_;
+    double angular_speed_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""circular_motion_publisher"");
+    
+    CircularMotionPublisher circular_motion_publisher;
+
+    return 0;
+}",5.7476367467908585
+75,Write a parameter ROS C++ that simulates and publishes the motion a differential drive robot moving in a in in circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class CircularMotionSimulator {
+public:
+    CircularMotionSimulator() : nh(""~"") {
+        nh.param<double>(""linear_speed"", linear_speed, 0.2);
+        nh.param<double>(""angular_speed"", angular_speed, 0.5);
+        nh.param<double>(""radius"", radius, 1.0);
+        
+        cmd_vel_pub = nh.advertise<geometry_msgs::Twist>(""/cmd_vel"", 10);
+    }
+
+    void publishMotionCommand() {
+        ros::Rate rate(10); // 10Hz
+
+        while (ros::ok()) {
+            geometry_msgs::Twist twist_msg;
+            twist_msg.linear.x = linear_speed;
+            twist_msg.angular.z = linear_speed / radius;
+
+            cmd_vel_pub.publish(twist_msg);
+
+            rate.sleep();
+        }
+    }
+
+private:
+    ros::NodeHandle nh;
+    ros::Publisher cmd_vel_pub;
+    double linear_speed;
+    double angular_speed;
+    double radius;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""circular_motion_simulator_node"");
+
+    CircularMotionSimulator simulator;
+
+    simulator.publishMotionCommand();
+
+    ros::spin();
+
+    return 0;
+}",6.148351502817249
+76,Write a parameter ROS C++ program that simulates and publishes the motion a differential drive robot moving in in circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class DifferentialDriveRobot {
+public:
+    DifferentialDriveRobot() : nh_(""~"") {
+        cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>(""/cmd_vel"", 10);
+        nh_.param(""linear_speed"", linear_speed_, 0.5);
+        nh_.param(""angular_speed"", angular_speed_, 1.0);
+    }
+
+    void moveInCircularPath() {
+        ros::Rate loop_rate(10);
+
+        while (ros::ok()) {
+            geometry_msgs::Twist twist_msg;
+            twist_msg.linear.x = linear_speed_;
+            twist_msg.angular.z = angular_speed_;
+            cmd_vel_pub_.publish(twist_msg);
+
+            ros::spinOnce();
+            loop_rate.sleep();
+        }
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher cmd_vel_pub_;
+    double linear_speed_;
+    double angular_speed_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""differential_drive_robot_node"");
+
+    DifferentialDriveRobot robot;
+    robot.moveInCircularPath();
+
+    return 0;
+}",6.145954187688677
+77,Write a parameter ROS C++ that simulates and publishes the motion a differential drive robot moving in a robot of circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class CircularMotionSimulator {
+private:
+    ros::NodeHandle nh;
+    ros::Publisher cmd_vel_pub;
+    geometry_msgs::Twist twist_msg;
+    double linear_speed, angular_speed, radius;
+    double x, y, theta;
+    double time_interval;
+    ros::Time prev_time;
+
+public:
+    CircularMotionSimulator() : nh(""~"") {
+        cmd_vel_pub = nh.advertise<geometry_msgs::Twist>(""/cmd_vel"", 10);
+        nh.param(""linear_speed"", linear_speed, 0.1);
+        nh.param(""angular_speed"", angular_speed, 0.1);
+        nh.param(""radius"", radius, 1.0);
+        nh.param(""time_interval"", time_interval, 0.1);
+        x = 0.0;
+        y = 0.0;
+        theta = 0.0;
+        prev_time = ros::Time::now();
+    }
+
+    void publishTwistMsg() {
+        twist_msg.linear.x = linear_speed;
+        twist_msg.angular.z = angular_speed;
+        cmd_vel_pub.publish(twist_msg);
+    }
+
+    void updatePosition() {
+        ros::Time current_time = ros::Time::now();
+        double dt = (current_time - prev_time).toSec();
+        double linear_distance = linear_speed * dt;
+        double angular_distance = angular_speed * dt;
+
+        x += linear_distance * cos(theta);
+        y += linear_distance * sin(theta);
+        theta += angular_distance;
+
+        prev_time = current_time;
+    }
+
+    void start() {
+        ros::Rate loop_rate(1 / time_interval);
+
+        while (ros::ok()) {
+            publishTwistMsg();
+            updatePosition();
+            ros::spinOnce();
+            loop_rate.sleep();
+        }
+    }
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""circular_motion_simulator"");
+    CircularMotionSimulator motion_simulator;
+
+    motion_simulator.start();
+
+    return 0;
+}",6.149731598167927
+79,Write a parameter queue ROS C++ that that simulates and and publishes the motion a differential drive robot a of Rotation spin mapping (ICR).,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class DifferentialDriveRobot {
+public:
+    DifferentialDriveRobot() : nh_(""~"") {
+        nh_.param<double>(""wheel_base"", wheel_base_, 0.5); // Distance between the two wheels
+        nh_.param<double>(""max_speed"", max_speed_, 1.0); // Maximum linear speed
+        nh_.param<double>(""max_angular_speed"", max_angular_speed_, 1.0); // Maximum angular speed
+
+        cmd_vel_sub_ = nh_.subscribe(""cmd_vel"", 1, &DifferentialDriveRobot::cmdVelCallback, this);
+        motion_pub_ = nh_.advertise<geometry_msgs::Twist>(""motion"", 1);
+    }
+
+    void cmdVelCallback(const geometry_msgs::Twist::ConstPtr& msg) {
+        geometry_msgs::Twist motion_msg;
+        double v = std::min(std::max(msg->linear.x, -max_speed_), max_speed_);
+        double w = std::min(std::max(msg->angular.z, -max_angular_speed_), max_angular_speed_);
+
+        motion_msg.linear.x = v;
+        motion_msg.angular.z = w;
+
+        motion_pub_.publish(motion_msg);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Subscriber cmd_vel_sub_;
+    ros::Publisher motion_pub_;
+
+    double wheel_base_;
+    double max_speed_;
+    double max_angular_speed_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""differential_drive_robot_node"");
+
+    DifferentialDriveRobot robot;
+
+    ros::spin();
+
+    return 0;
+}",1.4475498503699793
+81,Write a parameter ROS C++ program that simulates and node and publishes the motion a differential drive robot moving in in circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class DifferentialDriveRobot {
+public:
+    DifferentialDriveRobot() : nh_(""~"") {
+        nh_.param<double>(""linear_vel"", linear_vel_, 0.5);
+        nh_.param<double>(""angular_vel"", angular_vel_, 0.5);
+        
+        cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>(""/cmd_vel"", 10);
+    }
+
+    void moveInCircularPath() {
+        ros::Rate loop_rate(10); // 10 Hz
+        
+        while (ros::ok()) {
+            geometry_msgs::Twist msg;
+            msg.linear.x = linear_vel_;
+            msg.angular.z = angular_vel_;
+            
+            cmd_vel_pub_.publish(msg);
+            
+            ros::spinOnce();
+            loop_rate.sleep();
+        }
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher cmd_vel_pub_;
+    
+    double linear_vel_;
+    double angular_vel_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""differential_drive_robot_node"");
+
+    DifferentialDriveRobot robot;
+    robot.moveInCircularPath();
+
+    return 0;
+}",6.148643874288069
+82,Write a parameter ROS C++ that simulates and publishes the motion a differential drive moving in in a circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class CircularMotionSimulator
+{
+public:
+    CircularMotionSimulator()
+    {
+        nh_.param(""linear_velocity"", linear_vel_, 0.5); // Default linear velocity: 0.5 m/s
+        nh_.param(""angular_velocity"", angular_vel_, 0.5); // Default angular velocity: 0.5 rad/s
+
+        twist_pub_ = nh_.advertise<geometry_msgs::Twist>(""cmd_vel"", 10); // Publish twist messages to cmd_vel topic
+
+        ros::Rate loop_rate(10); // 10 Hz loop rate
+        while (ros::ok())
+        {
+            geometry_msgs::Twist twist_msg;
+            twist_msg.linear.x = linear_vel_;
+            twist_msg.angular.z = angular_vel_;
+
+            twist_pub_.publish(twist_msg);
+
+            ros::spinOnce();
+            loop_rate.sleep();
+        }
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher twist_pub_;
+    double linear_vel_;
+    double angular_vel_;
+};
+
+int main(int argc, char** argv)
+{
+    ros::init(argc, argv, ""circular_motion_simulator_node"");
+    CircularMotionSimulator circular_motion_simulator;
+
+    return 0;
+}",6.146456322584779
+83,Write a parameter ROS C++ that simulates mapping and publishes the motion a differential drive robot moving in in a circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+#include <nav_msgs/Odometry.h>
+#include <sensor_msgs/LaserScan.h>
+
+class CircularPathPlanner
+{
+public:
+    CircularPathPlanner(ros::NodeHandle nh) : nh_(nh)
+    {
+        nh_.getParam(""/robot_radius"", robot_radius_);
+        nh_.getParam(""/linear_velocity"", linear_velocity_);
+        nh_.getParam(""/angular_velocity"", angular_velocity_);
+
+        twist_pub_ = nh_.advertise<geometry_msgs::Twist>(""/cmd_vel"", 10);
+        odom_pub_ = nh_.advertise<nav_msgs::Odometry>(""/odom"", 10);
+        laser_pub_ = nh_.advertise<sensor_msgs::LaserScan>(""/scan"", 10);
+
+        // Initialize odometry and laser scan messages
+        // Set parameters such as frame_id and timestamps
+        
+        // Start the circular path motion
+        startCircularMotion();
+    }
+
+    void startCircularMotion()
+    {
+        ros::Rate loop_rate(10); // 10Hz loop rate
+
+        while (ros::ok())
+        {
+            // Calculate odom and laser scan data
+
+            // Publish odometry and laser scan data
+            twist_pub_.publish(calculateTwist());
+            odom_pub_.publish(odom_msg_);
+            laser_pub_.publish(laser_msg_);
+
+            ros::spinOnce();
+            loop_rate.sleep();
+        }
+    }
+
+    geometry_msgs::Twist calculateTwist()
+    {
+        geometry_msgs::Twist twist;
+        // Calculate twist message for circular motion
+        return twist;
+    }
+
+private:
+    double robot_radius_;
+    double linear_velocity_;
+    double angular_velocity_;
+    ros::NodeHandle nh_;
+    ros::Publisher twist_pub_;
+    ros::Publisher odom_pub_;
+    ros::Publisher laser_pub_;
+    nav_msgs::Odometry odom_msg_;
+    sensor_msgs::LaserScan laser_msg_;
+};
+
+int main(int argc, char **argv)
+{
+    ros::init(argc, argv, ""circular_path_planner"");
+    ros::NodeHandle nh;
+
+    CircularPathPlanner planner(nh);
+
+    ros::spin();
+
+    return 0;
+}",5.740046693717652
+84,Write a parameter ROS C++ that simulates and publishes the motion a differential drive robot moving in a robot of Rotation,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+
+class DifferentialDriveSimulator {
+public:
+    DifferentialDriveSimulator() : nh_(""~"") {
+        // Initialize parameters
+        nh_.param(""linear_velocity"", linear_velocity_, 0.1); // Linear velocity in m/s
+        nh_.param(""path_length"", path_length_, 5.0); // Length of the linear path in meters
+
+        // Setup publisher
+        pose_pub_ = nh_.advertise<geometry_msgs::Pose>(""robot_pose"", 10);
+
+        // Start simulation
+        timer_ = nh_.createTimer(ros::Duration(0.1), &DifferentialDriveSimulator::simulateMotion, this);
+        current_distance_ = 0.0;
+    }
+
+    void simulateMotion(const ros::TimerEvent& event) {
+        if (current_distance_ < path_length_) {
+            // Update current distance
+            current_distance_ += linear_velocity_ * 0.1;
+
+            // Publish robot pose
+            geometry_msgs::Pose pose;
+            pose.position.x = current_distance_;
+            pose.position.y = 0.0;
+            pose.position.z = 0.0;
+
+            tf2::Quaternion quat;
+            quat.setRPY(0, 0, 0); // No rotation for linear motion
+            tf2::convert(quat, pose.orientation);
+
+            pose_pub_.publish(pose);
+        }
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher pose_pub_;
+    ros::Timer timer_;
+    double linear_velocity_;
+    double path_length_;
+    double current_distance_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""differential_drive_simulator"");
+    DifferentialDriveSimulator simulator;
+    ros::spin();
+    return 0;
+}",5.8978940575562895
+85,Write a parameter ROS C++ that that simulates and and publishes the motion a differential drive robot moving in in circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class CircularMotionSimulator {
+private:
+    ros::NodeHandle nh;
+    ros::Publisher cmd_vel_pub;
+
+    double linear_speed;
+    double angular_speed;
+
+public:
+    CircularMotionSimulator() : nh(""~"") {
+        cmd_vel_pub = nh.advertise<geometry_msgs::Twist>(""cmd_vel"", 10);
+
+        // Initialize parameters
+        nh.param(""linear_speed"", linear_speed, 0.2); // m/s
+        nh.param(""angular_speed"", angular_speed, 0.5); // rad/s
+
+        // Set up motion
+        ros::Rate loop_rate(10); // 10 Hz
+        while (ros::ok()) {
+            geometry_msgs::Twist msg;
+            msg.linear.x = linear_speed;
+            msg.angular.z = angular_speed;
+
+            cmd_vel_pub.publish(msg);
+
+            ros::spinOnce();
+            loop_rate.sleep();
+        }
+    }
+};
+
+int main(int argc, char *argv[]) {
+    ros::init(argc, argv, ""circular_motion_simulator"");
+    CircularMotionSimulator circular_motion_simulator;
+
+    return 0;
+}",6.148674905328495
+86,Write a parameter ROS C++ that simulates and publishes the motion a differential drive robot moving robot moving in in circular sensor path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class CircularMotionSimulator {
+public:
+    CircularMotionSimulator() : nh_(""~"") {
+        nh_.param(""radius"", radius_, 1.0); // Default radius is 1 meter
+        nh_.param(""angular_speed"", angular_speed_, 0.5); // Default angular speed is 0.5 rad/s
+
+        cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>(""/cmd_vel"", 1);
+    }
+
+    void run() {
+        while (ros::ok()) {
+            auto twist_msg = createTwistMsg();
+            cmd_vel_pub_.publish(twist_msg);
+
+            ros::Duration(0.1).sleep(); // Sleep for 0.1 seconds
+        }
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher cmd_vel_pub_;
+
+    double radius_;
+    double angular_speed_;
+
+    geometry_msgs::Twist createTwistMsg() {
+        geometry_msgs::Twist twist_msg;
+        twist_msg.linear.x = 0.0;
+        twist_msg.linear.y = 0.0;
+        twist_msg.linear.z = 0.0;
+        twist_msg.angular.x = 0.0;
+        twist_msg.angular.y = 0.0;
+        twist_msg.angular.z = angular_speed_;
+
+        return twist_msg;
+    }
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""circular_motion_simulator_node"");
+
+    CircularMotionSimulator circular_motion_simulator;
+    circular_motion_simulator.run();
+
+    return 0;
+}",5.755776208196101
+89,Write a parameter ROS C++ that that simulates parameter and and publishes the motion a differential drive robot moving in in circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+// Define a ROS Node named ""parameter_simulator""
+class ParameterSimulatorNode {
+public:
+    ParameterSimulatorNode(ros::NodeHandle& nh) : nh_(nh) {
+        // Initialize parameters (default values)
+        nh_.param<double>(""linear_speed"", linear_speed_, 0.2);
+        nh_.param<double>(""angular_speed"", angular_speed_, 0.5);
+
+        // Create a publisher to publish Twist messages
+        motion_pub_ = nh_.advertise<geometry_msgs::Twist>(""cmd_vel"", 10);
+
+        // Set up the loop to publish motion commands
+        timer_ = nh_.createTimer(ros::Duration(0.1), &ParameterSimulatorNode::publishMotion, this);
+    }
+
+    // Function to publish Twist messages for circular motion
+    void publishMotion(const ros::TimerEvent& event) {
+        geometry_msgs::Twist msg;
+        msg.linear.x = linear_speed_;
+        msg.angular.z = angular_speed_;
+
+        motion_pub_.publish(msg);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher motion_pub_;
+    ros::Timer timer_;
+    double linear_speed_;
+    double angular_speed_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""parameter_simulator"");
+    ros::NodeHandle nh;
+
+    // Create an instance of ParameterSimulatorNode
+    ParameterSimulatorNode parameter_simulator(nh);
+
+    // Spin to process callbacks
+    ros::spin();
+
+    return 0;
+}",6.147585031274662
+91,Write a parameter ROS C++ that simulates and publishes the motion a differential drive robot moving in in a execution circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class CircularMotionSimulator
+{
+public:
+    CircularMotionSimulator() : nh_(""~"")
+    {
+        nh_.param<double>(""linear_speed"", linear_speed_, 0.1);
+        nh_.param<double>(""angular_speed"", angular_speed_, 0.5);
+
+        cmd_pub_ = nh_.advertise<geometry_msgs::Twist>(""/cmd_vel"", 10);
+
+        ROS_INFO(""Circular Motion Simulator Node Initialized"");
+
+        circularMotion();
+    }
+
+    void circularMotion()
+    {
+        ros::Rate loop_rate(10);
+
+        while (ros::ok())
+        {
+            geometry_msgs::Twist msg;
+            msg.linear.x = linear_speed_;
+            msg.angular.z = angular_speed_;
+
+            cmd_pub_.publish(msg);
+
+            ros::spinOnce();
+            loop_rate.sleep();
+        }
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher cmd_pub_;
+
+    double linear_speed_;
+    double angular_speed_;
+};
+
+int main(int argc, char **argv)
+{
+    ros::init(argc, argv, ""circular_motion_simulator_node"");
+
+    CircularMotionSimulator circular_motion_simulator;
+
+    return 0;
+}",6.148001383821173
+92,Write a parameter ROS C++ that simulates and localization publishes the motion a differential drive robot moving in a robot in circular path.,"#include ""ros/ros.h""
+#include ""geometry_msgs/Twist.h""
+
+class DifferentialDriveRobot {
+public:
+    DifferentialDriveRobot() : nh_(""~"") {
+        nh_.param(""radius"", radius_, 1.0);
+        nh_.param(""angular_velocity"", angular_velocity_, 1.0);
+        cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>(""cmd_vel"", 10);
+    }
+
+    void run() {
+        ros::Rate loop_rate(10);
+
+        while (ros::ok()) {
+            geometry_msgs::Twist vel_cmd;
+            vel_cmd.linear.x = 0.0;  // linear velocity
+            vel_cmd.angular.z = angular_velocity_;  // angular velocity for rotation
+            cmd_vel_pub_.publish(vel_cmd);
+
+            ros::spinOnce();
+            loop_rate.sleep();
+        }
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher cmd_vel_pub_;
+    double radius_;
+    double angular_velocity_;
+};
+
+int main(int argc, char **argv) {
+    ros::init(argc, argv, ""differential_drive_robot"");
+    DifferentialDriveRobot robot;
+    robot.run();
+    return 0;
+}",5.898915698351857
+93,Write a parameter ROS C++ that simulates and publishes the motion a differential drive robot moving in a robot of Rotation path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+double linear_speed;   // Linear speed of the robot
+double angular_speed;  // Angular speed of the robot
+double rotation_angle; // Rotation angle in radians
+
+ros::Publisher cmd_vel_pub;
+
+void setParams()
+{
+  // Set parameters from ROS parameter server
+  ros::NodeHandle nh(""~"");
+  nh.param(""linear_speed"", linear_speed, 0.5);     // Default linear speed is 0.5 m/s
+  nh.param(""angular_speed"", angular_speed, 0.5);   // Default angular speed is 0.5 rad/s
+  nh.param(""rotation_angle"", rotation_angle, 1.57); // Default rotation angle is 1.57 radians
+}
+
+void rotateRobot()
+{
+  geometry_msgs::Twist msg;
+  ros::Rate loop_rate(10);
+
+  double current_angle = 0.0;
+  double angular_distance = angular_speed / 10; // Distance to travel in one iteration
+
+  while (current_angle < rotation_angle)
+  {
+    msg.angular.z = angular_speed;
+    cmd_vel_pub.publish(msg);
+
+    current_angle += angular_distance;
+    loop_rate.sleep();
+  }
+  
+  // Stop the robot after reaching the desired angle
+  msg.angular.z = 0;
+  cmd_vel_pub.publish(msg);
+}
+
+int main(int argc, char **argv)
+{
+  ros::init(argc, argv, ""rotate_robot_node"");
+  ros::NodeHandle nh;
+
+  cmd_vel_pub = nh.advertise<geometry_msgs::Twist>(""cmd_vel"", 10);
+
+  setParams();
+
+  rotateRobot();
+
+  ros::spin();
+
+  return 0;
+}",0.9457766271971502
+94,process Write a parameter ROS C++ that simulates and publishes the motion a differential drive robot drive robot moving in in circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+// Parameters
+double linear_speed;  // m/s
+double angular_speed; // rad/s
+double wheel_base;    // Distance between the two wheels
+
+// Publisher
+ros::Publisher cmd_vel_pub;
+
+void calculateVelocities(double radius, double& left_wheel_velocity, double& right_wheel_velocity) {
+    left_wheel_velocity = linear_speed - angular_speed * wheel_base / 2;
+    right_wheel_velocity = linear_speed + angular_speed * wheel_base / 2;
+}
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""circular_motion_node"");
+    ros::NodeHandle nh;
+
+    // Retrieve parameters
+    nh.getParam(""linear_speed"", linear_speed);
+    nh.getParam(""angular_speed"", angular_speed);
+    nh.getParam(""wheel_base"", wheel_base);
+
+    cmd_vel_pub = nh.advertise<geometry_msgs::Twist>(""cmd_vel"", 10);
+
+    ros::Rate loop_rate(10); // 10 Hz
+
+    while (ros::ok()) {
+        // Calculate the radius of the circular path
+        double radius = linear_speed / angular_speed;
+
+        // Calculate wheel velocities
+        double left_wheel_velocity, right_wheel_velocity;
+        calculateVelocities(radius, left_wheel_velocity, right_wheel_velocity);
+
+        // Publish the velocities
+        geometry_msgs::Twist vel_msg;
+        vel_msg.linear.x = linear_speed;
+        vel_msg.angular.z = angular_speed;
+
+        cmd_vel_pub.publish(vel_msg);
+
+        ros::spinOnce();
+        loop_rate.sleep();
+    }
+
+    return 0;
+}",6.145766680216505
+96,Write a parameter ROS C++ program that simulates and and publishes the motion a differential drive bot moving in in circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class DifferentialDriveBot
+{
+public:
+    DifferentialDriveBot()
+    {
+        // Initialize node handle
+        nh = ros::NodeHandle(""~"");
+
+        // Get parameters
+        nh.param(""angular_vel"", angular_vel, 0.5); // default angular velocity
+        nh.param(""linear_vel"", linear_vel, 0.2);   // default linear velocity
+
+        // Initialize publisher
+        cmd_vel_pub = nh.advertise<geometry_msgs::Twist>(""/cmd_vel"", 10);
+
+        // Set the loop rate
+        loop_rate = 10; // 10 Hz
+        ros::Rate rate(loop_rate);
+
+        while (ros::ok())
+        {
+            // Create twist message
+            geometry_msgs::Twist twist_msg;
+            twist_msg.linear.x = linear_vel;
+            twist_msg.angular.z = angular_vel;
+
+            // Publish twist message
+            cmd_vel_pub.publish(twist_msg);
+
+            // Sleep to maintain loop rate
+            rate.sleep();
+
+            // Log message
+            ROS_INFO(""Moving in circular path"");
+        }
+    }
+
+private:
+    ros::NodeHandle nh;
+    ros::Publisher cmd_vel_pub;
+    double angular_vel, linear_vel;
+    int loop_rate;
+};
+
+int main(int argc, char **argv)
+{
+    // Initialize ROS node
+    ros::init(argc, argv, ""differential_drive_bot"");
+
+    // Create an instance of DifferentialDriveBot class
+    DifferentialDriveBot diff_drive_bot;
+
+    ros::spin();
+
+    return 0;
+}",6.149218140029111
+97,Write a parameter ROS C++ that simulates and publishes motion a differential drive robot moving in a robot of circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class CircularMotionPublisher {
+public:
+    CircularMotionPublisher() : nh(""~"") {
+        nh.param<double>(""radius"", radius, 1.0); // Default radius is 1.0 meter
+        nh.param<double>(""angular_speed"", angular_speed, 0.5); // Default angular speed is 0.5 rad/s
+
+        cmd_vel_pub = nh.advertise<geometry_msgs::Twist>(""/cmd_vel"", 10);
+    }
+
+    void run() {
+        ros::Rate loop_rate(10); // 10 Hz
+
+        while (ros::ok()) {
+            geometry_msgs::Twist cmd_vel_msg;
+            cmd_vel_msg.linear.x = 0.0;
+            cmd_vel_msg.linear.y = 0.0;
+            cmd_vel_msg.linear.z = 0.0;
+            cmd_vel_msg.angular.x = 0.0;
+            cmd_vel_msg.angular.y = 0.0;
+            cmd_vel_msg.angular.z = angular_speed;
+
+            cmd_vel_pub.publish(cmd_vel_msg);
+
+            ros::spinOnce();
+            loop_rate.sleep();
+        }
+    }
+
+private:
+    ros::NodeHandle nh;
+    ros::Publisher cmd_vel_pub;
+
+    double radius;
+    double angular_speed;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""circular_motion_publisher"");
+
+    CircularMotionPublisher circular_motion_publisher;
+    circular_motion_publisher.run();
+
+    return 0;
+}",6.149936229054296
+99,Write a parameter ROS C++ that simulates and publishes the motion a differential drive machine moving in moving in planning in circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class CircularMotionSimulator {
+public:
+    CircularMotionSimulator() : nh_(""~"") {
+        nh_.param(""radius"", radius_, 1.0);
+        nh_.param(""angular_speed"", angular_speed_, 0.5);
+
+        twist_pub_ = nh_.advertise<geometry_msgs::Twist>(""/cmd_vel"", 1);
+    }
+
+    void run() {
+        ros::Rate loop_rate(10);
+
+        while (ros::ok()) {
+            geometry_msgs::Twist twist_msg;
+            twist_msg.linear.x = 0.0;
+            twist_msg.angular.z = angular_speed_;
+
+            twist_pub_.publish(twist_msg);
+
+            ros::spinOnce();
+            loop_rate.sleep();
+        }
+    }
+
+private:
+    ros::NodeHandle nh_;
+    double radius_;
+    double angular_speed_;
+    ros::Publisher twist_pub_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""circular_motion_simulator"");
+    
+    CircularMotionSimulator circular_motion_simulator;
+    circular_motion_simulator.run();
+
+    return 0;
+}",6.147768117873671
+100,Write a parameter ROS C++ that simulates and publishes the motion a differential drive robot drive robot moving in in circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class CircularMotionNode {
+public:
+    CircularMotionNode() : nh_(""~"") {
+        nh_.param(""linear_speed"", linear_speed_, 0.5);
+        nh_.param(""angular_speed"", angular_speed_, 0.5);
+
+        cmd_pub_ = nh_.advertise<geometry_msgs::Twist>(""/cmd_vel"", 10);
+    }
+
+    void run() {
+        ros::Rate rate(10);
+
+        while (ros::ok()) {
+            geometry_msgs::Twist cmd;
+
+            cmd.linear.x = linear_speed_;
+            cmd.angular.z = angular_speed_;
+
+            cmd_pub_.publish(cmd);
+
+            rate.sleep();
+        }
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher cmd_pub_;
+    double linear_speed_;
+    double angular_speed_;
+};
+
+int main(int argc, char **argv) {
+    ros::init(argc, argv, ""circular_motion_node"");
+
+    CircularMotionNode motion_node;
+    
+    motion_node.run();
+
+    return 0;
+}",6.146869335923251
+101,robot Write a parameter ROS C++ that simulates and publishes the motion a differential drive robot drive bot moving in in circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class CircularMotionNode {
+public:
+    CircularMotionNode() : nh_(""~"") {
+        nh_.param(""radius"", radius_, 1.0);
+        nh_.param(""angular_vel"", angular_vel_, 0.5);
+
+        cmd_pub_ = nh_.advertise<geometry_msgs::Twist>(""cmd_vel"", 10);
+        timer_ = nh_.createTimer(ros::Duration(0.1), &CircularMotionNode::timerCallback, this);
+    }
+
+    void timerCallback(const ros::TimerEvent&) {
+        geometry_msgs::Twist cmd_vel;
+        cmd_vel.linear.x = angular_vel_ * radius_;
+        cmd_vel.angular.z = angular_vel_;
+        cmd_pub_.publish(cmd_vel);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher cmd_pub_;
+    ros::Timer timer_;
+    double radius_;
+    double angular_vel_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""circular_motion_node"");
+
+    CircularMotionNode node;
+
+    ros::spin();
+
+    return 0;
+}",6.644090643962791
+103,Write a parameter ROS C++ that simulates and publishes the motion a differential drive task robot navigation moving in a of circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class CircularMotionSimulator {
+public:
+    CircularMotionSimulator() : nh_(""~"") {
+        nh_.param(""radius"", radius_, 1.0); // default radius = 1.0 meter
+        nh_.param(""angular_velocity"", angular_velocity_, 0.5); // default angular velocity = 0.5 rad/s
+
+        cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>(""cmd_vel"", 10);
+
+        timer_ = nh_.createTimer(ros::Duration(0.1), &CircularMotionSimulator::publishTwist, this);
+    }
+
+    void publishTwist(const ros::TimerEvent& event) {
+        geometry_msgs::Twist twist;
+        twist.linear.x = radius_ * angular_velocity_;
+        twist.angular.z = angular_velocity_;
+
+        cmd_vel_pub_.publish(twist);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher cmd_vel_pub_;
+    ros::Timer timer_;
+
+    double radius_;
+    double angular_velocity_;
+};
+
+int main(int argc, char **argv) {
+    ros::init(argc, argv, ""circular_motion_simulator"");
+    
+    CircularMotionSimulator simulator;
+
+    ros::spin();
+
+    return 0;
+}",6.645609280404258
+105,Write a parameter ROS C++ that program that simulates publishes motion a differential drive robot moving in a of Rotation spin (ICR).,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class DiffDriveRobotICR
+{
+public:
+    DiffDriveRobotICR() : nh(""~"")
+    {
+        // Initialize parameters
+        nh.param<std::string>(""icr_frame"", icrFrame, ""icr"");
+        nh.param<double>(""angular_velocity"", angularVelocity, 1.0);
+
+        // Create a publisher for sending velocity commands
+        velPub = nh.advertise<geometry_msgs::Twist>(""cmd_vel"", 10);
+
+        // Initialize timer for publishing velocity commands
+        timer = nh.createTimer(ros::Duration(0.1), &DiffDriveRobotICR::timerCallback, this);
+    }
+
+    void timerCallback(const ros::TimerEvent&)
+    {
+        // Create a Twist message to publish
+        geometry_msgs::Twist velMsg;
+        velMsg.angular.z = angularVelocity;
+
+        // Publish the velocity command
+        velPub.publish(velMsg);
+    }
+
+private:
+    ros::NodeHandle nh;
+    ros::Publisher velPub;
+    ros::Timer timer;
+    std::string icrFrame;
+    double angularVelocity;
+};
+
+int main(int argc, char** argv)
+{
+    ros::init(argc, argv, ""diff_drive_robot_icr_node"");
+
+    DiffDriveRobotICR diffDriveRobotICR;
+
+    ros::spin();
+
+    return 0;
+}",5.896599061311635
+106,Write a component ROS C++ that simulates and and and publishes the motion a differential drive robot moving in in circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class DifferentialDriveRobot {
+public:
+    DifferentialDriveRobot(ros::NodeHandle& nh) : nh_(nh) {
+        // Setup publisher to publish Twist messages for robot motion
+        twist_pub_ = nh_.advertise<geometry_msgs::Twist>(""cmd_vel"", 10);
+
+        // Parameters for circular motion
+        linear_speed_ = 0.2; // m/s
+        angular_speed_ = 0.5; // rad/s
+    }
+
+    void moveInCircularPath() {
+        ros::Rate rate(10); // 10 Hz
+
+        while (ros::ok()) {
+            geometry_msgs::Twist twist;
+            twist.linear.x = linear_speed_;
+            twist.angular.z = angular_speed_;
+            twist_pub_.publish(twist);
+            rate.sleep();
+        }
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher twist_pub_;
+    double linear_speed_;
+    double angular_speed_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""differential_drive_robot"");
+    ros::NodeHandle nh;
+
+    DifferentialDriveRobot robot(nh);
+    robot.moveInCircularPath();
+
+    ros::spin();
+
+    return 0;
+}",5.749132911334904
+109,Write a parameter ROS C++ that simulates and publishes the motion a differential drive robot moving robot moving in in circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class CircleMotionSimulator {
+public:
+    CircleMotionSimulator() : nh_(""~"") {
+        nh_.param(""radius"", radius_, 1.0);
+        nh_.param(""angular_velocity"", angular_velocity_, 0.5);
+
+        cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>(""/cmd_vel"", 10);
+
+        timer_ = nh_.createTimer(ros::Duration(0.1), &CircleMotionSimulator::timerCallback, this);
+    }
+
+    void timerCallback(const ros::TimerEvent& event) {
+        geometry_msgs::Twist cmd_vel;
+        cmd_vel.linear.x = 0.0;
+        cmd_vel.linear.y = 0.0;
+        cmd_vel.linear.z = 0.0;
+        cmd_vel.angular.x = 0.0;
+        cmd_vel.angular.y = 0.0;
+        cmd_vel.angular.z = angular_velocity_;
+
+        cmd_vel_pub_.publish(cmd_vel);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher cmd_vel_pub_;
+    ros::Timer timer_;
+    double radius_;
+    double angular_velocity_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""circle_motion_simulator"");
+    CircleMotionSimulator simulator;
+
+    ros::spin();
+    return 0;
+}",6.649788693979401
+110,Write a parameter ROS C++ that simulates and publishes motion a differential drive robot moving robot moving in in circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+// Define the ROS node
+class CircularMotionNode {
+public:
+    CircularMotionNode() {
+        // Initialize node handle
+        nh_ = ros::NodeHandle(""~"");
+
+        // Get parameters
+        nh_.param<std::string>(""cmd_vel_topic"", cmd_vel_topic_, ""/cmd_vel"");
+        nh_.param<double>(""radius"", radius_, 1.0);
+        nh_.param<double>(""angular_velocity"", angular_velocity_, 0.5);
+
+        // Initialize publisher
+        cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>(cmd_vel_topic_, 10);
+
+        // Define timer callback to publish twist messages
+        timer_ = nh_.createTimer(ros::Duration(0.1), &CircularMotionNode::timerCallback, this);
+    }
+
+    void timerCallback(const ros::TimerEvent&) {
+        // Calculate linear and angular velocities to move in a circular path
+        double linear_velocity = angular_velocity_ * radius_;
+        double angular_velocity = angular_velocity_;
+
+        // Create twist message
+        geometry_msgs::Twist twist;
+        twist.linear.x = linear_velocity;
+        twist.angular.z = angular_velocity;
+
+        // Publish twist message
+        cmd_vel_pub_.publish(twist);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher cmd_vel_pub_;
+    ros::Timer timer_;
+
+    std::string cmd_vel_topic_;
+    double radius_;
+    double angular_velocity_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""circular_motion_node"");
+    CircularMotionNode node;
+    ros::spin();
+    return 0;
+}",6.646802273686191
+112,Write a parameter ROS C++ that simulates publishes the motion a queue differential drive robot moving in a of Rotation spin (ICR).,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class ICRMotionSimulation {
+public:
+    ICRMotionSimulation(ros::NodeHandle& nh) : nh_(nh) {
+        // Subscribing to the velocity topic
+        vel_sub_ = nh_.subscribe(""/cmd_vel"", 1, &ICRMotionSimulation::velocityCallback, this);
+        
+        // Publishing to the simulated motion topic
+        motion_pub_ = nh_.advertise<geometry_msgs::Twist>(""/simulated_motion"", 1);
+    }
+
+    // Callback function to process incoming velocity commands
+    void velocityCallback(const geometry_msgs::Twist::ConstPtr& msg) {
+        // Process velocity commands here and simulate the motion with ICR
+        // For the sake of simplicity, we will just publish the received velocity commands
+        motion_pub_.publish(*msg);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Subscriber vel_sub_;
+    ros::Publisher motion_pub_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""icr_motion_simulation_node"");
+    ros::NodeHandle nh;
+
+    ICRMotionSimulation icr_motion_sim(nh);
+
+    ros::spin();
+
+    return 0;
+}",1.4448701446114116
+115,Write a parameter ROS C++ that simulates and publishes the motion a differential drive robot moving in a robot in circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class CircularMotionSimulator
+{
+public:
+    CircularMotionSimulator()
+    {
+        ros::NodeHandle nh;
+        nh.param<double>(""/radius"", radius, 1.0); // Parameter for the radius of the circular path
+
+        velocity_publisher = nh.advertise<geometry_msgs::Twist>(""/cmd_vel"", 10); // Publish velocity commands
+
+        // Set the initial velocities
+        vel_msg.linear.x = 0.5; // linear velocity in m/s
+        vel_msg.angular.z = vel_msg.linear.x / radius; // angular velocity for circular path
+
+        // Publish the velocity command
+        velocity_publisher.publish(vel_msg);
+    }
+
+private:
+    ros::NodeHandle nh;
+    ros::Publisher velocity_publisher;
+    geometry_msgs::Twist vel_msg;
+    double radius;
+};
+
+int main(int argc, char** argv)
+{
+    ros::init(argc, argv, ""circular_motion_simulator"");
+    CircularMotionSimulator circular_motion_simulator;
+
+    ros::spin();
+
+    return 0;
+}",0.6954906354461357
+116,Write a parameter ROS C++ that simulates and publishes the motion a differential drive automaton moving robot moving parameter in in circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class CircularMotionPublisher {
+private:
+    ros::NodeHandle nh;
+    ros::Publisher cmd_vel_pub;
+    double linear_speed;
+    double angular_speed;
+
+public:
+    CircularMotionPublisher(): nh(""~"") {
+        cmd_vel_pub = nh.advertise<geometry_msgs::Twist>(""cmd_vel"", 10);
+
+        nh.param<double>(""linear_speed"", linear_speed, 0.2);
+        nh.param<double>(""angular_speed"", angular_speed, 0.5);
+
+        publishMotion();
+    }
+
+    void publishMotion() {
+        ros::Rate loop_rate(10);
+
+        while (ros::ok()) {
+            geometry_msgs::Twist twist_msg;
+            twist_msg.linear.x = linear_speed;
+            twist_msg.angular.z = angular_speed;
+
+            cmd_vel_pub.publish(twist_msg);
+
+            ros::spinOnce();
+            loop_rate.sleep();
+        }
+    }
+};
+
+int main(int argc, char **argv) {
+    ros::init(argc, argv, ""circular_motion_publisher_node"");
+
+    CircularMotionPublisher publisher;
+
+    ros::spin();
+
+    return 0;
+}",6.149981176869659
+117,Write a parameter ROS C++ that simulates and publishes the motion a differential drive differential drive machine moving in in circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class CircularMotionPublisher {
+public:
+    CircularMotionPublisher(ros::NodeHandle& nh) : nh_(nh) {
+        twist_pub_ = nh_.advertise<geometry_msgs::Twist>(""/cmd_vel"", 10);
+        nh_.getParam(""/circle_radius"", circle_radius_);
+        nh_.getParam(""/angular_velocity"", angular_velocity_);
+    }
+
+    void publishCircularMotion() {
+        ros::Rate rate(10); // 10 Hz
+
+        while (ros::ok()) {
+            geometry_msgs::Twist twist_msg;
+            twist_msg.linear.x = 0.0;
+            twist_msg.linear.y = 0.0;
+            twist_msg.linear.z = 0.0;
+            twist_msg.angular.x = 0.0;
+            twist_msg.angular.y = 0.0;
+            twist_msg.angular.z = angular_velocity_;
+
+            twist_pub_.publish(twist_msg);
+
+            ros::spinOnce();
+            rate.sleep();
+        }
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher twist_pub_;
+    double circle_radius_;
+    double angular_velocity_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""circular_motion_publisher_node"");
+    ros::NodeHandle nh;
+
+    CircularMotionPublisher circularMotionPublisher(nh);
+    circularMotionPublisher.publishCircularMotion();
+
+    return 0;
+}",6.150380665348676
+118,Write a parameter ROS C++ that simulates and publishes the motion a differential drive robot in a robot of Rotation path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+#include <nav_msgs/Odometry.h>
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf/transform_broadcaster.h>
+
+class RotationPathSimulator {
+public:
+    RotationPathSimulator() : nh(""~"") {
+        nh.param<double>(""angular_speed"", angular_speed_, 0.5);
+        nh.param<double>(""radius"", radius_, 1.0);
+
+        cmd_vel_sub_ = nh.subscribe(""cmd_vel"", 1, &RotationPathSimulator::cmdVelCallback, this);
+        odom_pub_ = nh.advertise<nav_msgs::Odometry>(""odom"", 1);
+
+        current_time_ = ros::Time::now();
+        last_time_ = ros::Time::now();
+    }
+
+    void cmdVelCallback(const geometry_msgs::Twist::ConstPtr& msg) {
+        // Ignore cmd_vel messages as we are simulating circular motion
+    }
+
+    void run() {
+        ros::Rate rate(50.0); // 50Hz
+        while (ros::ok()) {
+            current_time_ = ros::Time::now();
+            double dt = (current_time_ - last_time_).toSec();
+
+            updateOdometry(dt);
+            publishOdometry();
+
+            last_time_ = current_time_;
+            rate.sleep();
+        }
+    }
+
+private:
+    ros::NodeHandle nh;
+    ros::Subscriber cmd_vel_sub_;
+    ros::Publisher odom_pub_;
+    tf::TransformBroadcaster odom_broadcaster_;
+
+    double angular_speed_;
+    double radius_;
+    double x_ = 0.0;
+    double y_ = 0.0;
+    double theta_ = 0.0;
+
+    ros::Time current_time_;
+    ros::Time last_time_;
+
+    void updateOdometry(double dt) {
+        // Calculate the change in pose from the circular motion
+        double delta_theta = angular_speed_ * dt;
+
+        // Update the robot's pose
+        theta_ += delta_theta;
+        x_ = radius_ * cos(theta_);
+        y_ = radius_ * sin(theta_);
+    }
+
+    void publishOdometry() {
+        // Publish the odometry message
+        nav_msgs::Odometry odom;
+        odom.header.stamp = current_time_;
+        odom.header.frame_id = ""odom"";
+        odom.child_frame_id = ""base_link"";
+        odom.pose.pose.position.x = x_;
+        odom.pose.pose.position.y = y_;
+
+        tf2::Quaternion q;
+        q.setRPY(0, 0, theta_);
+        odom.pose.pose.orientation.x = q.x();
+        odom.pose.pose.orientation.y = q.y();
+        odom.pose.pose.orientation.z = q.z();
+        odom.pose.pose.orientation.w = q.w();
+
+        odom_pub_.publish(odom);
+
+        // Broadcast the transform
+        geometry_msgs::TransformStamped odom_trans;
+        odom_trans.header.stamp = current_time_;
+        odom_trans.header.frame_id = ""odom"";
+        odom_trans.child_frame_id = ""base_link"";
+        odom_trans.transform.translation.x = x_;
+        odom_trans.transform.translation.y = y_;
+        odom_trans.transform.translation.z = 0.0;
+        odom_trans.transform.rotation.x = q.x();
+        odom_trans.transform.rotation.y = q.y();
+        odom_trans.transform.rotation.z = q.z();
+        odom_trans.transform.rotation.w = q.w();
+
+        odom_broadcaster_.sendTransform(odom_trans);
+    }
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""rotation_path_simulator_node"");
+    RotationPathSimulator simulator;
+    simulator.run();
+    
+    return 0;
+}",0
+119,Write a parameter ROS C++ that process simulates and publishes the motion a differential drive differential drive robot moving in in circular path.,"#include ""ros/ros.h""
+#include ""geometry_msgs/Twist.h""
+
+// Global variables
+double linear_velocity = 0.5; // m/s
+double angular_velocity = 0.5; // rad/s
+
+// Callback function to publish twist messages for the robot's motion
+void publishTwistMsgs(ros::Publisher pub_twist)
+{
+    ros::Rate loop_rate(10); // 10 Hz
+    geometry_msgs::Twist twist_msg;
+
+    while (ros::ok())
+    {
+        twist_msg.linear.x = linear_velocity;
+        twist_msg.angular.z = angular_velocity;
+
+        pub_twist.publish(twist_msg);
+
+        ros::spinOnce();
+        loop_rate.sleep();
+    }
+}
+
+int main(int argc, char **argv)
+{
+    ros::init(argc, argv, ""circular_motion_node"");
+    ros::NodeHandle nh;
+
+    ros::Publisher pub_twist = nh.advertise<geometry_msgs::Twist>(""cmd_vel"", 10);
+
+    // Call the function to publish twist messages
+    publishTwistMsgs(pub_twist);
+
+    return 0;
+}",5.8938289327414655
+121,Write a parameter C++ that simulates and publishes the motion a differential drive robot moving in a robot execution circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class CircularMotionNode {
+public:
+    CircularMotionNode() : nh(""~"") {
+        double linear_speed, angular_speed, radius;
+
+        nh.param(""linear_speed"", linear_speed, 0.1);
+        nh.param(""angular_speed"", angular_speed, 0.1);
+        nh.param(""radius"", radius, 1.0);
+
+        vel_pub = nh.advertise<geometry_msgs::Twist>(""/cmd_vel"", 10);
+
+        double angular_vel = linear_speed / radius;
+
+        // Set the angular velocity to achieve circular motion
+        vel_msg.angular.z = angular_vel;
+        vel_msg.linear.x = linear_speed;
+
+        ros::Rate loop_rate(10);
+
+        while (ros::ok()) {
+            vel_pub.publish(vel_msg);
+
+            // Sleep to control the publishing rate
+            loop_rate.sleep();
+        }
+    }
+
+private:
+    ros::NodeHandle nh;
+    ros::Publisher vel_pub;
+    geometry_msgs::Twist vel_msg;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""circular_motion_node"");
+
+    CircularMotionNode circular_motion_node;
+
+    ros::spin();
+
+    return 0;
+}",6.148039406446248
+122,Write a parameter ROS C++ that simulates robot and publishes the motion a differential drive robot moving robot moving in in circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class CircularMotionNode {
+public:
+    CircularMotionNode() {
+        ros::NodeHandle nh;
+        
+        // Initialize parameters
+        nh.param<double>(""/robot_radius"", robot_radius, 0.5); // Radius of circular path
+        nh.param<double>(""/angular_speed"", angular_speed, 0.5); // Angular speed of the robot
+        
+        // Create publisher for cmd_vel topic
+        vel_pub = nh.advertise<geometry_msgs::Twist>(""cmd_vel"", 10);
+        
+        // Set loop rate for publishing the twist messages
+        ros::Rate loop_rate(10);
+
+        while (ros::ok()) {
+            geometry_msgs::Twist vel_msg;
+            
+            // Calculate linear velocity to move in a circular path
+            vel_msg.linear.x = robot_radius * angular_speed; 
+            vel_msg.angular.z = angular_speed;
+
+            vel_pub.publish(vel_msg);
+
+            ros::spinOnce();
+            loop_rate.sleep();
+        }
+    }
+
+private:
+    ros::NodeHandle nh;
+    ros::Publisher vel_pub;
+    double robot_radius;
+    double angular_speed;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""circular_motion_node"");
+
+    CircularMotionNode circularMotionNode;
+
+    ros::spin();
+
+    return 0;
+}",5.750453775000651
+124,Write a parameter ROS C++ that simulates and publishes the motion a differential drive robot moving in a machine of Rotation path.,"#include ""ros/ros.h""
+#include ""geometry_msgs/Twist.h""
+
+class DifferentialDriveRobot {
+public:
+    DifferentialDriveRobot() : nh_(""~"") {
+        nh_.param<double>(""linear_velocity"", linear_vel_, 0.1);
+        nh_.param<double>(""angular_velocity"", angular_vel_, 0.1);
+
+        cmd_pub_ = nh_.advertise<geometry_msgs::Twist>(""/cmd_vel"", 10);
+    }
+
+    void moveInRotationPath() {
+        ros::Rate rate(10); // 10 Hz
+        double current_time = ros::Time::now().toSec();
+        double initial_angle = 0.0;
+
+        while (ros::ok()) {
+            double elapsed_time = ros::Time::now().toSec() - current_time;
+            double angular_distance = angular_vel_ * elapsed_time;
+            double linear_distance = 2.0 * M_PI * 0.5; // Circumference of the rotation path (r = 0.5)
+
+            geometry_msgs::Twist cmd;
+            cmd.linear.x = linear_vel_;
+            cmd.angular.z = angular_vel_;
+
+            if (angular_distance >= 2.0 * M_PI) {
+                cmd.linear.x = 0.0;
+                cmd.angular.z = 0.0;
+                cmd_pub_.publish(cmd);
+                break;
+            }
+
+            cmd_pub_.publish(cmd);
+            rate.sleep();
+        }
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher cmd_pub_;
+    double linear_vel_;
+    double angular_vel_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""differential_drive_robot"");
+
+    DifferentialDriveRobot robot;
+    robot.moveInRotationPath();
+
+    return 0;
+}",5.906477429839253
+125,Write a message parameter ROS C++ that task simulates and publishes the motion a differential drive robot moving robot moving in in circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class CircularMotionSimulator {
+public:
+    CircularMotionSimulator() : nh_(""~"") {
+        nh_.param(""angular_vel"", angular_vel_, 0.5); // Default angular velocity 0.5 rad/s
+        nh_.param(""radius"", radius_, 1.0); // Default radius 1.0 meter
+        
+        pub_ = nh_.advertise<geometry_msgs::Twist>(""/cmd_vel"", 10);
+    }
+    
+    void publishCircularMotion() {
+        ros::Rate loop_rate(10); // Publish at 10 Hz
+        
+        while (ros::ok()) {
+            geometry_msgs::Twist msg;
+            msg.linear.x = 0.0;
+            msg.linear.y = 0.0;
+            msg.linear.z = 0.0;
+            msg.angular.x = 0.0;
+            msg.angular.y = 0.0;
+            msg.angular.z = angular_vel_;
+            
+            pub_.publish(msg);
+            
+            ros::spinOnce();
+            loop_rate.sleep();
+        }
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher pub_;
+    double angular_vel_;
+    double radius_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""circular_motion_simulator"");
+    
+    CircularMotionSimulator motion_simulator;
+    motion_simulator.publishCircularMotion();
+    
+    return 0;
+}",6.151527845651575
+126,control Write a parameter ROS C++ that simulates and publishes the motion a differential robot drive robot moving in moving in in circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class CircleMotionController {
+private:
+    ros::NodeHandle nh;
+    ros::Publisher cmd_vel_pub;
+    
+    double circle_radius;
+    double linear_vel;
+    double angular_vel;
+
+public:
+    CircleMotionController() : nh(""~"") {
+        nh.param(""circle_radius"", circle_radius, 1.0);
+        nh.param(""linear_velocity"", linear_vel, 0.2);
+        nh.param(""angular_velocity"", angular_vel, 0.1);
+        
+        cmd_vel_pub = nh.advertise<geometry_msgs::Twist>(""/cmd_vel"", 10);
+    }
+
+    void moveRobot() {
+        ros::Rate loop_rate(10);
+
+        while (ros::ok()) {
+            geometry_msgs::Twist vel_msg;
+            vel_msg.linear.x = linear_vel;
+            vel_msg.angular.z = linear_vel / circle_radius;
+
+            cmd_vel_pub.publish(vel_msg);
+
+            ros::spinOnce();
+            loop_rate.sleep();
+        }
+    }
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""circle_motion_controller"");
+
+    CircleMotionController controller;
+
+    controller.moveRobot();
+
+    return 0;
+}",6.150004571139581
+127,Write a parameter ROS C++ that simulates and publishes navigation the motion a differential drive robot moving message robot moving in in circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class CircularMotionController {
+public:
+    CircularMotionController(ros::NodeHandle& nh) : nh_(nh) {
+        // Initialize publisher for cmd_vel topic
+        cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>(""cmd_vel"", 10);
+
+        // Get parameters
+        nh_.param(""angular_vel"", angular_vel_, 0.5); // default angular velocity: 0.5 rad/s
+        nh_.param(""linear_vel"", linear_vel_, 0.2); // default linear velocity: 0.2 m/s
+
+        // Define timer callback function
+        timer_ = nh_.createTimer(ros::Duration(0.1), &CircularMotionController::timerCallback, this);
+    }
+
+    void timerCallback(const ros::TimerEvent& event) {
+        geometry_msgs::Twist msg;
+        msg.linear.x = linear_vel_;
+        msg.angular.z = angular_vel_;
+        cmd_vel_pub_.publish(msg);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher cmd_vel_pub_;
+    ros::Timer timer_;
+
+    double angular_vel_;
+    double linear_vel_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""circular_motion_node"");
+    ros::NodeHandle nh;
+
+    CircularMotionController controller(nh);
+
+    ros::spin();
+
+    return 0;
+}",6.147439947970204
+128,Write a parameter ROS C++ that simulates and publishes the motion a robot differential drive robot moving robot moving in in circular path.,"#include ""ros/ros.h""
+#include ""geometry_msgs/Twist.h""
+
+class CircularMotionSimulator
+{
+public:
+    CircularMotionSimulator() : nh_(""~"")
+    {
+        nh_.param(""radius"", radius_, 1.0);
+        nh_.param(""angular_speed"", angularSpeed_, 0.5);
+
+        cmdVelPub_ = nh_.advertise<geometry_msgs::Twist>(""/cmd_vel"", 10);
+
+        timer_ = nh_.createTimer(ros::Duration(0.1), &CircularMotionSimulator::timerCallback, this);
+    }
+
+    void timerCallback(const ros::TimerEvent& event)
+    {
+        geometry_msgs::Twist cmdVel;
+        cmdVel.linear.x = 0.0;
+        cmdVel.linear.y = 0.0;
+        cmdVel.linear.z = 0.0;
+        cmdVel.angular.x = 0.0;
+        cmdVel.angular.y = 0.0;
+        cmdVel.angular.z = angularSpeed_;
+
+        cmdVelPub_.publish(cmdVel);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher cmdVelPub_;
+    ros::Timer timer_;
+
+    double radius_;
+    double angularSpeed_;
+};
+
+int main(int argc, char** argv)
+{
+    ros::init(argc, argv, ""circular_motion_simulator"");
+
+    CircularMotionSimulator motionSimulator;
+
+    ros::spin();
+
+    return 0;
+}",6.64947778230939
+129,Write a parameter ROS C++ that simulates and publishes the motion a differential drive robot localization moving in a robot of Rotation spin mapping (ICR).,"#include ""ros/ros.h""
+#include ""geometry_msgs/Twist.h""
+#include ""geometry_msgs/Pose2D.h""
+
+class DifferentialDriveRobotICR
+{
+public:
+    DifferentialDriveRobotICR()
+    {
+        // Initialize node handle
+        nh = ros::NodeHandle(""~"");
+
+        // Subscribe to cmd_vel topic
+        cmd_vel_sub = nh.subscribe(""cmd_vel"", 1, &DifferentialDriveRobotICR::cmdVelCallback, this);
+
+        // Publish robot's pose
+        robot_pose_pub = nh.advertise<geometry_msgs::Pose2D>(""robot_pose"", 1);
+
+        // Initialize robot pose
+        robot_pose.x = 0.0;
+        robot_pose.y = 0.0;
+        robot_pose.theta = 0.0;
+    }
+
+    void cmdVelCallback(const geometry_msgs::Twist::ConstPtr& cmd_vel)
+    {
+        // Update robot pose based on cmd_vel input (for simplicity, linear and angular velocities are treated independently)
+        robot_pose.x += cmd_vel->linear.x * cos(robot_pose.theta);
+        robot_pose.y += cmd_vel->linear.x * sin(robot_pose.theta);
+        robot_pose.theta += cmd_vel->angular.z;
+    
+        // Publish robot pose
+        robot_pose_pub.publish(robot_pose);
+    }
+
+private:
+    ros::NodeHandle nh;
+    ros::Subscriber cmd_vel_sub;
+    ros::Publisher robot_pose_pub;
+    geometry_msgs::Pose2D robot_pose;
+};
+
+int main(int argc, char **argv)
+{
+    ros::init(argc, argv, ""differential_drive_robot_icr"");
+
+    DifferentialDriveRobotICR robot;
+
+    ros::spin();
+
+    return 0;
+}",0.949132986836017
+131,Write a parameter ROS C++ that simulates and publishes the motion a differential drive robot moving robot moving in node in circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class CircularMotionNode {
+public:
+    CircularMotionNode() {
+        // Initialize ROS node handle
+        nh = ros::NodeHandle();
+
+        // Advertise the velocity command topic
+        vel_pub = nh.advertise<geometry_msgs::Twist>(""cmd_vel"", 10);
+
+        // Get parameters for circular motion
+        double linear_vel, angular_vel;
+        nh.param<double>(""linear_velocity"", linear_vel, 0.2);
+        nh.param<double>(""angular_velocity"", angular_vel, 0.5);
+
+        // Set the velocity command for circular motion
+        vel_cmd.linear.x = linear_vel;
+        vel_cmd.angular.z = angular_vel;
+
+        // Publish the velocity command in a loop
+        publishTimer = nh.createTimer(ros::Duration(0.1), &CircularMotionNode::publishVelocity, this);
+    }
+
+    void publishVelocity(const ros::TimerEvent& event) {
+        vel_pub.publish(vel_cmd);
+    }
+
+private:
+    ros::NodeHandle nh;
+    ros::Publisher vel_pub;
+    geometry_msgs::Twist vel_cmd;
+    ros::Timer publishTimer;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""circular_motion_node"");
+
+    CircularMotionNode node;
+
+    ros::spin();
+
+    return 0;
+}",5.897561593410563
+132,Write a parameter ROS C++ that simulates and publishes the a differential drive mapping robot moving in in a execution circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+// Global Variables
+ros::Publisher cmd_vel_pub;
+bool clockwise = true; // Define the direction of the circular path
+
+// Function to publish twist messages for robot movement
+void moveRobot(float linear_speed, float angular_speed) {
+    geometry_msgs::Twist msg;
+    msg.linear.x = linear_speed;
+    msg.angular.z = angular_speed;
+    cmd_vel_pub.publish(msg);
+}
+
+int main(int argc, char** argv) {
+    // Initialize the ROS node
+    ros::init(argc, argv, ""circular_path_node"");
+    ros::NodeHandle nh;
+
+    // Define the publisher for velocity commands
+    cmd_vel_pub = nh.advertise<geometry_msgs::Twist>(""cmd_vel"", 10);
+
+    // Set the loop rate
+    ros::Rate loop_rate(10); // 10Hz
+
+    // Define the speeds for linear and angular movements
+    float linear_speed = 0.2; // m/s
+    float angular_speed = 0.5; // rad/s
+
+    while (ros::ok()) {
+        if (clockwise) {
+            moveRobot(linear_speed, -angular_speed); // Circular path in clockwise direction
+        } else {
+            moveRobot(linear_speed, angular_speed); // Circular path in anti-clockwise direction
+        }
+
+        ros::spinOnce();
+        loop_rate.sleep();
+    }
+
+    return 0;
+}",5.520120650448538
+133,Write a parameter ROS C++ that simulates and publishes the sensor motion a differential drive robot moving robot moving in in circular path.,"#include <ros/ros.h>
+#include <sensor_msgs/LaserScan.h>
+#include <cmath>
+
+class CircularPathSimulator
+{
+private:
+    ros::NodeHandle nh;
+    ros::Publisher sensor_pub;
+    sensor_msgs::LaserScan laser_scan;
+
+public:
+    CircularPathSimulator()
+    {
+        sensor_pub = nh.advertise<sensor_msgs::LaserScan>(""/sensor_data"", 10);
+        
+        // Setup laser scan message
+        laser_scan.header.frame_id = ""base_link"";
+        laser_scan.angle_min = -M_PI/2;
+        laser_scan.angle_max = M_PI/2;
+        laser_scan.angle_increment = 0.1;
+        laser_scan.range_min = 0.0;
+        laser_scan.range_max = 10.0;
+    }
+
+    void publishSensorData()
+    {
+        ros::Rate loop_rate(10); // Publish at 10Hz
+
+        while (ros::ok())
+        {
+            double theta = 0.0; // Start at 0 radians
+            for (int i = 0; i < 180; ++i)
+            {
+                laser_scan.ranges.push_back(std::abs(std::sin(theta))); // Simulate sensor reading
+                theta += laser_scan.angle_increment;
+            }
+
+            sensor_pub.publish(laser_scan);
+            ros::spinOnce();
+            loop_rate.sleep();
+        }
+    }
+};
+
+int main(int argc, char **argv)
+{
+    ros::init(argc, argv, ""circular_path_simulator_node"");
+
+    CircularPathSimulator simulator;
+    
+    simulator.publishSensorData();
+
+    return 0;
+}",5.9012553882031735
+134,Write a parameter C++ that simulates and publishes motion a differential drive robot moving robot in in circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class CircularMotionNode {
+public:
+    CircularMotionNode() : nh_(""~"") {
+        nh_.param(""linear_speed"", linear_speed_, 0.2);
+        nh_.param(""angular_speed"", angular_speed_, 0.5);
+        nh_.param(""circle_radius"", circle_radius_, 1.0);
+
+        cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>(""/cmd_vel"", 10);
+    }
+
+    void run() {
+        ros::Rate loop_rate(10); // 10Hz
+
+        while (ros::ok()) {
+            geometry_msgs::Twist msg;
+            msg.linear.x = linear_speed_;
+            msg.angular.z = linear_speed_ / circle_radius_;
+
+            cmd_vel_pub_.publish(msg);
+
+            ros::spinOnce();
+            loop_rate.sleep();
+        }
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher cmd_vel_pub_;
+
+    double linear_speed_;
+    double angular_speed_;
+    double circle_radius_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""circular_motion_node"");
+
+    CircularMotionNode node;
+    node.run();
+
+    return 0;
+}",6.148273420289689
+137,Write a parameter ROS C++ that simulates and publishes the motion a differential drive robot moving robot moving in in launch circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class DifferentialDriveRobot {
+public:
+    DifferentialDriveRobot() : nh_(""~"") {
+        nh_.param<double>(""angular_speed"", angular_speed_, 0.5);
+        nh_.param<double>(""linear_speed"", linear_speed_, 0.2);
+
+        cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>(""cmd_vel"", 10);
+    }
+
+    void moveInCircularPath() {
+        ros::Rate loop_rate(10); // 10Hz control loop
+
+        while (ros::ok()) {
+            geometry_msgs::Twist msg;
+            msg.linear.x = linear_speed_;
+            msg.angular.z = angular_speed_;
+
+            cmd_vel_pub_.publish(msg);
+
+            ros::spinOnce();
+            loop_rate.sleep();
+        }
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher cmd_vel_pub_;
+    double angular_speed_;
+    double linear_speed_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""differential_drive_robot_node"");
+
+    DifferentialDriveRobot robot;
+    robot.moveInCircularPath();
+
+    return 0;
+}",6.146857275336348
+138,Write a parameter ROS C++ that simulates and publishes the motion a differential drive bot moving robot moving in in circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+ros::Publisher cmd_vel_pub;
+
+void moveInCircularPath()
+{
+    geometry_msgs::Twist msg;
+    msg.linear.x = 0.2;  // set linear velocity
+    msg.angular.z = 0.5;  // set angular velocity
+
+    ros::Rate rate(10); // 10 Hz
+
+    while (ros::ok())
+    {
+        cmd_vel_pub.publish(msg);
+        ros::spinOnce();
+        rate.sleep();
+    }
+}
+
+int main(int argc, char **argv)
+{
+    ros::init(argc, argv, ""circular_motion_node"");
+    ros::NodeHandle nh;
+
+    cmd_vel_pub = nh.advertise<geometry_msgs::Twist>(""/cmd_vel"", 10);
+
+    moveInCircularPath();
+
+    return 0;
+}",6.136924159976548
+139,Write a parameter ROS C++ that sensor simulates and publishes the motion a differential drive robot moving robot moving in in circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class CircularMotionSimulator {
+public:
+    CircularMotionSimulator() : nh_(""~"") {
+        nh_.param(""radius"", radius_, 1.0);
+        nh_.param(""angular_speed"", angular_speed_, 0.5);
+
+        cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>(""/cmd_vel"", 10);
+    }
+
+    void simulateCircularMotion() {
+        ros::Rate loop_rate(10);
+
+        while (ros::ok()) {
+            geometry_msgs::Twist msg;
+            msg.linear.x = angular_speed_ * radius_;
+            msg.angular.z = angular_speed_;
+
+            cmd_vel_pub_.publish(msg);
+
+            ros::spinOnce();
+            loop_rate.sleep();
+        }
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher cmd_vel_pub_;
+    double radius_;
+    double angular_speed_;
+};
+
+int main(int argc, char **argv) {
+    ros::init(argc, argv, ""circular_motion_simulator_node"");
+
+    CircularMotionSimulator simulator;
+    simulator.simulateCircularMotion();
+
+    return 0;
+}",6.147663653570165
+140,Write a parameter ROS C++ that simulates and task publishes the motion a differential drive robot moving robot moving in in circular path.,"#include ""ros/ros.h""
+#include ""geometry_msgs/Twist.h""
+
+class CircularMotionNode {
+public:
+    CircularMotionNode() : nh_(""~"") {
+        nh_.param(""radius"", radius_, 1.0); // Radius of the circular path
+        nh_.param(""linear_vel"", linear_vel_, 0.2); // Linear velocity of the robot
+        nh_.param(""angular_vel"", angular_vel_, linear_vel_ / radius_); // Calculate angular velocity based on radius
+
+        twist_pub_ = nh_.advertise<geometry_msgs::Twist>(""cmd_vel"", 10);
+
+        ros::Rate loop_rate(10);
+
+        while (ros::ok()) {
+            geometry_msgs::Twist twist_msg;
+            twist_msg.linear.x = linear_vel_;
+            twist_msg.angular.z = angular_vel_;
+
+            twist_pub_.publish(twist_msg);
+
+            ros::spinOnce();
+            loop_rate.sleep();
+        }
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher twist_pub_;
+    double radius_;
+    double linear_vel_;
+    double angular_vel_;
+};
+
+int main(int argc, char **argv) {
+    ros::init(argc, argv, ""circular_motion_node"");
+
+    CircularMotionNode circular_motion_node;
+
+    return 0;
+}",6.14698456838566
+141,Write a parameter ROS task C++ that simulates mapping and publishes the motion a differential drive automaton moving in in a circular path.,"// Include ROS library
+#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+// Define the class for the ROS Node
+class CircularMotionNode {
+public:
+    CircularMotionNode() : nh_(""~"") { // Constructor
+        // Initialize ROS NodeHandle
+        nh_.param<std::string>(""cmd_vel_topic"", cmd_vel_topic_, ""/cmd_vel""); // Set default topic if not provided
+        nh_.param<double>(""linear_speed"", linear_speed_, 0.5); // Set default linear speed if not provided
+        nh_.param<double>(""angular_speed"", angular_speed_, 0.5); // Set default angular speed if not provided
+
+        // Advertise to publish Twist messages
+        cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>(cmd_vel_topic_, 1);
+    }
+
+    ~CircularMotionNode() {} // Destructor
+
+    // Initialize motion in a circular path
+    void initializeCircularMotion() {
+        ros::Rate rate(10); // Set control loop rate
+
+        while (ros::ok()) {
+            // Create Twist message for motion
+            geometry_msgs::Twist twist_msg;
+            twist_msg.linear.x = linear_speed_;
+            twist_msg.angular.z = angular_speed_;
+
+            // Publish Twist message
+            cmd_vel_pub_.publish(twist_msg);
+
+            ros::spinOnce();
+            rate.sleep();
+        }
+    }
+
+private:
+    ros::NodeHandle nh_; // NodeHandle for the ROS Node
+
+    ros::Publisher cmd_vel_pub_; // Publisher to publish Twist messages
+
+    std::string cmd_vel_topic_; // Topic to publish Twist messages
+    double linear_speed_; // Linear speed for motion
+    double angular_speed_; // Angular speed for motion
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""circular_motion_node""); // Initialize ROS Node
+
+    CircularMotionNode circular_motion_node; // Create an instance of CircularMotionNode class
+
+    circular_motion_node.initializeCircularMotion(); // Initialize circular motion
+
+    return 0;
+}",5.407253956647292
+142,Write a parameter ROS C++ that simulates and robot publishes the motion a differential drive robot moving robot moving in in circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class CircularMotionNode {
+public:
+    CircularMotionNode() : nh_(""~"") {
+        nh_.param(""radius"", radius_, 1.0);
+        nh_.param(""angular_speed"", angular_speed_, 0.5);
+
+        cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>(""/cmd_vel"", 10);
+    }
+
+    void startMotion() {
+        ros::Rate rate(10); // 10 Hz
+        while (ros::ok()) {
+            geometry_msgs::Twist msg;
+            msg.linear.x = 0.0;
+            msg.linear.y = 0.0;
+            msg.linear.z = 0.0;
+            msg.angular.x = 0.0;
+            msg.angular.y = 0.0;
+            msg.angular.z = angular_speed_;
+
+            cmd_vel_pub_.publish(msg);
+
+            rate.sleep();
+        }
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher cmd_vel_pub_;
+    double radius_;
+    double angular_speed_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""circular_motion_node"");
+
+    CircularMotionNode circular_motion_node;
+    circular_motion_node.startMotion();
+
+    ros::spin();
+
+    return 0;
+}",6.150584060993262
+145,Write a parameter ROS C++ that simulates and publishes the motion a differential drive robot moving robot moving in in circular,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class DifferentialDriveRobot {
+public:
+    DifferentialDriveRobot() :
+            nh_(""~""), // private node handle for accessing private parameters
+            linear_speed_(0.2),
+            angular_speed_(0.5) {
+        // Get parameters from the ROS parameter server
+        nh_.param(""linear_speed"", linear_speed_, 0.2);
+        nh_.param(""angular_speed"", angular_speed_, 0.5);
+
+        // Advertise a Twist message on the cmd_vel topic
+        cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>(""cmd_vel"", 10);
+
+        // Create a timer to publish Twist messages
+        timer_ = nh_.createTimer(ros::Duration(0.1), &DifferentialDriveRobot::timerCallback, this);
+    }
+
+    void timerCallback(const ros::TimerEvent& event) {
+        // Create a Twist message with circular motion commands
+        geometry_msgs::Twist twist;
+        twist.linear.x = linear_speed_;
+        twist.angular.z = angular_speed_;
+
+        // Publish the Twist message
+        cmd_vel_pub_.publish(twist);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher cmd_vel_pub_;
+    ros::Timer timer_;
+    double linear_speed_;
+    double angular_speed_;
+};
+
+int main(int argc, char **argv) {
+    ros::init(argc, argv, ""differential_drive_robot_sim"");
+
+    DifferentialDriveRobot robot;
+
+    ros::spin();
+
+    return 0;
+}",6.148049819190662
+146,Write a parameter ROS C++ that simulates and publishes the motion a differential drive robot moving in a robot in in circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class CircularMotionNode {
+public:
+    CircularMotionNode() {
+        // Initialize ROS node handle
+        nh = ros::NodeHandle();
+        
+        // Create a publisher for publishing Twist messages
+        cmd_vel_pub = nh.advertise<geometry_msgs::Twist>(""/cmd_vel"", 10);
+        
+        // Set the loop rate to 10Hz
+        loop_rate = ros::Rate(10);
+    }
+
+    void publishCircularMotion() {
+        while(ros::ok()) {
+            geometry_msgs::Twist move_cmd;
+            move_cmd.linear.x = 0.2;  // Linear velocity (m/s)
+            move_cmd.angular.z = 0.5;  // Angular velocity (rad/s)
+            cmd_vel_pub.publish(move_cmd);
+
+            loop_rate.sleep();
+        }
+    }
+
+private:
+    ros::NodeHandle nh;
+    ros::Publisher cmd_vel_pub;
+    ros::Rate loop_rate;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""circular_motion_node"");
+    CircularMotionNode circular_motion_node;
+
+    circular_motion_node.publishCircularMotion();
+
+    return 0;
+}",0
+150,Write a parameter ROS C++ that simulates and publishes the node motion a differential drive robot moving robot moving in in circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class DifferentialDriveRobot {
+public:
+    DifferentialDriveRobot() : nh(""~"") {
+        nh.param<double>(""robot_radius"", robot_radius, 0.5);
+        nh.param<double>(""angular_speed"", angular_speed, 0.5);
+
+        cmd_vel_pub = nh.advertise<geometry_msgs::Twist>(""/cmd_vel"", 1);
+
+        timer = nh.createTimer(ros::Duration(0.1), &DifferentialDriveRobot::timerCallback, this);
+    }
+
+    void timerCallback(const ros::TimerEvent& event) {
+        geometry_msgs::Twist cmd_vel_msg;
+        cmd_vel_msg.linear.x = 0.0;
+        cmd_vel_msg.angular.z = angular_speed;
+
+        cmd_vel_pub.publish(cmd_vel_msg);
+    }
+
+private:
+    ros::NodeHandle nh;
+    ros::Publisher cmd_vel_pub;
+    ros::Timer timer;
+    double robot_radius;
+    double angular_speed;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""circular_motion_node"");
+    DifferentialDriveRobot robot;
+
+    ros::spin();
+
+    return 0;
+}",6.644527955602099
+151,Write a parameter ROS C++ that simulates and publishes the motion a differential drive automaton moving robot moving in in circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class CircularMotionNode {
+public:
+    CircularMotionNode() : nh_(""~"") {
+        nh_.getParam(""radius"", radius_);
+        nh_.getParam(""angular_speed"", angular_speed_);
+
+        cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>(""/cmd_vel"", 10);
+        
+        // Set the linear velocity to zero
+        cmd_vel_.linear.x = 0;
+        cmd_vel_.linear.y = 0;
+        cmd_vel_.linear.z = 0;
+        
+        // Calculate the linear velocity for the circular path
+        cmd_vel_.angular.z = angular_speed_;
+    }
+
+    void run() {
+        ros::Rate rate(10); // 10 Hz loop rate
+
+        while (ros::ok()) {
+            cmd_vel_pub_.publish(cmd_vel_);
+            ros::spinOnce();
+            rate.sleep();
+        }
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher cmd_vel_pub_;
+    geometry_msgs::Twist cmd_vel_;
+    double radius_;
+    double angular_speed_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""circular_motion_node"");
+
+    CircularMotionNode node;
+    node.run();
+    
+    return 0;
+}",5.900407850603367
+152,Write a parameter ROS C++ that simulates and publishes the motion a differential drive robot moving robot moving mapping in in circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class CircularMotionSimulator {
+public:
+    CircularMotionSimulator() : nh_(""~"") {
+        double radius; // radius of the circular path
+        double linear_vel; // linear velocity of the robot
+        double angular_vel; // angular velocity of the robot
+
+        nh_.param(""radius"", radius, 1.0);
+        nh_.param(""linear_velocity"", linear_vel, 0.1);
+        nh_.param(""angular_velocity"", angular_vel, linear_vel / radius);
+
+        cmd_pub_ = nh_.advertise<geometry_msgs::Twist>(""/cmd_vel"", 10);
+        
+        timer_ = nh_.createTimer(ros::Duration(0.1), &CircularMotionSimulator::publishTwist, this);
+
+        // Initialize twist message
+        twist_msg_.linear.x = linear_vel;
+        twist_msg_.angular.z = angular_vel;
+    }
+
+    void publishTwist(const ros::TimerEvent& event) {
+        cmd_pub_.publish(twist_msg_);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher cmd_pub_;
+    ros::Timer timer_;
+    geometry_msgs::Twist twist_msg_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""circular_motion_simulator"");
+    
+    CircularMotionSimulator circular_motion_simulator;
+    
+    ros::spin();
+    
+    return 0;
+}",6.648464729465173
+154,Write a parameter ROS C++ that simulates and publishes the motion a drive robot moving robot moving in in circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+#include <nav_msgs/Odometry.h>
+#include <tf/transform_broadcaster.h>
+#include <math.h>
+
+class CircularMotionSimulator {
+public:
+    CircularMotionSimulator() {
+        ros::NodeHandle nh;
+        cmd_vel_sub_ = nh.subscribe(""cmd_vel"", 10, &CircularMotionSimulator::cmdVelCallback, this);
+        odom_pub_ = nh.advertise<nav_msgs::Odometry>(""odom"", 50);
+        current_time_ = ros::Time::now();
+        last_time_ = ros::Time::now();
+    }
+
+    void cmdVelCallback(const geometry_msgs::Twist::ConstPtr& msg) {
+        double linear_vel = msg->linear.x;
+        double angular_vel = msg->angular.z;
+
+        // Update odometry
+        updateOdometry(linear_vel, angular_vel);
+    }
+
+    void updateOdometry(double linear_vel, double angular_vel) {
+        current_time_ = ros::Time::now();
+        double dt = (current_time_ - last_time_).toSec();
+
+        double delta_theta = angular_vel * dt;
+        double delta_x = linear_vel * cos(theta_) * dt;
+        double delta_y = linear_vel * sin(theta_) * dt;
+
+        x_ += delta_x;
+        y_ += delta_y;
+        theta_ += delta_theta;
+
+        // Publish odometry message
+        nav_msgs::Odometry odom;
+        odom.header.stamp = current_time_;
+        odom.header.frame_id = ""odom"";
+        odom.pose.pose.position.x = x_;
+        odom.pose.pose.position.y = y_;
+        odom.pose.pose.orientation.w = cos(theta_ / 2);
+        odom.pose.pose.orientation.z = sin(theta_ / 2);
+
+        odom_pub_.publish(odom);
+
+        // Broadcast transform
+        geometry_msgs::TransformStamped odom_trans;
+        odom_trans.header.stamp = current_time_;
+        odom_trans.header.frame_id = ""odom"";
+        odom_trans.child_frame_id = ""base_link"";
+        odom_trans.transform.translation.x = x_;
+        odom_trans.transform.translation.y = y_;
+        odom_trans.transform.rotation = odom.pose.pose.orientation;
+
+        tf_broadcaster_.sendTransform(odom_trans);
+
+        last_time_ = current_time_;
+    }
+
+private:
+    ros::Subscriber cmd_vel_sub_;
+    ros::Publisher odom_pub_;
+    tf::TransformBroadcaster tf_broadcaster_;
+
+    double x_ = 0.0;
+    double y_ = 0.0;
+    double theta_ = 0.0;
+
+    ros::Time current_time_;
+    ros::Time last_time_;
+};
+
+int main(int argc, char **argv) {
+    ros::init(argc, argv, ""circular_motion_simulator"");
+    CircularMotionSimulator circular_motion_simulator;
+    ros::spin();
+
+    return 0;
+}",0
+158,sensor Write a parameter ROS C++ that simulates and publishes the motion a differential drive robot moving machine moving in in circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class CircularMotionPublisher {
+public:
+    CircularMotionPublisher() {
+        cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>(""cmd_vel"", 1);
+        timer_ = nh_.createTimer(ros::Duration(0.1), &CircularMotionPublisher::timerCallback, this);
+        
+        radius_ = 1.0; // radius of the circular path
+        linear_speed_ = 0.1; // linear speed of the robot
+        angular_speed_ = linear_speed_ / radius_; // calculate angular speed based on linear speed and radius
+    }
+
+    void timerCallback(const ros::TimerEvent& event) {
+        geometry_msgs::Twist cmd_vel;
+        cmd_vel.linear.x = linear_speed_;
+        cmd_vel.angular.z = angular_speed_;
+        cmd_vel_pub_.publish(cmd_vel);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher cmd_vel_pub_;
+    ros::Timer timer_;
+    double radius_;
+    double linear_speed_;
+    double angular_speed_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""circular_motion_publisher"");
+    CircularMotionPublisher circular_motion_publisher;
+
+    ros::spin();
+
+    return 0;
+}",6.64821594215619
+161,Write a parameter C++ parameter interface program that simulates and publishes the motion a execution differential drive robot moving in a circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class CircularMotionRobot {
+public:
+    CircularMotionRobot() {
+        nh.getParam(""/robot_radius"", robot_radius);
+        nh.getParam(""/linear_speed"", linear_speed);
+
+        vel_pub = nh.advertise<geometry_msgs::Twist>(""/cmd_vel"", 10);
+
+        // Initialize velocity message
+        vel_cmd.linear.x = linear_speed;
+        vel_cmd.angular.z = linear_speed / robot_radius;
+
+        timer = nh.createTimer(ros::Duration(0.1), &CircularMotionRobot::publishVelocity, this);
+    }
+
+    void publishVelocity(const ros::TimerEvent&) {
+        vel_pub.publish(vel_cmd);
+    }
+
+private:
+    ros::NodeHandle nh;
+    ros::Publisher vel_pub;
+    ros::Timer timer;
+    double robot_radius;
+    double linear_speed;
+    geometry_msgs::Twist vel_cmd;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""circular_motion_robot_node"");
+    
+    CircularMotionRobot robot;
+    
+    ros::spin();
+
+    return 0;
+}",6.645395575376821
+162,Write a parameter ROS C++ that simulates and publishes the motion a differential drive robot robot moving in in circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class CircularMotionNode {
+public:
+    CircularMotionNode() : nh(""~"") {
+        // Initialize node handle
+        nh.param<double>(""radius"", radius, 1.0);  // Default radius is 1.0
+        nh.param<double>(""angular_velocity"", angularVelocity, 0.5);  // Default angular velocity is 0.5
+        cmdVelPub = nh.advertise<geometry_msgs::Twist>(""cmd_vel"", 10);
+
+        // Set up timer for publishing motion commands
+        timer = nh.createTimer(ros::Duration(0.1), &CircularMotionNode::timerCallback, this);
+    }
+
+private:
+    ros::NodeHandle nh;
+    ros::Publisher cmdVelPub;
+    ros::Timer timer;
+    double radius;
+    double angularVelocity;
+
+    void timerCallback(const ros::TimerEvent&) {
+        geometry_msgs::Twist cmdVelMsg;
+        cmdVelMsg.linear.x = 0.0;
+        cmdVelMsg.linear.y = 0.0;
+        cmdVelMsg.linear.z = 0.0;
+        cmdVelMsg.angular.x = 0.0;
+        cmdVelMsg.angular.y = 0.0;
+        cmdVelMsg.angular.z = angularVelocity;
+
+        cmdVelPub.publish(cmdVelMsg);
+    }
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""circular_motion_node"");
+    CircularMotionNode node;
+
+    ros::spin();
+
+    return 0;
+}",6.14963034943017
+163,Write a factor system ROS C++ that simulates and publishes the motion a differential drive robot moving robot moving in in circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class CircularMotionSimulator {
+public:
+    CircularMotionSimulator() : nh_(), linear_vel_(0.5), angular_vel_(1.0), radius_(1.0) {
+        cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>(""cmd_vel"", 10);
+    }
+
+    void moveInCircularPath() {
+        ros::Rate loop_rate(10);
+
+        while (ros::ok()) {
+            geometry_msgs::Twist twist_msg;
+            twist_msg.linear.x = linear_vel_;
+            twist_msg.angular.z = angular_vel_;
+            cmd_vel_pub_.publish(twist_msg);
+            ros::spinOnce();
+            loop_rate.sleep();
+        }
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher cmd_vel_pub_;
+    double linear_vel_;
+    double angular_vel_;
+    double radius_;
+};
+
+int main(int argc, char **argv) {
+    ros::init(argc, argv, ""circular_motion_simulator_node"");
+
+    CircularMotionSimulator simulator;
+    simulator.moveInCircularPath();
+
+    return 0;
+}",6.147651766271752
+164,Write a variable ROS C++ that simulates and publishes the motion a differential drive robot moving in a robot of circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class DifferentialDriveRobot {
+public:
+    DifferentialDriveRobot() {
+        cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>(""/cmd_vel"", 1);
+        timer_ = nh_.createTimer(ros::Duration(0.1), &DifferentialDriveRobot::timerCallback, this);
+        current_angle_ = 0.0;
+    }
+
+    void timerCallback(const ros::TimerEvent& event) {
+        geometry_msgs::Twist twist;
+        twist.linear.x = 1.0; // constant linear velocity
+        twist.angular.z = 1.0; // constant angular velocity
+
+        cmd_vel_pub_.publish(twist);
+
+        current_angle_ += twist.angular.z * 0.1; // Update the current angle
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher cmd_vel_pub_;
+    ros::Timer timer_;
+    double current_angle_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""differential_drive_robot"");
+    DifferentialDriveRobot differential_drive_robot;
+
+    ros::spin();
+
+    return 0;
+}",6.6456488422416164
+166,Write a component ROS C++ task that simulates queue and publishes the motion a differential drive robot moving in a in in circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class RobotMotionPublisher {
+public:
+    RobotMotionPublisher() : nh_(""""), private_nh_(""~""), linear_speed_(0.2), angular_speed_(0.5) {
+        motion_pub_ = nh_.advertise<geometry_msgs::Twist>(""cmd_vel"", 10);
+    }
+
+    void run() {
+        ros::Rate loop_rate(10);
+
+        while (ros::ok()) {
+            geometry_msgs::Twist twist_msg;
+            twist_msg.linear.x = linear_speed_;
+            twist_msg.angular.z = angular_speed_;
+
+            motion_pub_.publish(twist_msg);
+
+            loop_rate.sleep();
+        }
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::NodeHandle private_nh_;
+    ros::Publisher motion_pub_;
+    double linear_speed_;
+    double angular_speed_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""robot_motion_publisher_node"");
+
+    RobotMotionPublisher robot_motion_publisher;
+    robot_motion_publisher.run();
+
+    return 0;
+}",6.147497657767373
+167,Write a parameter ROS C++ that simulates and the motion a differential drive robot moving robot moving in in circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class CircularMotion
+{
+public:
+    CircularMotion()
+    {
+        // Initialize node handle
+        nh = ros::NodeHandle();
+
+        // Create publisher to publish velocity commands
+        cmd_vel_pub = nh.advertise<geometry_msgs::Twist>(""/cmd_vel"", 10);
+
+        // Set parameters for circular motion
+        nh.param(""linear_speed"", linear_speed, 0.5); // linear speed in m/s
+        nh.param(""angular_speed"", angular_speed, 0.5); // angular speed in rad/s
+    }
+
+    void moveInCircle()
+    {
+        ros::Rate loop_rate(10); // 10Hz
+
+        while (ros::ok())
+        {
+            geometry_msgs::Twist vel_msg;
+            vel_msg.linear.x = linear_speed;
+            vel_msg.angular.z = angular_speed;
+
+            cmd_vel_pub.publish(vel_msg);
+
+            ros::spinOnce();
+            loop_rate.sleep();
+        }
+    }
+
+private:
+    ros::NodeHandle nh;
+    ros::Publisher cmd_vel_pub;
+    double linear_speed;
+    double angular_speed;
+};
+
+int main(int argc, char **argv)
+{
+    ros::init(argc, argv, ""circular_motion_node"");
+
+    CircularMotion circular_motion;
+
+    circular_motion.moveInCircle();
+
+    return 0;
+}",5.899353270097965
+168,Write a parameter ROS C++ that simulates and publishes the motion differential drive robot moving in moving in in circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class CircularMotionController {
+public:
+    CircularMotionController() {
+        cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>(""/cmd_vel"", 10);
+        // Radius of the circular path
+        radius_ = 1.0;
+        // Linear velocity of the robot
+        linear_speed_ = 0.1;
+        // Angular velocity of the robot
+        angular_speed_ = linear_speed_ / radius_;
+    }
+
+    void moveInCircularPath() {
+        ros::Rate loop_rate(10); // 10Hz loop rate
+        while (ros::ok()) {
+            geometry_msgs::Twist twist_msg;
+            twist_msg.linear.x = linear_speed_;
+            twist_msg.angular.z = angular_speed_;
+            cmd_vel_pub_.publish(twist_msg);
+            ros::spinOnce();
+            loop_rate.sleep();
+        }
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher cmd_vel_pub_;
+    double radius_;
+    double linear_speed_;
+    double angular_speed_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""circular_motion_controller"");
+    
+    CircularMotionController controller;
+    controller.moveInCircularPath();
+
+    return 0;
+}",6.150651153923464
+169,control Write a parameter ROS C++ that simulates system and publishes the motion a differential drive robot moving robot moving in in circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class CircularMotionSimulator {
+public:
+    CircularMotionSimulator() : nh_(""~"") {
+        nh_.param<double>(""linear_velocity"", linear_vel_, 0.5);  // Linear velocity of the robot
+        nh_.param<double>(""angular_velocity"", angular_vel_, 0.5);  // Angular velocity of the robot
+
+        cmd_pub_ = nh_.advertise<geometry_msgs::Twist>(""cmd_vel"", 10);
+        
+        // Set the initial velocities
+        twist_msg_.linear.x = linear_vel_;
+        twist_msg_.angular.z = angular_vel_;
+    }
+
+    void run() {
+        ros::Rate loop_rate(10);  // 10 Hz
+        
+        while (ros::ok()) {
+            cmd_pub_.publish(twist_msg_);
+            ros::spinOnce();
+            loop_rate.sleep();
+        }
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher cmd_pub_;
+    geometry_msgs::Twist twist_msg_;
+    double linear_vel_;
+    double angular_vel_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""circular_motion_simulator_node"");
+    
+    CircularMotionSimulator simulator;
+    simulator.run();
+
+    return 0;
+}",6.1479489393581765
+171,Write a parameter ROS C++ that simulates and publishes the motion a differential drive robot moving robot moving in circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class CircularMotionSimulator
+{
+public:
+    CircularMotionSimulator() : nh_(""~"")
+    {
+        // Initialize parameters
+        nh_.param(""radius"", radius_, 1.0); // Radius of the circular path
+        nh_.param(""angular_speed"", angular_speed_, 0.5); // Angular speed of the robot
+        nh_.param(""rate"", rate_, 10); // Publish rate
+
+        // Create publisher to publish Twist messages
+        cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>(""cmd_vel"", 10);
+
+        // Set up the loop rate
+        ros::Rate loop_rate(rate_);
+
+        // Main loop
+        while (ros::ok())
+        {
+            // Calculate linear and angular velocities for circular motion
+            double linear_velocity = 0.0;
+            double angular_velocity = angular_speed_;
+
+            // Create Twist message
+            geometry_msgs::Twist twist_msg;
+            twist_msg.linear.x = linear_velocity;
+            twist_msg.angular.z = angular_velocity;
+
+            // Publish Twist message
+            cmd_vel_pub_.publish(twist_msg);
+
+            ros::spinOnce();
+            loop_rate.sleep();
+        }
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher cmd_vel_pub_;
+    double radius_;
+    double angular_speed_;
+    int rate_;
+};
+
+int main(int argc, char** argv)
+{
+    ros::init(argc, argv, ""circular_motion_simulator_node"");
+    
+    CircularMotionSimulator circular_motion_simulator;
+    
+    ros::spin();
+
+    return 0;
+}",5.9001040324852205
+172,Write a parameter ROS C++ that simulates publishes the motion a differential drive robot moving robot moving in in circular path.,"#include ""ros/ros.h""
+#include ""geometry_msgs/Twist.h""
+
+class CircularMotionPublisher {
+public:
+    CircularMotionPublisher() : nh(""~"") {
+        nh.param(""radius"", radius, 1.0); // Default radius is 1.0 meter
+        nh.param(""angular_speed"", angularSpeed, 0.5); // Default angular speed is 0.5 rad/s
+
+        cmdVelPub = nh.advertise<geometry_msgs::Twist>(""/cmd_vel"", 10);
+    }
+
+    void publishMotion() {
+        ros::Rate rate(10); // 10 Hz
+
+        while (ros::ok()) {
+            geometry_msgs::Twist cmdVelMsg;
+            cmdVelMsg.linear.x = 0.0;
+            cmdVelMsg.angular.z = angularSpeed;
+
+            cmdVelPub.publish(cmdVelMsg);
+
+            rate.sleep();
+        }
+    }
+
+private:
+    ros::NodeHandle nh;
+    ros::Publisher cmdVelPub;
+
+    double radius;
+    double angularSpeed;
+};
+
+int main(int argc, char **argv) {
+    ros::init(argc, argv, ""circular_motion_publisher"");
+    
+    CircularMotionPublisher circularMotionPublisher;
+    circularMotionPublisher.publishMotion();
+
+    return 0;
+}",6.145557987746658
+173,Write a parameter ROS C++ that simulates and publishes the motion a differential drive control robot moving robot moving in in circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class CircularMotionController {
+private:
+    ros::NodeHandle nh;
+    ros::Publisher cmd_vel_pub;
+
+public:
+    CircularMotionController() {
+        cmd_vel_pub = nh.advertise<geometry_msgs::Twist>(""/cmd_vel"", 10);
+    }
+
+    void moveInCircularPath() {
+        geometry_msgs::Twist twist_msg;
+        twist_msg.linear.x = 0.2; // Set linear speed
+        twist_msg.angular.z = 0.5; // Set angular speed (for circular motion)
+
+        ros::Rate loop_rate(10); // Set control loop rate
+
+        while (ros::ok()) {
+            cmd_vel_pub.publish(twist_msg); // Publish Twist message
+
+            ros::spinOnce();
+            loop_rate.sleep();
+        }
+    }
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""circular_motion_controller"");
+    CircularMotionController controller;
+
+    controller.moveInCircularPath();
+
+    return 0;
+}",5.895719231719331
+174,Write a parameter ROS C++ that simulates and publishes the motion a differential drive machine moving robot moving in in circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class CircularMotionNode {
+public:
+    CircularMotionNode() : nh_(""~"") {
+        nh_.param(""radius"", radius_, 1.0); // Parameter for the radius of the circular path
+        nh_.param(""angular_velocity"", angular_velocity_, 0.5); // Parameter for the angular velocity of the robot
+        
+        vel_pub_ = nh_.advertise<geometry_msgs::Twist>(""/cmd_vel"", 10);
+        
+        timer_ = nh_.createTimer(ros::Duration(0.1), &CircularMotionNode::timerCallback, this);
+    }
+
+    void timerCallback(const ros::TimerEvent& event) {
+        geometry_msgs::Twist cmd_vel;
+        cmd_vel.linear.x = 0.0;
+        cmd_vel.angular.z = angular_velocity_;
+        vel_pub_.publish(cmd_vel);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher vel_pub_;
+    ros::Timer timer_;
+
+    double radius_;
+    double angular_velocity_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""circular_motion_node"");
+
+    CircularMotionNode circular_motion_node;
+
+    ros::spin();
+
+    return 0;
+}",5.896151340076852
+176,Write a parameter ROS C++ that simulates and publishes the motion a differential navigation drive robot moving robot moving in control in circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class CircularMotionController
+{
+public:
+    CircularMotionController()
+    {
+        ros::NodeHandle nh;
+
+        // Parameters
+        nh.param<double>(""linear_speed"", linear_speed_, 0.2); // default linear speed = 0.2 m/s
+        nh.param<double>(""angular_speed"", angular_speed_, 0.5); // default angular speed = 0.5 rad/s
+        nh.param<double>(""radius"", radius_, 1.0); // default radius = 1.0 meter
+
+        // Publisher
+        cmd_vel_pub_ = nh.advertise<geometry_msgs::Twist>(""cmd_vel"", 10);
+
+        // Timer for publishing commands
+        timer_ = nh.createTimer(ros::Duration(0.1), &CircularMotionController::timerCallback, this);
+    }
+
+private:
+    ros::NodeHandle nh;
+    ros::Publisher cmd_vel_pub_;
+    ros::Timer timer_;
+    double linear_speed_;
+    double angular_speed_;
+    double radius_;
+    double current_angle_ = 0.0;
+
+    void timerCallback(const ros::TimerEvent& event)
+    {
+        geometry_msgs::Twist cmd_vel_msg;
+        cmd_vel_msg.linear.x = linear_speed_;
+        cmd_vel_msg.angular.z = angular_speed_;
+
+        cmd_vel_pub_.publish(cmd_vel_msg);
+
+        // Update current angle
+        double distance = linear_speed_ * 0.1; // linear_speed * time_interval
+        current_angle_ += distance / radius_;
+    }
+};
+
+int main(int argc, char** argv)
+{
+    ros::init(argc, argv, ""circular_motion_controller_node"");
+    CircularMotionController controller;
+
+    ros::spin();
+
+    return 0;
+}",6.1469791230164095
+177,Write a parameter ROS C++ that simulates and publishes the motion a differential drive robot moving machine moving in in circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class CircularMotionSimulator {
+public:
+    CircularMotionSimulator() : nh_(""~"") {
+        nh_.param(""radius"", radius_, 1.0); // default radius is 1.0 unit
+        nh_.param(""angular_speed"", angular_speed_, 0.5); // default angular speed is 0.5 rad/s
+
+        cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>(""/cmd_vel"", 10);
+
+        timer_ = nh_.createTimer(ros::Duration(0.1), &CircularMotionSimulator::timerCallback, this);
+    }
+
+    void timerCallback(const ros::TimerEvent& event) {
+        geometry_msgs::Twist cmd_vel;
+        cmd_vel.linear.x = 0.0;
+        cmd_vel.linear.y = 0.0;
+        cmd_vel.angular.z = angular_speed_;
+
+        cmd_vel_pub_.publish(cmd_vel);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher cmd_vel_pub_;
+    ros::Timer timer_;
+    double radius_;
+    double angular_speed_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""circular_motion_simulator_node"");
+    CircularMotionSimulator circular_motion_simulator;
+    ros::spin();
+
+    return 0;
+}",6.645082129135952
+179,Write a variable ROS C++ that simulates and publishes the motion a differential drive robot moving robot moving in in circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class CircularMotionPublisher {
+public:
+    CircularMotionPublisher() {
+        cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>(""cmd_vel"", 10);
+        timer_ = nh_.createTimer(ros::Duration(0.1), &CircularMotionPublisher::timerCallback, this);
+        angular_vel_ = 0.5; // Angular velocity in rad/s
+        linear_vel_ = 0.2; // Linear velocity in m/s
+    }
+
+    void timerCallback(const ros::TimerEvent& event) {
+        geometry_msgs::Twist msg;
+        msg.linear.x = linear_vel_;
+        msg.angular.z = angular_vel_;
+        cmd_vel_pub_.publish(msg);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher cmd_vel_pub_;
+    ros::Timer timer_;
+    double angular_vel_;
+    double linear_vel_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""circular_motion_publisher"");
+    
+    CircularMotionPublisher circular_motion_publisher;
+
+    ros::spin();
+
+    return 0;
+}",6.64641461473591
+180,Write a parameter ROS C++ that simulates and publishes the motion a differential drive robot moving in a in circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class CircularMotionPublisher {
+public:
+    CircularMotionPublisher() {
+        // Initialize ROS node handle
+        nh = ros::NodeHandle();
+
+        // Create a publisher for cmd_vel topic
+        cmd_vel_pub = nh.advertise<geometry_msgs::Twist>(""cmd_vel"", 10);
+
+        // Parameters for circular motion
+        nh.param<double>(""/radius"", radius, 1.0);  // Radius of the circular path
+        nh.param<double>(""/angular_velocity"", angular_velocity, 1.0);  // Angular velocity of the robot
+
+        // Set up timer to publish twist messages
+        timer = nh.createTimer(ros::Duration(0.1), &CircularMotionPublisher::timerCallback, this);
+    }
+
+    void timerCallback(const ros::TimerEvent&) {
+        geometry_msgs::Twist msg;
+        msg.linear.x = 0.0;
+        msg.linear.y = 0.0;
+        msg.linear.z = 0.0;
+        msg.angular.x = 0.0;
+        msg.angular.y = 0.0;
+        msg.angular.z = angular_velocity;
+
+        cmd_vel_pub.publish(msg);
+    }
+
+private:
+    ros::NodeHandle nh;
+    ros::Publisher cmd_vel_pub;
+    ros::Timer timer;
+    double radius;
+    double angular_velocity;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""circular_motion_publisher"");
+    CircularMotionPublisher cmp;
+
+    ros::spin();
+
+    return 0;
+}",5.902579544197428
+181,Write a parameter ROS C++ that simulates and sensor publishes the motion a differential drive moving in a in in circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+#include <sensor_msgs/Imu.h>
+
+class CircularMotionSimulator
+{
+public:
+    CircularMotionSimulator()
+    {
+        nh.getParam(""/robot_radius"", robot_radius);
+        nh.getParam(""/linear_speed"", linear_speed);
+        nh.getParam(""/angular_speed"", angular_speed);
+
+        imu_pub = nh.advertise<sensor_msgs::Imu>(""/imu_data"", 10);
+        motion_pub = nh.advertise<geometry_msgs::Twist>(""/cmd_vel"", 10);
+
+        // Initialize IMU message
+        imu_data.header.frame_id = ""base_link"";
+
+        // Set the control rate
+        control_timer = nh.createTimer(ros::Duration(1.0 / control_rate), &CircularMotionSimulator::controlCallback, this);
+    }
+
+    void controlCallback(const ros::TimerEvent&)
+    {
+        // Update orientation for simulated IMU data
+        imu_data.header.stamp = ros::Time::now();
+        imu_data.orientation.z += angular_speed / control_rate;
+
+        // Publish simulated IMU data
+        imu_pub.publish(imu_data);
+
+        // Publish motion command for circular path
+        geometry_msgs::Twist twist;
+        twist.linear.x = linear_speed;
+        twist.angular.z = angular_speed;
+        motion_pub.publish(twist);
+    }
+
+private:
+    ros::NodeHandle nh;
+    ros::Publisher imu_pub;
+    ros::Publisher motion_pub;
+    ros::Timer control_timer;
+    sensor_msgs::Imu imu_data;
+
+    double robot_radius;
+    double linear_speed;
+    double angular_speed;
+    double control_rate = 10.0; // control rate in Hz
+};
+
+int main(int argc, char** argv)
+{
+    ros::init(argc, argv, ""circular_motion_simulator"");
+    CircularMotionSimulator simulator;
+
+    ros::spin();
+
+    return 0;
+}",5.899827260840926
+183,Write a parameter ROS C++ that simulates and publishes the navigation motion a differential drive robot moving robot moving in in circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class CircularMotionController {
+public:
+    CircularMotionController() : nh_(""~"") {
+        nh_.param<std::string>(""cmd_vel_topic"", cmd_vel_topic_, ""/cmd_vel"");
+        nh_.param<double>(""linear_velocity"", linear_velocity_, 0.2);
+        nh_.param<double>(""angular_velocity"", angular_velocity_, 0.5);
+
+        cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>(cmd_vel_topic_, 10);
+    }
+
+    void startCircularMotion() {
+        ros::Rate loop_rate(10); // 10 Hz
+        while (ros::ok()) {
+            geometry_msgs::Twist msg;
+            msg.linear.x = linear_velocity_;
+            msg.angular.z = angular_velocity_;
+            cmd_vel_pub_.publish(msg);
+            ros::spinOnce();
+            loop_rate.sleep();
+        }
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher cmd_vel_pub_;
+    std::string cmd_vel_topic_;
+    double linear_velocity_;
+    double angular_velocity_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""circular_motion_node"");
+
+    CircularMotionController controller;
+    controller.startCircularMotion();
+
+    return 0;
+}",6.147237002284026
+184,Write a parameter ROS C++ that parameter and publishes the motion a drive robot moving in a robot of circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class CircularMotionNode {
+public:
+    CircularMotionNode() : nh_(""~"") {
+        nh_.param<double>(""radius"", radius_, 1.0);
+        nh_.param<double>(""angular_speed"", angular_speed_, 1.0);
+        
+        cmd_pub_ = nh_.advertise<geometry_msgs::Twist>(""/cmd_vel"", 10);
+        
+        ros::Rate loop_rate(10);
+        
+        while (ros::ok()) {
+            geometry_msgs::Twist cmd_vel;
+            cmd_vel.linear.x = angular_speed_ * radius_;
+            cmd_vel.angular.z = angular_speed_;
+            
+            cmd_pub_.publish(cmd_vel);
+            
+            ros::spinOnce();
+            loop_rate.sleep();
+        }
+    }
+
+private:
+    ros::NodeHandle nh_;
+    double radius_;
+    double angular_speed_;
+    ros::Publisher cmd_pub_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""circular_motion_node"");
+    
+    CircularMotionNode node;
+    
+    return 0;
+}",6.149059552274403
+185,Write a parameter C++ that simulates and publishes the motion a differential drive robot moving in in in circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+ros::Publisher cmd_vel_pub;
+
+void publishCircularMotion() {
+    // Initialize the message
+    geometry_msgs::Twist msg;
+
+    // Set linear speed for forward motion and angular speed for circular motion
+    msg.linear.x = 0.2;  // Adjust the forward speed as needed
+    msg.angular.z = 0.5; // Adjust the angular speed for desired circular motion
+
+    // Publish the message
+    cmd_vel_pub.publish(msg);
+}
+
+int main(int argc, char **argv) {
+    // Initialize the ROS node
+    ros::init(argc, argv, ""circular_motion_node"");
+    ros::NodeHandle nh;
+
+    // Advertise the topic to control the robot's motion
+    cmd_vel_pub = nh.advertise<geometry_msgs::Twist>(""/cmd_vel"", 10);
+
+    // Set the loop rate for publishing the motion commands
+    ros::Rate loop_rate(10); // 10 Hz
+
+    while (ros::ok()) {
+        publishCircularMotion();
+        ros::spinOnce();
+        loop_rate.sleep();
+    }
+
+    return 0;
+}",5.572484075050685
+187,Write a parameter ROS C++ that simulates and publishes the motion a differential drive robot moving moving in in circular path.,"#include ""ros/ros.h""
+#include ""geometry_msgs/Twist.h""
+
+class CircularMotionRobot {
+public:
+    CircularMotionRobot() : nh_(""~"") {
+        nh_.param(""angular_speed"", angular_speed_, 0.5);
+        nh_.param(""linear_speed"", linear_speed_, 0.2);
+
+        cmd_pub_ = nh_.advertise<geometry_msgs::Twist>(""/cmd_vel"", 10);
+    }
+
+    void move() {
+        ros::Rate rate(10);
+        while (ros::ok()) {
+            geometry_msgs::Twist msg;
+            msg.linear.x = linear_speed_;
+            msg.angular.z = angular_speed_;
+            cmd_pub_.publish(msg);
+            rate.sleep();
+        }
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher cmd_pub_;
+    double angular_speed_;
+    double linear_speed_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""circular_motion_robot"");
+    CircularMotionRobot robot;
+    robot.move();
+    return 0;
+}",6.146273965714851
+189,Write a parameter ROS program that simulates publishes the motion a queue differential task drive robot moving navigation in a of Rotation spin (ICR).,"#!/usr/bin/env python
+
+import rospy
+from geometry_msgs.msg import Twist
+from std_msgs.msg import Float64
+
+class DifferentialDriveRobot:
+    def __init__(self):
+        rospy.init_node('differential_drive_robot_node', anonymous=True)
+
+        self.cmd_vel_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
+        self.rotation_spin_pub = rospy.Publisher('/rotation_spin', Float64, queue_size=10)
+
+        rospy.Subscriber('/desired_angular_velocity', Float64, self.angular_velocity_callback)
+
+        self.angular_velocity = 0.0
+
+    def angular_velocity_callback(self, data):
+        self.angular_velocity = data.data
+
+    def update_velocity(self):
+        twist_msg = Twist()
+        twist_msg.linear.x = 0.0
+        twist_msg.angular.z = self.angular_velocity
+
+        self.cmd_vel_pub.publish(twist_msg)
+
+    def simulate_motion(self):
+        rate = rospy.Rate(10)  # 10 Hz
+        while not rospy.is_shutdown():
+            self.update_velocity()
+            rate.sleep()
+
+if __name__ == '__main__':
+    try:
+        robot = DifferentialDriveRobot()
+        robot.simulate_motion()
+    except rospy.ROSInterruptException:
+        pass",0
+190,Write a launch parameter ROS C++ that simulates and publishes the motion a differential drive robot moving robot moving in in circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class CircularMotionPublisher {
+public:
+    CircularMotionPublisher() {
+        cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>(""/cmd_vel"", 10);
+        timer_ = nh_.createTimer(ros::Duration(0.1), &CircularMotionPublisher::timerCallback, this);
+        
+        radius_ = 1.0; // Radius of the circular path in meters
+        linear_vel_ = 0.1; // Linear velocity in m/s
+        angular_vel_ = linear_vel_ / radius_; // Calculate angular velocity using v = ω * r
+    }
+
+    void timerCallback(const ros::TimerEvent&) {
+        geometry_msgs::Twist msg;
+        msg.linear.x = linear_vel_;
+        msg.angular.z = angular_vel_;
+        cmd_vel_pub_.publish(msg);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher cmd_vel_pub_;
+    ros::Timer timer_;
+
+    double radius_;
+    double linear_vel_;
+    double angular_vel_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""circular_motion_publisher"");
+
+    CircularMotionPublisher circular_motion_publisher;
+
+    ros::spin();
+
+    return 0;
+}",6.648961842339995
+191,Write a parameter ROS C++ that simulates and publishes the motion a differential drive robot moving in robot in circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class DifferentialDriveRobot {
+public:
+    DifferentialDriveRobot() {
+        cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>(""cmd_vel"", 10);
+    }
+
+    void moveInCircularPath() {
+        ros::Rate loop_rate(10); // 10 Hz
+
+        while (ros::ok()) {
+            geometry_msgs::Twist msg;
+            msg.linear.x = 0.5; // Forward linear velocity
+            msg.angular.z = 0.3; // Angular velocity for a circular path
+
+            cmd_vel_pub_.publish(msg);
+
+            ros::spinOnce();
+            loop_rate.sleep();
+        }
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher cmd_vel_pub_;
+};
+
+int main(int argc, char **argv) {
+    ros::init(argc, argv, ""differential_drive_robot_node"");
+    DifferentialDriveRobot robot;
+
+    robot.moveInCircularPath();
+
+    return 0;
+}",5.894577470303137
+195,Write a parameter ROS C++ that simulates and publishes the motion a differential drive robot moving robot moving in in path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class DifferentialDriveRobot {
+public:
+    DifferentialDriveRobot() : nh_(""~"") {
+        nh_.param<double>(""linear_speed"", linear_speed_, 0.5);
+        nh_.param<double>(""angular_speed"", angular_speed_, 0.2);
+
+        cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>(""/cmd_vel"", 10);
+    }
+
+    void moveInPath() {
+        ros::Rate loop_rate(10);
+
+        while (ros::ok()) {
+            geometry_msgs::Twist cmd_vel;
+            cmd_vel.linear.x = linear_speed_;
+            cmd_vel.angular.z = angular_speed_;
+
+            cmd_vel_pub_.publish(cmd_vel);
+
+            ros::spinOnce();
+            loop_rate.sleep();
+        }
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher cmd_vel_pub_;
+    double linear_speed_;
+    double angular_speed_;
+};
+
+int main(int argc, char **argv) {
+    ros::init(argc, argv, ""differential_drive_robot"");
+    
+    DifferentialDriveRobot robot;
+    robot.moveInPath();
+
+    return 0;
+}",6.147915782329633
+196,Write a parameter ROS C++ that simulates and publishes the motion a differential drive robot moving message planning robot moving in in circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class CircularMotionPlanner {
+public:
+    CircularMotionPlanner() : nh_(""~"") {
+        // Initialize parameters
+        nh_.param(""radius"", radius_, 1.0);
+        nh_.param(""velocity"", velocity_, 0.5);
+
+        // Initialize publisher
+        cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>(""/cmd_vel"", 10);
+
+        // Timer for publishing twist message
+        timer_ = nh_.createTimer(ros::Duration(0.1), &CircularMotionPlanner::timerCallback, this);
+    }
+
+    void timerCallback(const ros::TimerEvent& event) {
+        geometry_msgs::Twist twist_msg;
+        
+        // Calculate linear and angular velocities for circular motion
+        twist_msg.linear.x = velocity_;
+        twist_msg.angular.z = velocity_ / radius_;
+
+        // Publish twist message
+        cmd_vel_pub_.publish(twist_msg);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher cmd_vel_pub_;
+    ros::Timer timer_;
+    double radius_;
+    double velocity_;
+};
+
+int main(int argc, char **argv) {
+    ros::init(argc, argv, ""circular_motion_planner"");
+    CircularMotionPlanner planner;
+
+    ros::spin();
+    
+    return 0;
+}",5.8984110955785045
+197,Write a parameter ROS C++ process that simulates and publishes the motion a differential drive robot moving robot moving in in circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class CircularMotionSimulator {
+public:
+    CircularMotionSimulator() {
+        ros::NodeHandle nh;
+
+        // Parameters
+        nh.param(""linear_velocity"", linear_velocity_, 0.2); // m/s
+        nh.param(""angular_velocity"", angular_velocity_, 0.5); // rad/s
+
+        // Publisher
+        cmd_vel_pub_ = nh.advertise<geometry_msgs::Twist>(""/cmd_vel"", 10);
+
+        // Timer
+        timer_ = nh.createTimer(ros::Duration(0.05), &CircularMotionSimulator::timerCallback, this);
+    }
+
+    void timerCallback(const ros::TimerEvent& event) {
+        geometry_msgs::Twist msg;
+
+        // Set linear and angular velocities for circular motion
+        msg.linear.x = linear_velocity_;
+        msg.angular.z = angular_velocity_;
+
+        cmd_vel_pub_.publish(msg);
+    }
+
+private:
+    ros::NodeHandle nh;
+    ros::Publisher cmd_vel_pub_;
+    ros::Timer timer_;
+    double linear_velocity_;
+    double angular_velocity_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""circular_motion_simulator"");
+
+    CircularMotionSimulator simulator;
+
+    ros::spin();
+
+    return 0;
+}",6.147865239899332
+199,Write a ROS C++ that simulates and publishes the a differential drive mapping robot moving in in a execution circular path.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+#include <tf/transform_broadcaster.h>
+
+class MappingRobot {
+public:
+    MappingRobot() : nh_(""~"") {
+        nh_.param(""robot_name"", robot_name_, std::string(""mapping_robot""));
+        
+        cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>(robot_name_+""/cmd_vel"", 1);
+    }
+
+    void executeCircularPath() {
+        ros::Rate loop_rate(10);
+        double angular_speed = 0.2;
+        double radius = 1.0;
+        double linear_speed = angular_speed * radius;
+
+        geometry_msgs::Twist cmd_vel_msg;
+        cmd_vel_msg.linear.x = linear_speed;
+        cmd_vel_msg.angular.z = angular_speed;
+
+        while (ros::ok()) {
+            cmd_vel_pub_.publish(cmd_vel_msg);
+
+            tf::Transform transform;
+            transform.setOrigin(tf::Vector3(radius, 0.0, 0.0));
+            tf::Quaternion q;
+            q.setRPY(0, 0, 0);
+            transform.setRotation(q);
+
+            tf_br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), ""world"", robot_name_+""/base_link""));
+
+            ros::spinOnce();
+            loop_rate.sleep();
+        }
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher cmd_vel_pub_;
+
+    std::string robot_name_;
+
+    tf::TransformBroadcaster tf_br;
+};
+
+int main(int argc, char **argv) {
+    ros::init(argc, argv, ""mapping_robot_node"");
+    MappingRobot mapping_robot;
+
+    mapping_robot.executeCircularPath();
+
+    return 0;
+}",0

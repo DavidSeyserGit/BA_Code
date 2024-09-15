@@ -1,0 +1,5449 @@
+generation,prompt,code,fitness
+0,Generate a ROS C++ node that calculates and publishes differential drive wheel velocities based on robot parameters.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+// Robot parameters
+const double wheel_separation = 0.5; // in meters
+const double wheel_radius = 0.1; // in meters
+
+ros::Publisher vel_pub;
+
+void calculateWheelVelocities(const double linear_vel, const double angular_vel) {
+    double left_wheel_vel = (linear_vel - (angular_vel * wheel_separation / 2)) / wheel_radius;
+    double right_wheel_vel = (linear_vel + (angular_vel * wheel_separation / 2)) / wheel_radius;
+
+    // Publish calculated wheel velocities
+    geometry_msgs::Twist vel_msg;
+    vel_msg.linear.x = left_wheel_vel;
+    vel_msg.linear.y = right_wheel_vel;
+    vel_pub.publish(vel_msg);
+}
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""differential_drive_controller"");
+    ros::NodeHandle nh;
+
+    vel_pub = nh.advertise<geometry_msgs::Twist>(""/cmd_vel"", 10);
+
+    double linear_vel = 0.1; // default linear velocity
+    double angular_vel = 0.1; // default angular velocity
+
+    ros::param::get(""~linear_vel"", linear_vel);
+    ros::param::get(""~angular_vel"", angular_vel);
+
+    ros::Rate loop_rate(10);
+
+    while (ros::ok()) {
+        calculateWheelVelocities(linear_vel, angular_vel);
+        ros::spinOnce();
+        loop_rate.sleep();
+    }
+
+    return 0;
+}",9.233076887728503
+0,Create a C++ ROS controller for a two-wheeled robot that publishes velocity commands.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class TwoWheeledRobotController
+{
+public:
+    TwoWheeledRobotController()
+    {
+        // Initialize ROS node handle
+        nh_ = ros::NodeHandle();
+
+        // Create publisher for velocity commands
+        vel_pub_ = nh_.advertise<geometry_msgs::Twist>(""cmd_vel"", 10);
+
+        // Create subscriber for target velocities
+        vel_sub_ = nh_.subscribe(""target_vel"", 10, &TwoWheeledRobotController::velocityCallback, this);
+    }
+
+    void velocityCallback(const geometry_msgs::Twist::ConstPtr& msg)
+    {
+        // Publish received target velocities
+        vel_pub_.publish(*msg);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher vel_pub_;
+    ros::Subscriber vel_sub_;
+};
+
+int main(int argc, char** argv)
+{
+    ros::init(argc, argv, ""two_wheeled_robot_controller"");
+
+    TwoWheeledRobotController controller;
+
+    ros::spin();
+
+    return 0;
+}",0.8333653752037762
+0,Implement a ROS node for computing and broadcasting wheel speeds of a differential drive robot.,"#!/usr/bin/env python
+
+import rospy
+from geometry_msgs.msg import Twist
+from std_msgs.msg import Float64
+
+class WheelSpeedCalculatorNode:
+    def __init__(self):
+        rospy.init_node('wheel_speed_calculator_node', anonymous=True)
+        
+        self.wheel_separation_distance = rospy.get_param('~wheel_separation_distance', 0.5)  # Distance between the two wheels
+        self.wheel_radius = rospy.get_param('~wheel_radius', 0.1)  # Radius of the wheels
+
+        self.left_wheel_pub = rospy.Publisher('left_wheel_speed', Float64, queue_size=10)
+        self.right_wheel_pub = rospy.Publisher('right_wheel_speed', Float64, queue_size=10)
+
+        rospy.Subscriber('cmd_vel', Twist, self.cmd_vel_callback)
+
+    def cmd_vel_callback(self, msg):
+        linear_vel = msg.linear.x
+        angular_vel = msg.angular.z
+
+        left_wheel_speed = (linear_vel - angular_vel * self.wheel_separation_distance / 2) / self.wheel_radius
+        right_wheel_speed = (linear_vel + angular_vel * self.wheel_separation_distance / 2) / self.wheel_radius
+
+        self.left_wheel_pub.publish(left_wheel_speed)
+        self.right_wheel_pub.publish(right_wheel_speed)
+
+if __name__ == '__main__':
+    try:
+        wheel_speed_calculator_node = WheelSpeedCalculatorNode()
+        rospy.spin()
+    except rospy.ROSInterruptException:
+        pass",0
+0,Write a C++ program using ROS to calculate and publish wheel velocities for a two-wheeled mobile platform.,"#include ""ros/ros.h""
+#include ""geometry_msgs/Twist.h""
+#include ""std_msgs/Float32.h""
+
+class WheelVelocityCalculator {
+public:
+    WheelVelocityCalculator() {
+        nh.getParam(""/robot_wheel_radius"", wheel_radius);
+        nh.getParam(""/robot_wheel_base"", wheel_base);
+
+        velocity_sub = nh.subscribe(""cmd_vel"", 10, &WheelVelocityCalculator::velocityCallback, this);
+        left_wheel_vel_pub = nh.advertise<std_msgs::Float32>(""left_wheel_velocity"", 10);
+        right_wheel_vel_pub = nh.advertise<std_msgs::Float32>(""right_wheel_velocity"", 10);
+    }
+
+    void velocityCallback(const geometry_msgs::Twist::ConstPtr& msg) {
+        double linear_vel = msg->linear.x;
+        double angular_vel = msg->angular.z;
+
+        double left_wheel_vel = (linear_vel - angular_vel * wheel_base / 2) / wheel_radius;
+        double right_wheel_vel = (linear_vel + angular_vel * wheel_base / 2) / wheel_radius;
+
+        publishWheelVelocities(left_wheel_vel, right_wheel_vel);
+    }
+
+    void publishWheelVelocities(double left, double right) {
+        std_msgs::Float32 left_wheel_msg, right_wheel_msg;
+        left_wheel_msg.data = left;
+        right_wheel_msg.data = right;
+
+        left_wheel_vel_pub.publish(left_wheel_msg);
+        right_wheel_vel_pub.publish(right_wheel_msg);
+    }
+
+private:
+    ros::NodeHandle nh;
+    ros::Subscriber velocity_sub;
+    ros::Publisher left_wheel_vel_pub, right_wheel_vel_pub;
+    double wheel_radius, wheel_base;
+};
+
+int main(int argc, char **argv) {
+    ros::init(argc, argv, ""wheel_velocity_calculator_node"");
+
+    WheelVelocityCalculator wheel_vel_calc;
+
+    ros::spin();
+
+    return 0;
+}",1.4688109271047844
+1,Generate a ROS C++ node that calculates and publishes differential drive wheel for a two-wheeled mobile platform.,"#include ""ros/ros.h""
+#include ""geometry_msgs/Twist.h""
+#include ""nav_msgs/Odometry.h""
+
+class DiffDriveController {
+public:
+    DiffDriveController() : nh_(""~"") {
+        nh_.param(""wheel_base"", wheel_base_, 0.5);
+        
+        cmd_vel_sub_ = nh_.subscribe(""cmd_vel"", 1, &DiffDriveController::cmdVelCallback, this);
+        odom_pub_ = nh_.advertise<nav_msgs::Odometry>(""odom"", 1);
+    }
+
+    void cmdVelCallback(const geometry_msgs::Twist::ConstPtr& cmd_vel_msg) {
+        double linear_vel = cmd_vel_msg->linear.x;
+        double angular_vel = cmd_vel_msg->angular.z;
+
+        double wheel_left_vel = (linear_vel - angular_vel * wheel_base_ / 2);
+        double wheel_right_vel = (linear_vel + angular_vel * wheel_base_ / 2);
+
+        publishOdom(wheel_left_vel, wheel_right_vel);
+    }
+
+    void publishOdom(double wheel_left_vel, double wheel_right_vel) {
+        // Publish odometry message here
+        nav_msgs::Odometry odom_msg;
+        // Fill in the odometry message with relevant data
+        // odom_msg.header.stamp = ros::Time::now();
+        // odom_msg.twist.twist.linear.x = (wheel_left_vel + wheel_right_vel) / 2.0;
+        // odom_msg.twist.twist.angular.z = (wheel_right_vel - wheel_left_vel) / wheel_base_;
+        odom_pub_.publish(odom_msg);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Subscriber cmd_vel_sub_;
+    ros::Publisher odom_pub_;
+    double wheel_base_;
+};
+
+int main(int argc, char **argv) {
+    ros::init(argc, argv, ""diff_drive_controller"");
+
+    DiffDriveController controller;
+
+    ros::spin();
+
+    return 0;
+}",1.4748707526705447
+3,Generate a ROS C++ node that calculates and publishes differential drive wheel velocities based on mobile platform.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+// Constants for the wheelbase/track width and maximum linear/angular velocities
+const double wheelbase = 0.5;  // in meters
+const double max_linear_vel = 1.0;  // in m/s
+const double max_angular_vel = 1.0;  // in rad/s
+
+ros::Publisher velocity_pub;
+
+// Callback function to receive twist messages and calculate wheel velocities
+void twistCallback(const geometry_msgs::Twist& twist_msg)
+{
+    double linear_vel = twist_msg.linear.x;
+    double angular_vel = twist_msg.angular.z;
+
+    // Calculate wheel velocities using differential drive kinematics
+    double left_wheel_vel = (linear_vel - angular_vel * wheelbase / 2.0);
+    double right_wheel_vel = (linear_vel + angular_vel * wheelbase / 2.0);
+
+    // Limit wheel velocities to maximum values
+    if (std::abs(left_wheel_vel) > max_linear_vel)
+    {
+        left_wheel_vel = std::copysign(max_linear_vel, left_wheel_vel);
+    }
+    if (std::abs(right_wheel_vel) > max_linear_vel)
+    {
+        right_wheel_vel = std::copysign(max_linear_vel, right_wheel_vel);
+    }
+
+    // Publish left and right wheel velocities
+    geometry_msgs::Twist wheel_vel_msg;
+    wheel_vel_msg.linear.x = left_wheel_vel;
+    wheel_vel_msg.linear.y = right_wheel_vel;
+    velocity_pub.publish(wheel_vel_msg);
+}
+
+int main(int argc, char** argv)
+{
+    ros::init(argc, argv, ""differential_drive_controller"");
+    ros::NodeHandle nh;
+
+    // Setup subscriber for twist messages
+    ros::Subscriber twist_sub = nh.subscribe(""cmd_vel"", 10, twistCallback);
+
+    // Setup publisher for wheel velocities
+    velocity_pub = nh.advertise<geometry_msgs::Twist>(""wheel_velocities"", 10);
+
+    ros::spin();
+
+    return 0;
+}",3.3944279671709086
+7,Generate a ROS C++ node that calculates and publishes actuator differential drive wheel velocities based on mobile platform.,"// Includes
+#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+#include <tf/tf.h>
+
+// Constants
+const double WHEEL_RADIUS = 0.1;  // Radius of the wheels in meters
+const double BASE_WIDTH = 0.5;     // Distance between the two wheels in meters
+
+// ROS Node initialization
+ros::NodeHandle nh;
+ros::Publisher cmd_vel_pub = nh.advertise<geometry_msgs::Twist>(""/cmd_vel"", 10);
+
+// Callback function to receive desired linear and angular velocities
+void velocitiesCallback(const geometry_msgs::Twist::ConstPtr& vel_msg) {
+    double linear_vel = vel_msg->linear.x;
+    double angular_vel = vel_msg->angular.z;
+
+    // Calculate left and right wheel velocities based on differential drive kinematics
+    double left_wheel_vel = (linear_vel - angular_vel * (BASE_WIDTH / 2.0)) / WHEEL_RADIUS;
+    double right_wheel_vel = (linear_vel + angular_vel * (BASE_WIDTH / 2.0)) / WHEEL_RADIUS;
+
+    // Create cmd_vel message
+    geometry_msgs::Twist cmd_vel;
+    cmd_vel.linear.x = left_wheel_vel;
+    cmd_vel.linear.y = right_wheel_vel;
+
+    // Publish cmd_vel message
+    cmd_vel_pub.publish(cmd_vel);
+}
+
+int main(int argc, char** argv) {
+    // Initialize ROS node
+    ros::init(argc, argv, ""actuator_calculator_node"");
+
+    // Subscribe to desired velocities topic
+    ros::Subscriber sub = nh.subscribe(""/desired_velocities"", 10, velocitiesCallback);
+
+    // Spin and process callbacks
+    ros::spin();
+
+    return 0;
+}",4.491870737542384
+8,Generate a ROS C++ node that calculates and publishes differential drive wheel velocities based based on mobile platform.,,0
+9,Generate a ROS C++ node that calculates and publishes differential drive wheel wheel velocities based on mobile platform.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+#include <std_msgs/Float64.h>
+
+class DifferentialDriveController {
+public:
+    DifferentialDriveController() {
+        // Initialize ROS node and publisher
+        node_handle_ = ros::NodeHandle();
+        cmd_vel_sub_ = node_handle_.subscribe(""cmd_vel"", 1, &DifferentialDriveController::cmdVelCallback, this);
+        left_wheel_pub_ = node_handle_.advertise<std_msgs::Float64>(""left_wheel_velocity"", 1);
+        right_wheel_pub_ = node_handle_.advertise<std_msgs::Float64>(""right_wheel_velocity"", 1);
+    }
+
+    void cmdVelCallback(const geometry_msgs::Twist::ConstPtr& msg) {
+        // Calculate wheel velocities based on linear and angular velocities
+        double linear_vel = msg->linear.x;
+        double angular_vel = msg->angular.z;
+
+        double left_wheel_vel = linear_vel - (angular_vel * wheel_base_ / 2);
+        double right_wheel_vel = linear_vel + (angular_vel * wheel_base_ / 2);
+
+        // Publish left and right wheel velocities
+        std_msgs::Float64 left_wheel_vel_msg;
+        left_wheel_vel_msg.data = left_wheel_vel;
+        left_wheel_pub_.publish(left_wheel_vel_msg);
+
+        std_msgs::Float64 right_wheel_vel_msg;
+        right_wheel_vel_msg.data = right_wheel_vel;
+        right_wheel_pub_.publish(right_wheel_vel_msg);
+    }
+
+private:
+    ros::NodeHandle node_handle_;
+    ros::Subscriber cmd_vel_sub_;
+    ros::Publisher left_wheel_pub_;
+    ros::Publisher right_wheel_pub_;
+
+    double wheel_base_ = 0.5; // Distance between two wheels
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""differential_drive_controller"");
+
+    DifferentialDriveController controller;
+
+    ros::spin();
+
+    return 0;
+}",1.4612801546766843
+11,Generate a ROS C++ node that calculates and publishes execution differential wheel velocities based on robot parameters.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+// Define robot parameters
+const double WHEEL_BASE = 0.5;  // Distance between the two wheels in meters
+const double WHEEL_RADIUS = 0.1;  // Radius of the wheels in meters
+
+// ROS node initialization
+ros::NodeHandle nh;
+ros::Publisher cmd_vel_pub = nh.advertise<geometry_msgs::Twist>(""cmd_vel"", 10);
+
+// Callback function to calculate wheel velocities
+void calculateWheelVelocities(const geometry_msgs::Twist::ConstPtr& cmd_msg) {
+    double linear_velocity = cmd_msg->linear.x;  // Linear velocity in m/s
+    double angular_velocity = cmd_msg->angular.z;  // Angular velocity in rad/s
+
+    // Calculate left and right wheel velocities
+    double left_wheel_velocity = (2 * linear_velocity - angular_velocity * WHEEL_BASE) / (2 * WHEEL_RADIUS);
+    double right_wheel_velocity = (2 * linear_velocity + angular_velocity * WHEEL_BASE) / (2 * WHEEL_RADIUS);
+
+    // Create message
+    geometry_msgs::Twist cmd_vel_msg;
+    cmd_vel_msg.linear.x = left_wheel_velocity;
+    cmd_vel_msg.linear.y = right_wheel_velocity;
+
+    // Publish message
+    cmd_vel_pub.publish(cmd_vel_msg);
+}
+
+int main(int argc, char** argv) {
+    // ROS node initialization
+    ros::init(argc, argv, ""wheel_controller_node"");
+
+    // Subscribe to command velocity topic
+    ros::Subscriber cmd_vel_sub = nh.subscribe(""cmd_vel"", 10, calculateWheelVelocities);
+
+    // ROS spin
+    ros::spin();
+
+    return 0;
+}",4.493216511180452
+12,Generate actuator a ROS C++ node that calculates and robot that publishes velocity commands.,"#include <ros/ros.h>
+#include <sensor_msgs/LaserScan.h>
+#include <geometry_msgs/Twist.h>
+
+class ActuatorController
+{
+public:
+    ActuatorController()
+    {
+        // Initialize ROS node handle
+        nh_ = ros::NodeHandle(""~"");
+
+        // Subscribe to sensor data (e.g., laser scan)
+        sub_sensor_ = nh_.subscribe(""/sensor_data"", 1, &ActuatorController::sensorCallback, this);
+
+        // Publish velocity commands to control the robot
+        pub_cmd_vel_ = nh_.advertise<geometry_msgs::Twist>(""/cmd_vel"", 1);
+    }
+
+    void sensorCallback(const sensor_msgs::LaserScan::ConstPtr& sensor_msg)
+    {
+        // Process sensor data and calculate velocity commands
+        double obstacle_distance = sensor_msg->ranges[sensor_msg->ranges.size() / 2]; // Assuming the sensor data is centered
+        geometry_msgs::Twist cmd_vel;
+
+        if (obstacle_distance < 1.0) // If obstacle is detected within 1 meter
+        {
+            cmd_vel.linear.x = 0.0; // Stop forward movement
+            cmd_vel.angular.z = 0.5; // Rotate in place
+        }
+        else
+        {
+            cmd_vel.linear.x = 0.5; // Move forward
+            cmd_vel.angular.z = 0.0; // No rotation
+        }
+
+        // Publish velocity commands
+        pub_cmd_vel_.publish(cmd_vel);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Subscriber sub_sensor_;
+    ros::Publisher pub_cmd_vel_;
+};
+
+int main(int argc, char **argv)
+{
+    ros::init(argc, argv, ""actuator_controller"");
+    ActuatorController controller;
+
+    ros::spin();
+
+    return 0;
+}",0.7288618804532425
+17,Generate a ROS C++ node that calculates and publishes differential drive velocities based on robot localization parameters.,"/*
+  Description:
+  This ROS node calculates differential drive velocities based on robot localization parameters
+  and publishes them to the '/cmd_vel' topic.
+
+  Subscribed Topics:
+    /robot_pose (geometry_msgs/Pose) - The current pose of the robot
+
+  Published Topics:
+    /cmd_vel (geometry_msgs/Twist) - The velocity commands for the robot's differential drive
+
+  Parameters:
+    ~max_linear_speed (double, default: 0.5) - Maximum linear speed for the robot
+    ~max_angular_speed (double, default: 1.0) - Maximum angular speed for the robot
+
+  Dependencies:
+    geometry_msgs
+    roscpp
+    rospy
+*/
+
+#include <ros/ros.h>
+#include <geometry_msgs/Pose.h>
+#include <geometry_msgs/Twist.h>
+
+class VelocityCalculatorNode {
+public:
+    VelocityCalculatorNode() : nh_(""~"") {
+        // Initialize parameters
+        nh_.param(""max_linear_speed"", max_linear_speed_, 0.5);
+        nh_.param(""max_angular_speed"", max_angular_speed_, 1.0);
+
+        // Subscribe to robot_pose topic
+        pose_sub_ = nh_.subscribe(""/robot_pose"", 1, &VelocityCalculatorNode::poseCallback, this);
+
+        // Publish to cmd_vel topic
+        vel_pub_ = nh_.advertise<geometry_msgs::Twist>(""/cmd_vel"", 1);
+    }
+
+    void poseCallback(const geometry_msgs::Pose::ConstPtr& msg) {
+        // Calculate linear and angular velocities based on robot pose
+        double linear_vel = calculateLinearVelocity(msg->position.x, msg->position.y);
+        double angular_vel = calculateAngularVelocity(msg->orientation.z);
+
+        // Create Twist message and publish
+        geometry_msgs::Twist twist_msg;
+        twist_msg.linear.x = linear_vel;
+        twist_msg.angular.z = angular_vel;
+        vel_pub_.publish(twist_msg);
+    }
+
+    double calculateLinearVelocity(double x, double y) {
+        // Placeholder implementation - Replace with your differential drive control logic
+        return std::min(sqrt(x * x + y * y), max_linear_speed_);
+    }
+
+    double calculateAngularVelocity(double theta) {
+        // Placeholder implementation - Replace with your differential drive control logic
+        return std::min(theta, max_angular_speed_);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Subscriber pose_sub_;
+    ros::Publisher vel_pub_;
+    double max_linear_speed_;
+    double max_angular_speed_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""velocity_calculator_node"");
+    VelocityCalculatorNode node;
+    ros::spin();
+    return 0;
+}",3.334629761269413
+19,Generate a ROS C++ node that calculates and publishes execution differential velocities based on robot parameters.,"#include ""ros/ros.h""
+#include ""geometry_msgs/Twist.h""
+
+class VelocityCalculatorNode {
+public:
+    VelocityCalculatorNode() : nh(""~"") {
+        nh.param<double>(""wheel_base"", wheel_base, 0.5);
+        nh.param<double>(""max_linear_vel"", max_linear_vel, 0.5);
+        nh.param<double>(""max_angular_vel"", max_angular_vel, 1.0);
+
+        cmd_sub = nh.subscribe(""cmd_vel"", 10, &VelocityCalculatorNode::cmdVelCallback, this);
+        vel_pub = nh.advertise<geometry_msgs::Twist>(""exec_vel"", 10);
+    }
+
+    void cmdVelCallback(const geometry_msgs::Twist::ConstPtr& cmd_msg) {
+        double target_linear_vel = std::min(std::max(cmd_msg->linear.x, -max_linear_vel), max_linear_vel);
+        double target_angular_vel = std::min(std::max(cmd_msg->angular.z, -max_angular_vel), max_angular_vel);
+
+        double left_wheel_vel = (target_linear_vel - target_angular_vel * wheel_base / 2);
+        double right_wheel_vel = (target_linear_vel + target_angular_vel * wheel_base / 2);
+
+        geometry_msgs::Twist exec_vel;
+        exec_vel.linear.x = left_wheel_vel;
+        exec_vel.linear.y = right_wheel_vel;
+
+        vel_pub.publish(exec_vel);
+    }
+
+private:
+    ros::NodeHandle nh;
+    ros::Subscriber cmd_sub;
+    ros::Publisher vel_pub;
+
+    double wheel_base;
+    double max_linear_vel;
+    double max_angular_vel;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""velocity_calculator_node"");
+
+    VelocityCalculatorNode node;
+
+    ros::spin();
+
+    return 0;
+}",4.4866078491676635
+20,Generate a ROS C++ node that calculates and publishes differential drive wheel based on robot parameters.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+#include <std_msgs/Float64.h>
+
+class DifferentialDriveNode {
+public:
+    DifferentialDriveNode() : nh(""~"") {
+        nh.getParam(""wheel_base"", wheel_base);
+        nh.getParam(""wheel_radius"", wheel_radius);
+
+        vel_sub = nh.subscribe(""/cmd_vel"", 1, &DifferentialDriveNode::velCallback, this);
+        left_wheel_pub = nh.advertise<std_msgs::Float64>(""/left_wheel_vel"", 1);
+        right_wheel_pub = nh.advertise<std_msgs::Float64>(""/right_wheel_vel"", 1);
+    }
+
+    void velCallback(const geometry_msgs::Twist& cmd_vel) {
+        double linear_vel = cmd_vel.linear.x;
+        double angular_vel = cmd_vel.angular.z;
+
+        double left_vel = (linear_vel - angular_vel * wheel_base / 2.0) / wheel_radius;
+        double right_vel = (linear_vel + angular_vel * wheel_base / 2.0) / wheel_radius;
+
+        std_msgs::Float64 left_wheel_msg, right_wheel_msg;
+        left_wheel_msg.data = left_vel;
+        right_wheel_msg.data = right_vel;
+
+        left_wheel_pub.publish(left_wheel_msg);
+        right_wheel_pub.publish(right_wheel_msg);
+    }
+
+private:
+    ros::NodeHandle nh;
+    ros::Subscriber vel_sub;
+    ros::Publisher left_wheel_pub, right_wheel_pub;
+    double wheel_base, wheel_radius;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""differential_drive_node"");
+    DifferentialDriveNode differential_drive_node;
+    ros::spin();
+    return 0;
+}",4.492792808523267
+21,Generate a ROS C++ node that calculates and publishes execution differential wheel launch velocities based on robot parameters.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+// Robot parameters
+const double WHEEL_RADIUS = 0.1; // in meters
+const double BASE_WIDTH = 0.5; // in meters
+
+// ROS publisher for wheel velocities
+ros::Publisher wheel_vel_pub;
+
+// Callback function to calculate and publish wheel velocities based on linear and angular velocities
+void velocityCallback(const geometry_msgs::Twist::ConstPtr& msg) {
+    double linear_vel = msg->linear.x;
+    double angular_vel = msg->angular.z;
+
+    // Calculate left and right wheel velocities
+    double left_wheel_vel = (2 * linear_vel - angular_vel * BASE_WIDTH) / (2 * WHEEL_RADIUS);
+    double right_wheel_vel = (2 * linear_vel + angular_vel * BASE_WIDTH) / (2 * WHEEL_RADIUS);
+
+    // Publish wheel velocities
+    geometry_msgs::Twist wheel_velocities;
+    wheel_velocities.linear.x = left_wheel_vel;
+    wheel_velocities.linear.y = right_wheel_vel;
+    wheel_vel_pub.publish(wheel_velocities);
+}
+
+int main(int argc, char **argv) {
+    // Initialize ROS node
+    ros::init(argc, argv, ""differential_wheel_controller"");
+    ros::NodeHandle nh;
+
+    // Setup publisher for wheel velocities
+    wheel_vel_pub = nh.advertise<geometry_msgs::Twist>(""wheel_velocities"", 10);
+
+    // Setup subscriber for velocity commands
+    ros::Subscriber vel_sub = nh.subscribe(""cmd_vel"", 10, velocityCallback);
+
+    // Spin to process callback functions
+    ros::spin();
+
+    return 0;
+}",3.5938442849371173
+23,Generate a ROS C++ node sensor that calculates and publishes differential drive wheel velocities based on robot parameters.,"#include ""ros/ros.h""
+#include ""geometry_msgs/Twist.h""
+#include ""std_msgs/Float64.h""
+
+class DifferentialDriveController {
+public:
+    DifferentialDriveController() : nh(""~"") {
+        nh.param(""wheel_base"", wheel_base, 0.5);
+        nh.param(""wheel_radius"", wheel_radius, 0.1);
+
+        vel_sub = nh.subscribe(""cmd_vel"", 1, &DifferentialDriveController::velocityCallback, this);
+        left_wheel_pub = nh.advertise<std_msgs::Float64>(""left_wheel_velocity"", 1);
+        right_wheel_pub = nh.advertise<std_msgs::Float64>(""right_wheel_velocity"", 1);
+    }
+
+    void velocityCallback(const geometry_msgs::Twist::ConstPtr& msg) {
+        double linear_vel = msg->linear.x;
+        double angular_vel = msg->angular.z;
+
+        double left_vel = (linear_vel - angular_vel * wheel_base / 2.0) / wheel_radius;
+        double right_vel = (linear_vel + angular_vel * wheel_base / 2.0) / wheel_radius;
+
+        publishWheelVelocities(left_vel, right_vel);
+    }
+
+    void publishWheelVelocities(double left_vel, double right_vel) {
+        std_msgs::Float64 left_msg, right_msg;
+        left_msg.data = left_vel;
+        right_msg.data = right_vel;
+
+        left_wheel_pub.publish(left_msg);
+        right_wheel_pub.publish(right_msg);
+    }
+
+private:
+    ros::NodeHandle nh;
+    ros::Subscriber vel_sub;
+    ros::Publisher left_wheel_pub;
+    ros::Publisher right_wheel_pub;
+
+    double wheel_base;
+    double wheel_radius;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""differential_drive_controller"");
+
+    DifferentialDriveController controller;
+
+    ros::spin();
+
+    return 0;
+}",4.4722400899860775
+24,Generate a ROS C++ node that calculates and execution publishes differential drive wheel velocities based on robot parameters.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class DifferentialDriveController {
+public:
+    DifferentialDriveController() : nh(""~"") {
+        nh.getParam(""wheel_separation"", wheelSeparation);
+        nh.getParam(""wheel_radius"", wheelRadius);
+
+        cmdVelPub = nh.advertise<geometry_msgs::Twist>(""cmd_vel"", 10);
+        velSub = nh.subscribe(""cmd_vel_input"", 10, &DifferentialDriveController::velCallback, this);
+    }
+
+    void velCallback(const geometry_msgs::Twist::ConstPtr& msg) {
+        double linearVel = msg->linear.x;
+        double angularVel = msg->angular.z;
+
+        double leftWheelVel = (linearVel - angularVel * wheelSeparation / 2.0) / wheelRadius;
+        double rightWheelVel = (linearVel + angularVel * wheelSeparation / 2.0) / wheelRadius;
+
+        publishWheelVelocities(leftWheelVel, rightWheelVel);
+    }
+
+    void publishWheelVelocities(double leftVel, double rightVel) {
+        geometry_msgs::Twist cmdVel;
+        cmdVel.linear.x = leftVel;
+        cmdVel.linear.y = rightVel;
+        cmdVelPub.publish(cmdVel);
+    }
+
+private:
+    ros::NodeHandle nh;
+    ros::Publisher cmdVelPub;
+    ros::Subscriber velSub;
+
+    double wheelSeparation;
+    double wheelRadius;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""differential_drive_controller"");
+    DifferentialDriveController controller;
+
+    ros::spin();
+
+    return 0;
+}",4.494531734694081
+25,Generate a ROS C++ node that calculates node and publishes differential drive wheel wheel velocities based on robot parameters.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+// Define robot parameters
+const double wheel_base = 0.5; // Distance between the two wheels in meters
+const double wheel_radius = 0.1; // Radius of the wheels in meters
+
+ros::Publisher vel_pub;
+
+void calculateWheelVelocities(const geometry_msgs::Twist::ConstPtr& cmd_vel_msg) {
+    double linear_vel = cmd_vel_msg->linear.x;
+    double angular_vel = cmd_vel_msg->angular.z;
+
+    double left_wheel_vel = (linear_vel - angular_vel * wheel_base / 2.0) / wheel_radius;
+    double right_wheel_vel = (linear_vel + angular_vel * wheel_base / 2.0) / wheel_radius;
+
+    // Create a Twist message for left and right wheel velocities
+    geometry_msgs::Twist wheel_velocities;
+    wheel_velocities.linear.x = left_wheel_vel;
+    wheel_velocities.linear.y = right_wheel_vel;
+
+    vel_pub.publish(wheel_velocities);
+}
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""differential_drive_controller"");
+    ros::NodeHandle nh;
+
+    vel_pub = nh.advertise<geometry_msgs::Twist>(""wheel_velocities"", 10);
+
+    ros::Subscriber cmd_vel_sub = nh.subscribe(""cmd_vel"", 10, calculateWheelVelocities);
+
+    ros::spin();
+
+    return 0;
+}",1.0330070962630096
+27,Generate a ROS C++ node that calculates and execution publishes process differential drive velocities based on robot parameters.,"#include ""ros/ros.h""
+#include ""geometry_msgs/Twist.h""
+
+class DifferentialDriveController {
+public:
+    DifferentialDriveController(): nh_(""~"") {
+        // Initialize parameters
+        nh_.param(""wheel_separation"", wheel_separation_, 0.5); // Distance between the wheels
+        nh_.param(""wheel_radius"", wheel_radius_, 0.1); // Radius of the wheels
+
+        // Subscribe to desired velocity topic
+        vel_sub_ = nh_.subscribe(""cmd_vel"", 1, &DifferentialDriveController::velCallback, this);
+        
+        // Publish calculated wheel velocities
+        wheel_vel_pub_ = nh_.advertise<geometry_msgs::Twist>(""wheel_velocities"", 1);
+    }
+
+    void velCallback(const geometry_msgs::Twist::ConstPtr& msg) {
+        double linear_vel = msg->linear.x;
+        double angular_vel = msg->angular.z;
+
+        // Calculate wheel velocities for differential drive robot
+        double left_vel = (linear_vel - angular_vel * (wheel_separation_ / 2)) / wheel_radius_;
+        double right_vel = (linear_vel + angular_vel * (wheel_separation_ / 2)) / wheel_radius_;
+
+        // Publish the calculated wheel velocities
+        geometry_msgs::Twist wheel_velocities;
+        wheel_velocities.linear.x = left_vel;
+        wheel_velocities.linear.y = right_vel;
+        wheel_vel_pub_.publish(wheel_velocities);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Subscriber vel_sub_;
+    ros::Publisher wheel_vel_pub_;
+    double wheel_separation_;
+    double wheel_radius_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""differential_drive_controller"");
+    DifferentialDriveController controller;
+
+    ros::spin();
+
+    return 0;
+}",3.968115605138437
+28,Generate sensor a ROS C++ node that calculates and robot publishes differential localization drive wheel for a two-wheeled mobile platform.,"/*
+ * Description: This ROS node calculates differential drive wheel odometry for a two-wheeled mobile platform.
+ */
+
+#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+#include <nav_msgs/Odometry.h>
+#include <tf/transform_broadcaster.h>
+
+class DifferentialDriveWheelOdometry {
+public:
+    DifferentialDriveWheelOdometry() {
+        // Initialize ROS node handle
+        nh = ros::NodeHandle();
+
+        // Initialize publishers and subscribers
+        cmd_vel_sub = nh.subscribe(""cmd_vel"", 10, &DifferentialDriveWheelOdometry::cmdVelCallback, this);
+        odom_pub = nh.advertise<nav_msgs::Odometry>(""odom"", 10);
+
+        // Initialize variables
+        x = 0.0;
+        y = 0.0;
+        theta = 0.0;
+        linear_velocity = 0.0;
+        angular_velocity = 0.0;
+    }
+
+    void cmdVelCallback(const geometry_msgs::Twist::ConstPtr& msg) {
+        linear_velocity = msg->linear.x;
+        angular_velocity = msg->angular.z;
+    }
+
+    void calculateOdometry() {
+        double dt = (ros::Time::now() - last_time).toSec();
+
+        double dx = (linear_velocity * cos(theta)) * dt;
+        double dy = (linear_velocity * sin(theta)) * dt;
+        double dtheta = angular_velocity * dt;
+
+        x += dx;
+        y += dy;
+        theta += dtheta;
+
+        // Publish odometry
+        nav_msgs::Odometry odom;
+        odom.header.stamp = ros::Time::now();
+        odom.header.frame_id = ""odom"";
+        odom.child_frame_id = ""base_link"";
+        odom.pose.pose.position.x = x;
+        odom.pose.pose.position.y = y;
+
+        tf::Quaternion q;
+        q.setRPY(0, 0, theta);
+        odom.pose.pose.orientation.x = q.x();
+        odom.pose.pose.orientation.y = q.y();
+        odom.pose.pose.orientation.z = q.z();
+        odom.pose.pose.orientation.w = q.w();
+
+        odom_pub.publish(odom);
+
+        last_time = ros::Time::now();
+    }
+
+private:
+    ros::NodeHandle nh;
+    ros::Subscriber cmd_vel_sub;
+    ros::Publisher odom_pub;
+    ros::Time last_time;
+    double x, y, theta;
+    double linear_velocity, angular_velocity;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""differential_drive_wheel_odometry"");
+
+    DifferentialDriveWheelOdometry diff_drive_wheel_odom;
+
+    ros::Rate loop_rate(10); // 10 Hz
+
+    while (ros::ok()) {
+        diff_drive_wheel_odom.calculateOdometry();
+
+        ros::spinOnce();
+        loop_rate.sleep();
+    }
+
+    return 0;
+}",0.6594794271508668
+29,Generate a ROS C++ node that calculates and execution launch publishes differential drive wheel velocities based on robot parameters.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+// Robot parameters
+const double wheel_base = 0.5; // Distance between the two wheels
+const double wheel_radius = 0.1; // Radius of the wheels
+
+ros::Publisher velocity_publisher;
+
+void calculateWheelVelocities(const double linear_velocity, const double angular_velocity) {
+    // Calculate left and right wheel velocities for differential drive robot
+    double left_wheel_velocity = (linear_velocity - angular_velocity * wheel_base / 2) / wheel_radius;
+    double right_wheel_velocity = (linear_velocity + angular_velocity * wheel_base / 2) / wheel_radius;
+
+    // Publish the wheel velocities
+    geometry_msgs::Twist wheel_velocities;
+    wheel_velocities.linear.x = left_wheel_velocity;
+    wheel_velocities.linear.y = right_wheel_velocity;
+    velocity_publisher.publish(wheel_velocities);
+}
+
+int main(int argc, char** argv) {
+    // Initialize the ROS node
+    ros::init(argc, argv, ""differential_drive_controller"");
+    ros::NodeHandle nh;
+
+    // Advertise the wheel velocities publisher
+    velocity_publisher = nh.advertise<geometry_msgs::Twist>(""/wheel_velocities"", 10);
+
+    // Subscribe to the desired velocity topic
+    ros::Subscriber velocity_subscriber = nh.subscribe(""/cmd_vel"", 10, 
+        [&](const geometry_msgs::Twist::ConstPtr& msg) {
+            calculateWheelVelocities(msg->linear.x, msg->angular.z);
+        }
+    );
+
+    // Spin to process callbacks
+    ros::spin();
+
+    return 0;
+}",0
+30,Generate a ROS C++ node that calculates and publishes drive wheel based on robot parameters.,"// Includes
+#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+#include <std_msgs/Float64.h>
+
+// Global variables
+double robot_width; // Distance between the two drive wheels
+double wheel_base; // Distance between the drive wheel and the center of the robot
+double linear_velocity; // Linear velocity of the robot
+double angular_velocity; // Angular velocity of the robot
+
+// ROS publishers
+ros::Publisher left_wheel_pub;
+ros::Publisher right_wheel_pub;
+
+// Callback function to update robot parameters
+void paramsCallback(const geometry_msgs::Twist::ConstPtr& msg)
+{
+    linear_velocity = msg->linear.x;
+    angular_velocity = msg->angular.z;
+}
+
+// Function to calculate wheel speeds
+void calculateWheelSpeeds()
+{
+    // Calculate left and right wheel speeds based on linear and angular velocities
+    double left_speed = (2 * linear_velocity - angular_velocity * robot_width) / 2;
+    double right_speed = (2 * linear_velocity + angular_velocity * robot_width) / 2;
+
+    // Publish left and right wheel speeds
+    std_msgs::Float64 left_wheel_speed;
+    std_msgs::Float64 right_wheel_speed;
+    left_wheel_speed.data = left_speed;
+    right_wheel_speed.data = right_speed;
+    left_wheel_pub.publish(left_wheel_speed);
+    right_wheel_pub.publish(right_wheel_speed);
+}
+
+int main(int argc, char **argv)
+{
+    // Initialize ROS node
+    ros::init(argc, argv, ""wheel_speed_calculator"");
+    ros::NodeHandle nh;
+
+    // Get robot parameters from ROS parameter server
+    nh.getParam(""/robot_width"", robot_width);
+    nh.getParam(""/wheel_base"", wheel_base);
+
+    // ROS subscribers
+    ros::Subscriber params_sub = nh.subscribe(""cmd_vel"", 10, paramsCallback);
+
+    // ROS publishers
+    left_wheel_pub = nh.advertise<std_msgs::Float64>(""left_wheel_speed"", 10);
+    right_wheel_pub = nh.advertise<std_msgs::Float64>(""right_wheel_speed"", 10);
+
+    // ROS loop rate
+    ros::Rate loop_rate(10);
+
+    while (ros::ok())
+    {
+        calculateWheelSpeeds();
+        ros::spinOnce();
+        loop_rate.sleep();
+    }
+
+    return 0;
+}",9.134990704690615
+31,system Generate a ROS C++ node that calculates and drive wheel based on robot parameters.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class WheelControllerNode {
+public:
+    WheelControllerNode() : nh_(""~"") {
+        // Initialize parameters
+        nh_.param(""robot_width"", robot_width_, 0.5); // in meters
+
+        // Subscribe to cmd_vel topic
+        cmd_vel_sub_ = nh_.subscribe(""/cmd_vel"", 1, &WheelControllerNode::cmdVelCallback, this);
+
+        // Advertise wheel velocities
+        left_wheel_pub_ = nh_.advertise<std_msgs::Float64>(""/left_wheel_velocity"", 1);
+        right_wheel_pub_ = nh_.advertise<std_msgs::Float64>(""/right_wheel_velocity"", 1);
+    }
+
+    void cmdVelCallback(const geometry_msgs::Twist::ConstPtr& msg) {
+        double linear_vel = msg->linear.x; // m/s
+        double angular_vel = msg->angular.z; // rad/s
+
+        // Calculate wheel speeds
+        double left_wheel_vel = linear_vel - angular_vel * robot_width_ / 2;
+        double right_wheel_vel = linear_vel + angular_vel * robot_width_ / 2;
+
+        // Publish wheel velocities
+        std_msgs::Float64 left_wheel_msg, right_wheel_msg;
+        left_wheel_msg.data = left_wheel_vel;
+        right_wheel_msg.data = right_wheel_vel;
+        left_wheel_pub_.publish(left_wheel_msg);
+        right_wheel_pub_.publish(right_wheel_msg);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Subscriber cmd_vel_sub_;
+    ros::Publisher left_wheel_pub_;
+    ros::Publisher right_wheel_pub_;
+
+    double robot_width_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""wheel_controller_node"");
+    WheelControllerNode node;
+
+    ros::spin();
+    return 0;
+}",0
+32,Generate a ROS C++ node that system calculates and publishes drive wheel based on robot parameters.,"#include ""ros/ros.h""
+#include ""std_msgs/Float64.h""
+
+class DriveCalculatorNode {
+public:
+    DriveCalculatorNode() {
+        // Initialize ROS node handle
+        nh = ros::NodeHandle();
+
+        // Subscribe to left wheel velocity
+        leftWheelSub = nh.subscribe(""left_wheel_velocity"", 1, &DriveCalculatorNode::leftWheelCallback, this);
+
+        // Subscribe to right wheel velocity
+        rightWheelSub = nh.subscribe(""right_wheel_velocity"", 1, &DriveCalculatorNode::rightWheelCallback, this);
+
+        // Advertise drive wheel topic
+        driveWheelPub = nh.advertise<std_msgs::Float64>(""drive_wheel_velocity"", 1);
+    }
+
+    void leftWheelCallback(const std_msgs::Float64::ConstPtr& left_vel_msg) {
+        leftWheelVelocity = left_vel_msg->data;
+        calculateDriveWheel();
+    }
+
+    void rightWheelCallback(const std_msgs::Float64::ConstPtr& right_vel_msg) {
+        rightWheelVelocity = right_vel_msg->data;
+        calculateDriveWheel();
+    }
+
+    void calculateDriveWheel() {
+        // Calculate drive wheel velocity based on left and right velocities
+        driveWheelVelocity.data = (leftWheelVelocity + rightWheelVelocity) / 2.0;
+        driveWheelPub.publish(driveWheelVelocity);
+    }
+
+private:
+    ros::NodeHandle nh;
+    ros::Subscriber leftWheelSub;
+    ros::Subscriber rightWheelSub;
+    ros::Publisher driveWheelPub;
+    double leftWheelVelocity;
+    double rightWheelVelocity;
+    std_msgs::Float64 driveWheelVelocity;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""drive_calculator_node"");
+
+    DriveCalculatorNode driveCalculatorNode;
+
+    ros::spin();
+
+    return 0;
+}",4.46917115695468
+33,Generate a ROS C++ node that calculates and publishes differential wheel based on robot parameters.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+#include <math.h>
+
+class DifferentialDriveController {
+public:
+    DifferentialDriveController() : nh(""~"") {
+        // Initialize node handle
+        nh.param(""wheel_base"", wheel_base, 1.0); // Distance between the wheels
+        nh.param(""wheel_radius"", wheel_radius, 0.1); // Wheel radius
+        
+        // Publisher for differential drive commands
+        cmd_pub = nh.advertise<geometry_msgs::Twist>(""cmd_vel"", 10);
+        
+        // Subscriber for velocity commands
+        vel_sub = nh.subscribe(""velocity_cmd"", 10, &DifferentialDriveController::velocityCallback, this);
+    }
+
+    void velocityCallback(const geometry_msgs::Twist::ConstPtr& msg) {
+        double linear_vel = msg->linear.x; // Linear velocity command
+        double angular_vel = msg->angular.z; // Angular velocity command
+        
+        // Calculate wheel speeds based on the input velocities
+        double left_speed = (linear_vel - angular_vel * wheel_base / 2) / wheel_radius;
+        double right_speed = (linear_vel + angular_vel * wheel_base / 2) / wheel_radius;
+        
+        // Publish differential drive commands
+        geometry_msgs::Twist cmd_msg;
+        cmd_msg.linear.x = left_speed;
+        cmd_msg.linear.y = right_speed;
+        cmd_pub.publish(cmd_msg);
+    }
+
+private:
+    ros::NodeHandle nh;
+    ros::Publisher cmd_pub;
+    ros::Subscriber vel_sub;
+    double wheel_base;
+    double wheel_radius;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""differential_drive_controller"");
+    DifferentialDriveController controller;
+    
+    ros::spin();
+    
+    return 0;
+}",3.7150695754387573
+40,Generate a ROS C++ node that calculates parameter and publishes differential drive based on robot parameters.,"#include ""ros/ros.h""
+#include ""geometry_msgs/Twist.h""
+#include ""std_msgs/Float64.h""
+
+// Robot parameters
+const double wheel_base = 0.5; // distance between two wheels
+const double wheel_radius = 0.1; // radius of wheels
+
+ros::Publisher twist_pub;
+
+// Callback function for parameter update
+void paramCallback(const std_msgs::Float64::ConstPtr& msg)
+{
+    // Calculate differential drive values based on robot parameters
+    double linear_velocity = msg->data * wheel_radius;
+    double angular_velocity = linear_velocity / wheel_base;
+
+    // Create Twist message and publish
+    geometry_msgs::Twist twist_msg;
+    twist_msg.linear.x = linear_velocity;
+    twist_msg.angular.z = angular_velocity;
+
+    twist_pub.publish(twist_msg);
+}
+
+int main(int argc, char** argv)
+{
+    ros::init(argc, argv, ""differential_drive_node"");
+    ros::NodeHandle nh;
+
+    twist_pub = nh.advertise<geometry_msgs::Twist>(""cmd_vel"", 10);
+    ros::Subscriber param_sub = nh.subscribe(""robot_param"", 10, paramCallback);
+
+    ros::spin();
+
+    return 0;
+}",4.060494806079388
+43,Generate a ROS C++ node that calculates and publishes differential drive wheel velocities robot parameters.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class DifferentialDriveController {
+public:
+    DifferentialDriveController() : nh_(""~"") {
+        nh_.param(""wheel_base"", wheel_base_, 0.5);
+        nh_.param(""max_velocity"", max_velocity_, 2.0);
+        nh_.param(""max_angular_velocity"", max_angular_velocity_, 1.0);
+
+        cmd_vel_sub_ = nh_.subscribe(""cmd_vel"", 1, &DifferentialDriveController::cmdVelCallback, this);
+        left_wheel_vel_pub_ = nh_.advertise<std_msgs::Float64>(""left_wheel_velocity"", 1);
+        right_wheel_vel_pub_ = nh_.advertise<std_msgs::Float64>(""right_wheel_velocity"", 1);
+    }
+
+    void cmdVelCallback(const geometry_msgs::Twist::ConstPtr& msg) {
+        double linear_vel = std::min(msg->linear.x, max_velocity_);
+        double angular_vel = std::min(msg->angular.z, max_angular_velocity_);
+
+        double left_vel = (linear_vel - angular_vel * wheel_base_ / 2.0);
+        double right_vel = (linear_vel + angular_vel * wheel_base_ / 2.0);
+
+        std_msgs::Float64 left_wheel_vel;
+        std_msgs::Float64 right_wheel_vel;
+        left_wheel_vel.data = left_vel;
+        right_wheel_vel.data = right_vel;
+
+        left_wheel_vel_pub_.publish(left_wheel_vel);
+        right_wheel_vel_pub_.publish(right_wheel_vel);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Subscriber cmd_vel_sub_;
+    ros::Publisher left_wheel_vel_pub_;
+    ros::Publisher right_wheel_vel_pub_;
+    double wheel_base_;
+    double max_velocity_;
+    double max_angular_velocity_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""differential_drive_controller"");
+    DifferentialDriveController controller;
+    ros::spin();
+    return 0;
+}",0
+44,Generate a ROS C++ node that that calculates and publishes differential drive wheel velocities based on robot parameters.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class DifferentialDrive {
+public:
+    DifferentialDrive() {
+        // Initialize node handle
+        nh = ros::NodeHandle();
+
+        // Subscribe to velocity commands
+        sub = nh.subscribe(""cmd_vel"", 10, &DifferentialDrive::velocityCallback, this);
+
+        // Advertise wheel velocities
+        pub = nh.advertise<geometry_msgs::Twist>(""wheel_vel"", 10);
+    }
+
+    void velocityCallback(const geometry_msgs::Twist& cmd_vel) {
+        // Calculate left and right wheel velocities based on robot parameters
+        double robot_width = 0.5; // distance between wheels
+        double linear_velocity = cmd_vel.linear.x;
+        double angular_velocity = cmd_vel.angular.z;
+        double left_wheel_vel = linear_velocity - angular_velocity * (robot_width / 2);
+        double right_wheel_vel = linear_velocity + angular_velocity * (robot_width / 2);
+
+        // Create twist message with wheel velocities
+        geometry_msgs::Twist wheel_vel;
+        wheel_vel.linear.x = left_wheel_vel;
+        wheel_vel.linear.y = right_wheel_vel;
+
+        // Publish wheel velocities
+        pub.publish(wheel_vel);
+    }
+
+private:
+    ros::NodeHandle nh;
+    ros::Subscriber sub;
+    ros::Publisher pub;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""differential_drive_node"");
+    DifferentialDrive differentialDrive;
+
+    ros::spin();
+
+    return 0;
+}",1.4962218271739083
+46,Generate a ROS C++ node that calculates and publishes queue differential drive based on robot parameters.,"// Include necessary ROS libraries
+#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+#include <std_msgs/Float64.h>
+
+// Define constants for robot parameters
+const double wheel_base = 0.5; // Distance between the two wheels
+const double wheel_radius = 0.1; // Radius of the wheels
+
+// Global variables for linear and angular velocities
+double linear_velocity = 0.0;
+double angular_velocity = 0.0;
+
+// Callback function to update linear and angular velocities
+void calculateVelocity(const std_msgs::Float64::ConstPtr& left_velocity, const std_msgs::Float64::ConstPtr& right_velocity) {
+    // Calculate linear velocity using the average of left and right wheel velocities
+    linear_velocity = (left_velocity->data + right_velocity->data) / 2.0;
+
+    // Calculate angular velocity using the formula: (right_wheel - left_wheel) / wheel_base
+    angular_velocity = (right_velocity->data - left_velocity->data) / wheel_base;
+}
+
+int main(int argc, char **argv) {
+    // Initialize the ROS node
+    ros::init(argc, argv, ""queue_differential_drive"");
+    ros::NodeHandle nh;
+
+    // Create publishers for linear and angular velocities
+    ros::Publisher velocity_pub = nh.advertise<geometry_msgs::Twist>(""cmd_vel"", 1000);
+
+    // Create subscribers for left and right wheel velocities
+    ros::Subscriber left_velocity_sub = nh.subscribe(""left_wheel_velocity"", 1000, leftVelocityCallback);
+    ros::Subscriber right_velocity_sub = nh.subscribe(""right_wheel_velocity"", 1000, rightVelocityCallback);
+
+    // Define the rate at which to publish the velocities
+    ros::Rate rate(10); // 10 Hz
+
+    while (ros::ok()) {
+        // Create Twist message to publish linear and angular velocities
+        geometry_msgs::Twist velocity_msg;
+        velocity_msg.linear.x = linear_velocity;
+        velocity_msg.angular.z = angular_velocity;
+
+        // Publish the calculated linear and angular velocities
+        velocity_pub.publish(velocity_msg);
+
+        // Spin and sleep to maintain the loop rate
+        ros::spinOnce();
+        rate.sleep();
+    }
+
+    return 0;
+}",0
+47,Generate a ROS C++ node that calculates and publishes differential drive wheel velocities based parameters.,"// Include necessary ROS headers
+#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+// Define global variables
+ros::Publisher velocity_publisher;
+
+// Callback function to receive linear and angular velocities
+void velocityCallback(const geometry_msgs::Twist::ConstPtr& msg) {
+    // Extract linear and angular velocities from the message
+    double linear = msg->linear.x;
+    double angular = msg->angular.z;
+
+    // Calculate differential drive wheel velocities based on parameters
+    double left_wheel_vel = linear - angular;
+    double right_wheel_vel = linear + angular;
+
+    // Publish the calculated wheel velocities
+    // Assuming left and right wheel velocities are published to separate topics
+    // Modify the topic names as needed
+    // You can use std_msgs/Float64 message to publish wheel velocities
+    // Publish left wheel velocity
+    // velocity_publisher_left.publish(left_wheel_vel);
+
+    // Publish right wheel velocity
+    // velocity_publisher_right.publish(right_wheel_vel);
+}
+
+int main(int argc, char** argv) {
+    // Initialize the ROS node
+    ros::init(argc, argv, ""<node_name>"");
+    ros::NodeHandle nh;
+
+    // Subscribe to the topic that provides linear and angular velocities
+    // Replace '<input_topic>' with the actual topic name
+    ros::Subscriber velocity_subscriber = nh.subscribe(""<input_topic>"", 10, velocityCallback);
+
+    // Publish the calculated wheel velocities to separate topics
+    // You can create publishers here or pass them as arguments to the callback function
+    
+    // Spin to process callback function
+    ros::spin();
+
+    return 0;
+}",4.469630809584206
+48,Generate a ROS C++ node that calculates and publishes drive wheel based on launch machine parameters.,"#include <ros/ros.h>
+#include <std_msgs/Float32.h>
+#include <my_pkg/MachineParameters.h>
+
+// Global variables to store machine parameters
+double tire_radius; // in meters
+double gear_ratio;
+
+// Callback function to fetch machine parameters
+void machineParametersCallback(const my_pkg::MachineParameters::ConstPtr& msg) {
+    tire_radius = msg->tire_radius;
+    gear_ratio = msg->gear_ratio;
+}
+
+// Callback function to calculate and publish drive wheel based on machine parameters
+void calculateDriveWheel(const ros::TimerEvent& event) {
+    // Calculate drive wheel based on the given formula
+    // Drive wheel = (tire_radius * 2 * pi) / gear_ratio
+    double drive_wheel = (tire_radius * 2 * M_PI) / gear_ratio;
+
+    // Publish the calculated drive wheel
+    ros::NodeHandle nh;
+    ros::Publisher drive_wheel_pub = nh.advertise<std_msgs::Float32>(""drive_wheel"", 10);
+    std_msgs::Float32 drive_wheel_msg;
+    drive_wheel_msg.data = drive_wheel;
+    drive_wheel_pub.publish(drive_wheel_msg);
+}
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""drive_wheel_calculator"");
+    ros::NodeHandle nh;
+
+    // Subscribe to machine parameters topic
+    ros::Subscriber machine_param_sub = nh.subscribe(""machine_parameters"", 10, machineParametersCallback);
+
+    // Set up a timer to calculate and publish drive wheel at a fixed rate
+    ros::Timer timer = nh.createTimer(ros::Duration(1.0), calculateDriveWheel);
+
+    ros::spin();
+
+    return 0;
+}",0
+51,Generate a ROS C++ node that calculates and publishes differential drive wheel on robot parameters.,"#include ""ros/ros.h""
+#include ""geometry_msgs/Twist.h""
+#include ""std_msgs/Float64.h""
+
+class DifferentialDriveParametersNode {
+public:
+    DifferentialDriveParametersNode() {
+        // Initialize ROS node and subscribe to velocity commands
+        nh_ = ros::NodeHandle();
+        cmd_vel_sub_ = nh_.subscribe(""cmd_vel"", 1, &DifferentialDriveParametersNode::velocityCallback, this);
+
+        // Advertise wheel parameters
+        wheel_radius_pub_ = nh_.advertise<std_msgs::Float64>(""wheel_radius"", 1);
+        base_width_pub_ = nh_.advertise<std_msgs::Float64>(""base_width"", 1);
+        max_linear_speed_pub_ = nh_.advertise<std_msgs::Float64>(""max_linear_speed"", 1);
+        max_angular_speed_pub_ = nh_.advertise<std_msgs::Float64>(""max_angular_speed"", 1);
+    }
+
+    void velocityCallback(const geometry_msgs::Twist::ConstPtr& msg) {
+        // Calculate wheel parameters based on linear and angular velocities
+        double linear_speed = msg->linear.x;
+        double angular_speed = msg->angular.z;
+
+        double wheel_radius = linear_speed / angular_speed;
+        double base_width = linear_speed / angular_speed;
+        double max_linear_speed = fabs(linear_speed);
+        double max_angular_speed = fabs(angular_speed);
+
+        // Publish wheel parameters
+        std_msgs::Float64 radius_msg, base_width_msg, max_linear_speed_msg, max_angular_speed_msg;
+        radius_msg.data = wheel_radius;
+        base_width_msg.data = base_width;
+        max_linear_speed_msg.data = max_linear_speed;
+        max_angular_speed_msg.data = max_angular_speed;
+
+        wheel_radius_pub_.publish(radius_msg);
+        base_width_pub_.publish(base_width_msg);
+        max_linear_speed_pub_.publish(max_linear_speed_msg);
+        max_angular_speed_pub_.publish(max_angular_speed_msg);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Subscriber cmd_vel_sub_;
+    ros::Publisher wheel_radius_pub_;
+    ros::Publisher base_width_pub_;
+    ros::Publisher max_linear_speed_pub_;
+    ros::Publisher max_angular_speed_pub_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""differential_drive_parameters_node"");
+    DifferentialDriveParametersNode node;
+    ros::spin();
+    return 0;
+}",4.420634884715604
+53,a ROS C++ node that calculates and publishes drive wheel based on robot parameters.,"#include ""ros/ros.h""
+#include ""geometry_msgs/Twist.h""
+
+class DriveWheelController {
+public:
+    DriveWheelController() : nh(""~"") {
+        nh.getParam(""max_linear_vel"", max_linear_vel);
+        nh.getParam(""max_angular_vel"", max_angular_vel);
+
+        twist_pub = nh.advertise<geometry_msgs::Twist>(""cmd_vel"", 10);
+
+        // Subscribe to velocity command topic
+        vel_sub = nh.subscribe(""vel_cmd"", 10, &DriveWheelController::velCallback, this);
+    }
+
+    void velCallback(const geometry_msgs::TwistConstPtr& msg) {
+        double linear_vel = std::min(msg->linear.x, max_linear_vel);
+        double angular_vel = std::min(msg->angular.z, max_angular_vel);
+
+        // Calculate drive wheel commands based on desired velocities
+        // Here you can implement your logic for mapping linear and angular velocities to drive wheel commands
+
+        publishDriveWheelCommands(linear_vel, angular_vel);
+    }
+
+    void publishDriveWheelCommands(double linear_vel, double angular_vel) {
+        geometry_msgs::Twist twist_msg;
+        twist_msg.linear.x = linear_vel;
+        twist_msg.angular.z = angular_vel;
+
+        twist_pub.publish(twist_msg);
+    }
+
+private:
+    ros::NodeHandle nh;
+    ros::Publisher twist_pub;
+    ros::Subscriber vel_sub;
+
+    double max_linear_vel;
+    double max_angular_vel;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""drive_wheel_controller"");
+    DriveWheelController controller;
+
+    ros::spin();
+
+    return 0;
+}",3.9859989498365196
+55,Generate a ROS C++ node that calculates and publishes differential drive wheel on actuator robot parameters.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+#include <stdio.h>
+
+class DifferentialDriveController {
+public:
+    DifferentialDriveController() : nh_(""""), left_wheel_vel_(0.0), right_wheel_vel_(0.0) {
+        cmd_vel_sub_ = nh_.subscribe(""/cmd_vel"", 1, &DifferentialDriveController::cmdVelCallback, this);
+        left_wheel_vel_pub_ = nh_.advertise<std_msgs::Float64>(""/left_wheel_vel"", 1);
+        right_wheel_vel_pub_ = nh_.advertise<std_msgs::Float64>(""/right_wheel_vel"", 1);
+    }
+
+    void cmdVelCallback(const geometry_msgs::Twist::ConstPtr& msg) {
+        // Calculate left and right wheel velocities based on differential drive kinematics
+        double linear_vel = msg->linear.x;
+        double angular_vel = msg->angular.z;
+
+        left_wheel_vel_ = linear_vel - angular_vel / 2.0;
+        right_wheel_vel_ = linear_vel + angular_vel / 2.0;
+
+        publishWheelVelocities();
+    }
+
+    void publishWheelVelocities() {
+        std_msgs::Float64 left_vel_msg;
+        std_msgs::Float64 right_vel_msg;
+
+        left_vel_msg.data = left_wheel_vel_;
+        right_vel_msg.data = right_wheel_vel_;
+
+        left_wheel_vel_pub_.publish(left_vel_msg);
+        right_wheel_vel_pub_.publish(right_vel_msg);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Subscriber cmd_vel_sub_;
+    ros::Publisher left_wheel_vel_pub_;
+    ros::Publisher right_wheel_vel_pub_;
+
+    double left_wheel_vel_;
+    double right_wheel_vel_;
+};
+
+int main(int argc, char **argv) {
+    ros::init(argc, argv, ""differential_drive_controller"");
+    DifferentialDriveController controller;
+
+    ros::spin();
+
+    return 0;
+}",0
+56,Generate a ROS C++ node that calculates and publishes speeds of a differential drive robot.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class SpeedCalculatorNode {
+public:
+    SpeedCalculatorNode() {
+        cmd_vel_sub_ = nh_.subscribe(""/cmd_vel"", 1, &SpeedCalculatorNode::cmdVelCallback, this);
+        speeds_pub_ = nh_.advertise<geometry_msgs::Twist>(""/robot_speeds"", 1);
+    }
+
+    void cmdVelCallback(const geometry_msgs::Twist::ConstPtr& cmd_msg) {
+        double linear_speed = cmd_msg->linear.x;
+        double angular_speed = cmd_msg->angular.z;
+
+        // Calculate speeds based on input velocities
+        double left_speed = linear_speed - angular_speed;
+        double right_speed = linear_speed + angular_speed;
+
+        // Create and populate the Twist message
+        geometry_msgs::Twist speeds_msg;
+        speeds_msg.linear.x = left_speed;
+        speeds_msg.linear.y = right_speed;
+
+        // Publish the calculated speeds
+        speeds_pub_.publish(speeds_msg);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Subscriber cmd_vel_sub_;
+    ros::Publisher speeds_pub_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""speed_calculator_node"");
+    SpeedCalculatorNode speed_calculator_node;
+
+    ros::spin();
+
+    return 0;
+}",1.5277251935806069
+58,Generate a ROS C++ node data that calculates and publishes differential drive wheel velocities a two-wheeled mobile platform.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+#include <std_msgs/Float64.h>
+
+class DiffDriveController {
+public:
+    DiffDriveController() : nh_(""~"") {
+        nh_.param<double>(""wheel_separation"", wheel_sep_, 0.5);
+        nh_.param<double>(""wheel_radius"", wheel_radius_, 0.1);
+
+        cmd_sub_ = nh_.subscribe(""/cmd_vel"", 1, &DiffDriveController::cmdVelCallback, this);
+        left_wheel_pub_ = nh_.advertise<std_msgs::Float64>(""/left_wheel_velocity"", 1);
+        right_wheel_pub_ = nh_.advertise<std_msgs::Float64>(""/right_wheel_velocity"", 1);
+    }
+
+    void cmdVelCallback(const geometry_msgs::Twist::ConstPtr& msg) {
+        double linear_vel = msg->linear.x;
+        double angular_vel = msg->angular.z;
+
+        double left_vel = (2 * linear_vel - angular_vel * wheel_sep_) / (2 * wheel_radius_);
+        double right_vel = (2 * linear_vel + angular_vel * wheel_sep_) / (2 * wheel_radius_);
+
+        std_msgs::Float64 left_wheel_vel;
+        left_wheel_vel.data = left_vel;
+        std_msgs::Float64 right_wheel_vel;
+        right_wheel_vel.data = right_vel;
+
+        left_wheel_pub_.publish(left_wheel_vel);
+        right_wheel_pub_.publish(right_wheel_vel);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Subscriber cmd_sub_;
+    ros::Publisher left_wheel_pub_;
+    ros::Publisher right_wheel_pub_;
+    double wheel_sep_;
+    double wheel_radius_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""diff_drive_controller"");
+    DiffDriveController controller;
+
+    ros::spin();
+
+    return 0;
+}",1.479764601993815
+59,Generate a ROS C++ node that calculates and publishes differential drive wheel velocities based on robot a two-wheeled mobile platform.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+#include <std_msgs/Float64.h>
+
+class DifferentialDriveController {
+public:
+    DifferentialDriveController() : nh(""~"") {
+        nh.param(""wheel_separation"", wheelSeparation, 0.5);
+        
+        velSub = nh.subscribe(""cmd_vel"", 1, &DifferentialDriveController::velCallback, this);
+        leftWheelVelPub = nh.advertise<std_msgs::Float64>(""left_wheel_velocity"", 1);
+        rightWheelVelPub = nh.advertise<std_msgs::Float64>(""right_wheel_velocity"", 1);
+    }
+
+    void velCallback(const geometry_msgs::Twist::ConstPtr& msg) {
+        double linearVel = msg->linear.x;
+        double angularVel = msg->angular.z;
+
+        // Calculate wheel velocities for differential drive robot
+        double leftWheelVel = linearVel - (angularVel * wheelSeparation / 2);
+        double rightWheelVel = linearVel + (angularVel * wheelSeparation / 2);
+
+        // Publish wheel velocities
+        std_msgs::Float64 leftVelMsg, rightVelMsg;
+        leftVelMsg.data = leftWheelVel;
+        rightVelMsg.data = rightWheelVel;
+
+        leftWheelVelPub.publish(leftVelMsg);
+        rightWheelVelPub.publish(rightVelMsg);
+    }
+
+private:
+    ros::NodeHandle nh;
+    ros::Subscriber velSub;
+    ros::Publisher leftWheelVelPub;
+    ros::Publisher rightWheelVelPub;
+    double wheelSeparation;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""differential_drive_controller"");
+    
+    DifferentialDriveController controller;
+
+    ros::spin();
+
+    return 0;
+}",0.9815465645291788
+61,Generate a ROS C++ node that calculates and publishes differential drive wheel on parameters.,"#include ""ros/ros.h""
+#include ""std_msgs/Float32.h""
+#include ""geometry_msgs/Twist.h""
+#include ""nav_msgs/Odometry.h""
+#include <tf/transform_broadcaster.h>
+
+class DifferentialDriveOdometry {
+public:
+    DifferentialDriveOdometry() : nh(""~"") {
+        nh.param<std::string>(""left_wheel_topic"", left_wheel_topic, ""/left_wheel_topic"");
+        nh.param<std::string>(""right_wheel_topic"", right_wheel_topic, ""/right_wheel_topic"");
+        nh.param<std::string>(""odometry_topic"", odometry_topic, ""/odom"");
+
+        left_wheel_sub = nh.subscribe(left_wheel_topic, 1, &DifferentialDriveOdometry::leftWheelCallback, this);
+        right_wheel_sub = nh.subscribe(right_wheel_topic, 1, &DifferentialDriveOdometry::rightWheelCallback, this);
+        odometry_pub = nh.advertise<nav_msgs::Odometry>(odometry_topic, 10);
+        
+        x = 0.0;
+        y = 0.0;
+        theta = 0.0;
+    }
+
+    void leftWheelCallback(const std_msgs::Float32::ConstPtr& msg) {
+        // Update left wheel encoder value
+        // Calculate new odometry
+        // Publish updated odometry
+    }
+
+    void rightWheelCallback(const std_msgs::Float32::ConstPtr& msg) {
+        // Update right wheel encoder value
+        // Calculate new odometry
+        // Publish updated odometry
+    }
+
+private:
+    ros::NodeHandle nh;
+    ros::Subscriber left_wheel_sub;
+    ros::Subscriber right_wheel_sub;
+    ros::Publisher odometry_pub;
+    std::string left_wheel_topic;
+    std::string right_wheel_topic;
+    std::string odometry_topic;
+    
+    double x;
+    double y;
+    double theta;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""differential_drive_odometry"");
+    DifferentialDriveOdometry differential_drive_odometry;
+    ros::spin();
+    return 0;
+}",4.456532152497189
+64,Generate a ROS C++ node that calculates and publishes differential wheel based on automaton parameters.,"#include ""ros/ros.h""
+#include ""geometry_msgs/Twist.h""
+#include ""std_msgs/Float64.h""
+
+class DifferentialWheelCalculator {
+public:
+    DifferentialWheelCalculator() {
+        cmd_vel_sub_ = nh_.subscribe(""/cmd_vel"", 1, &DifferentialWheelCalculator::cmdVelCallback, this);
+        wheel_vel_left_pub_ = nh_.advertise<std_msgs::Float64>(""/wheel_vel_left"", 1);
+        wheel_vel_right_pub_ = nh_.advertise<std_msgs::Float64>(""/wheel_vel_right"", 1);
+    }
+
+    void cmdVelCallback(const geometry_msgs::Twist::ConstPtr& cmd_msg) {
+        // Calculate differential wheel velocities based on command velocity (linear and angular)
+        double linear_vel = cmd_msg->linear.x;
+        double angular_vel = cmd_msg->angular.z;
+
+        // Calculate left and right wheel velocities
+        double wheel_base = 0.5; // Distance between the two wheels
+        double wheel_radius = 0.1; // Wheel radius
+
+        double left_wheel_vel = (linear_vel - angular_vel * wheel_base) / wheel_radius;
+        double right_wheel_vel = (linear_vel + angular_vel * wheel_base) / wheel_radius;
+
+        // Publish left and right wheel velocities
+        std_msgs::Float64 left_wheel_msg, right_wheel_msg;
+        left_wheel_msg.data = left_wheel_vel;
+        right_wheel_msg.data = right_wheel_vel;
+
+        wheel_vel_left_pub_.publish(left_wheel_msg);
+        wheel_vel_right_pub_.publish(right_wheel_msg);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Subscriber cmd_vel_sub_;
+    ros::Publisher wheel_vel_left_pub_;
+    ros::Publisher wheel_vel_right_pub_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""differential_wheel_calculator"");
+    
+    DifferentialWheelCalculator calculator;
+    
+    ros::spin();
+
+    return 0;
+}",4.457120943053023
+67,Generate a ROS node that calculates and publishes drive wheel based on robot parameters.,"#!/usr/bin/env python
+
+import rospy
+from geometry_msgs.msg import Twist
+from std_msgs.msg import Float64
+
+class DriveWheelController:
+    def __init__(self):
+        # Initialize node
+        rospy.init_node('drive_wheel_controller')
+
+        # Parameters
+        self.wheel_radius = rospy.get_param('~wheel_radius', 0.1)
+
+        # Subscribers
+        rospy.Subscriber('/cmd_vel', Twist, self.cmd_vel_callback)
+
+        # Publisher
+        self.drive_wheel_pub = rospy.Publisher('/drive_wheel_velocity', Float64, queue_size=10)
+
+    def cmd_vel_callback(self, msg):
+        linear_vel = msg.linear.x
+        angular_vel = msg.angular.z
+
+        # Calculate drive wheel velocity
+        drive_wheel_vel = linear_vel / self.wheel_radius + angular_vel
+
+        # Publish drive wheel velocity
+        self.drive_wheel_pub.publish(drive_wheel_vel)
+
+    def run(self):
+        rospy.spin()
+
+if __name__ == '__main__':
+    try:
+        drive_wheel_controller = DriveWheelController()
+        drive_wheel_controller.run()
+    except rospy.ROSInterruptException:
+        pass",0
+70,Generate a ROS C++ node that calculates and publishes differential drive based on robot parameters.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+#include <std_msgs/Float64.h>
+
+class DifferentialDriveController {
+public:
+    DifferentialDriveController() {
+        // Initialize ROS node handle
+        nh_ = ros::NodeHandle();
+
+        // Subscribe to cmd_vel topic
+        cmd_vel_sub_ = nh_.subscribe(""cmd_vel"", 10, &DifferentialDriveController::velCallback, this);
+
+        // Publish left and right wheel velocities
+        left_wheel_vel_pub_ = nh_.advertise<std_msgs::Float64>(""left_wheel_vel"", 10);
+        right_wheel_vel_pub_ = nh_.advertise<std_msgs::Float64>(""right_wheel_vel"", 10);
+
+        // Initialize wheel parameters
+        wheel_base_ = 0.5; // Distance between the two wheels
+        wheel_radius_ = 0.1; // Radius of the wheels
+    }
+
+    void velCallback(const geometry_msgs::Twist::ConstPtr& msg) {
+        double linear_vel = msg->linear.x;
+        double angular_vel = msg->angular.z;
+
+        // Calculate left and right wheel velocities based on differential drive kinematics
+        double left_wheel_vel = (linear_vel - angular_vel * wheel_base_ / 2) / wheel_radius_;
+        double right_wheel_vel = (linear_vel + angular_vel * wheel_base_ / 2) / wheel_radius_;
+
+        // Publish left and right wheel velocities
+        std_msgs::Float64 left_vel_msg, right_vel_msg;
+        left_vel_msg.data = left_wheel_vel;
+        right_vel_msg.data = right_wheel_vel;
+
+        left_wheel_vel_pub_.publish(left_vel_msg);
+        right_wheel_vel_pub_.publish(right_vel_msg);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Subscriber cmd_vel_sub_;
+    ros::Publisher left_wheel_vel_pub_;
+    ros::Publisher right_wheel_vel_pub_;
+
+    double wheel_base_;
+    double wheel_radius_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""differential_drive_controller"");
+
+    // Create an instance of the DifferentialDriveController class
+    DifferentialDriveController controller;
+
+    ros::spin();
+
+    return 0;
+}",4.437439005627626
+71,Generate a ROS C++ node that calculates and publishes drive wheel based system on robot parameters.,"// Include necessary ROS libraries
+#include <ros/ros.h>
+#include <std_msgs/Float64.h>
+#include <geometry_msgs/Twist.h>
+
+class DriveSystemCalculator {
+public:
+    DriveSystemCalculator() {
+        // Subscribe to the topic to get the linear and angular velocities
+        twist_sub_ = nh_.subscribe(""cmd_vel"", 1, &DriveSystemCalculator::twistCallback, this);
+        
+        // Advertise the drive wheel system parameters
+        left_wheel_pub_ = nh_.advertise<std_msgs::Float64>(""left_wheel_vel"", 1);
+        right_wheel_pub_ = nh_.advertise<std_msgs::Float64>(""right_wheel_vel"", 1);
+
+        // Initialize default parameters
+        wheel_base_distance_ = 0.5;  // distance between the wheels in meters
+        wheel_radius_ = 0.1;         // wheel radius in meters
+    }
+
+    // Callback function to process the linear and angular velocities
+    void twistCallback(const geometry_msgs::Twist::ConstPtr& twist_msg) {
+        // Calculate the linear and angular velocities
+        double linear_vel = twist_msg->linear.x;
+        double angular_vel = twist_msg->angular.z;
+
+        // Calculate left and right wheel velocities based on robot parameters
+        double left_vel = (linear_vel - angular_vel * wheel_base_distance_ / 2) / wheel_radius_;
+        double right_vel = (linear_vel + angular_vel * wheel_base_distance_ / 2) / wheel_radius_;
+
+        // Publish the left and right wheel velocities
+        std_msgs::Float64 left_wheel_msg;
+        left_wheel_msg.data = left_vel;
+        left_wheel_pub_.publish(left_wheel_msg);
+
+        std_msgs::Float64 right_wheel_msg;
+        right_wheel_msg.data = right_vel;
+        right_wheel_pub_.publish(right_wheel_msg);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Subscriber twist_sub_;
+    ros::Publisher left_wheel_pub_;
+    ros::Publisher right_wheel_pub_;
+
+    double wheel_base_distance_;
+    double wheel_radius_;
+};
+
+int main(int argc, char** argv) {
+    // Initialize the ROS node
+    ros::init(argc, argv, ""drive_system_calculator_node"");
+    
+    // Create an instance of DriveSystemCalculator class
+    DriveSystemCalculator drive_system_calculator;
+    
+    // Spin to process callbacks
+    ros::spin();
+
+    return 0;
+}",4.4201711521115055
+74,Generate a ROS C++ node that calculates and publishes differential drive wheel velocities based on on robot parameters.,"#include ""ros/ros.h""
+#include ""geometry_msgs/Twist.h""
+
+class DifferentialDriveController {
+public:
+    DifferentialDriveController() : nh_(""""), private_nh_(""~"") {
+        cmd_pub_ = nh_.advertise<geometry_msgs::Twist>(""/cmd_vel"", 10);
+
+        private_nh_.param(""wheel_base"", wheel_base_, 0.5);
+        private_nh_.param(""max_speed"", max_speed_, 1.0);
+        private_nh_.param(""max_angular_vel"", max_angular_vel_, 1.0);
+
+        vel_sub_ = nh_.subscribe(""/desired_velocity"", 10, &DifferentialDriveController::velocityCallback, this);
+    }
+
+    void velocityCallback(const geometry_msgs::Twist::ConstPtr& msg) {
+        double linear_vel = msg->linear.x;
+        double angular_vel = msg->angular.z;
+
+        double left_wheel_vel = (2 * linear_vel - angular_vel * wheel_base_) / 2;
+        double right_wheel_vel = (2 * linear_vel + angular_vel * wheel_base_) / 2;
+
+        // Saturate the wheel velocities
+        left_wheel_vel = std::min(std::max(left_wheel_vel, -max_speed_), max_speed_);
+        right_wheel_vel = std::min(std::max(right_wheel_vel, -max_speed_), max_speed_);
+
+        publishWheelVelocities(left_wheel_vel, right_wheel_vel);
+    }
+
+    void publishWheelVelocities(double left_wheel_vel, double right_wheel_vel) {
+        geometry_msgs::Twist cmd_vel;
+        cmd_vel.linear.x = left_wheel_vel;
+        cmd_vel.linear.y = right_wheel_vel;
+        cmd_pub_.publish(cmd_vel);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::NodeHandle private_nh_;
+
+    ros::Publisher cmd_pub_;
+    ros::Subscriber vel_sub_;
+
+    double wheel_base_;
+    double max_speed_;
+    double max_angular_vel_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""differential_drive_controller"");
+    DifferentialDriveController controller;
+
+    ros::spin();
+
+    return 0;
+}",1.4509907055215097
+75,Generate a ROS C++ node that calculates and publishes robot drive wheel based on robot parameters.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+#include <std_msgs/Float64.h>
+
+class RobotDriveWheelCalculator
+{
+public:
+    RobotDriveWheelCalculator()
+    {
+        // Initialize ROS node handle
+        nh_ = ros::NodeHandle(""~"");
+
+        // Subscribe to the cmd_vel topic
+        cmd_vel_sub_ = nh_.subscribe(""/cmd_vel"", 10, &RobotDriveWheelCalculator::cmdVelCallback, this);
+
+        // Advertise the drive_wheel_speed topic
+        drive_wheel_speed_pub_ = nh_.advertise<std_msgs::Float64>(""/drive_wheel_speed"", 10);
+    }
+
+    void cmdVelCallback(const geometry_msgs::Twist::ConstPtr& msg)
+    {
+        // Calculate drive wheel speed based on linear and angular velocities
+        double linear_vel = msg->linear.x;
+        double angular_vel = msg->angular.z;
+
+        // Assuming simple calculation based on linear and angular velocities
+        double drive_wheel_speed = linear_vel + angular_vel;
+
+        // Publish the calculated drive wheel speed
+        std_msgs::Float64 drive_wheel_speed_msg;
+        drive_wheel_speed_msg.data = drive_wheel_speed;
+        drive_wheel_speed_pub_.publish(drive_wheel_speed_msg);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Subscriber cmd_vel_sub_;
+    ros::Publisher drive_wheel_speed_pub_;
+};
+
+int main(int argc, char **argv)
+{
+    ros::init(argc, argv, ""robot_drive_wheel_calculator"");
+
+    RobotDriveWheelCalculator calculator;
+
+    ros::spin();
+
+    return 0;
+}",1.4918399526180002
+76,Generate a ROS C++ node that and task publishes differential wheel based on robot parameters.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class DifferentialWheelController {
+public:
+    DifferentialWheelController() : nh_(""""), private_nh_(""~"") {
+        private_nh_.param<double>(""wheel_radius"", wheel_radius_, 0.05); // default wheel radius = 0.05 meters
+        private_nh_.param<double>(""wheel_base"", wheel_base_, 0.2); // default wheel separation distance = 0.2 meters
+        private_nh_.param<double>(""max_linear_vel"", max_linear_vel_, 0.5); // default max linear velocity = 0.5 m/s
+        private_nh_.param<double>(""max_angular_vel"", max_angular_vel_, 1.0); // default max angular velocity = 1.0 rad/s
+
+        twist_pub_ = nh_.advertise<geometry_msgs::Twist>(""cmd_vel"", 10);
+    }
+
+    void publishTwist(double linear_vel, double angular_vel) {
+        geometry_msgs::Twist twist_msg;
+        twist_msg.linear.x = linear_vel;
+        twist_msg.angular.z = angular_vel;
+        twist_pub_.publish(twist_msg);
+    }
+
+    double limitVelocity(double vel, double max_vel) {
+        return (vel > max_vel) ? max_vel : ((vel < -max_vel) ? -max_vel : vel);
+    }
+
+    void controlLoop() {
+        ros::Rate rate(10); // Loop at 10 Hz
+
+        while (ros::ok()) {
+            double linear_vel = calculateLinearVelocity();
+            double angular_vel = calculateAngularVelocity();
+
+            linear_vel = limitVelocity(linear_vel, max_linear_vel_);
+            angular_vel = limitVelocity(angular_vel, max_angular_vel_);
+
+            publishTwist(linear_vel, angular_vel);
+
+            ros::spinOnce();
+            rate.sleep();
+        }
+    }
+
+    double calculateLinearVelocity() {
+        // Insert your differential drive kinematics here to calculate linear velocity
+        // Example: linear_vel = <your differential drive kinematics>;
+        return 0.0; // dummy value
+    }
+
+    double calculateAngularVelocity() {
+        // Insert your differential drive kinematics here to calculate angular velocity
+        // Example: angular_vel = <your differential drive kinematics>;
+        return 0.0; // dummy value
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::NodeHandle private_nh_;
+    ros::Publisher twist_pub_;
+
+    double wheel_radius_;
+    double wheel_base_;
+    double max_linear_vel_;
+    double max_angular_vel_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""differential_wheel_controller"");
+    DifferentialWheelController controller;
+
+    controller.controlLoop();
+
+    return 0;
+}",8.482922138728469
+77,Generate a ROS C++ node that calculates node and publishes differential wheel wheel velocities based on robot parameters.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class DifferentialDriveController {
+public:
+    DifferentialDriveController() : nh_(""~"") {
+        nh_.param(""wheel_base"", wheel_base_, 0.5);
+        nh_.param(""max_angular_vel"", max_angular_vel_, 1.0);
+        nh_.param(""max_linear_vel"", max_linear_vel_, 0.5);
+
+        vel_pub_ = nh_.advertise<geometry_msgs::Twist>(""/cmd_vel"", 10);
+        cmd_sub_ = nh_.subscribe(""/desired_cmd_vel"", 10, &DifferentialDriveController::cmdVelCallback, this);
+    }
+
+    void cmdVelCallback(const geometry_msgs::Twist::ConstPtr& msg) {
+        double linear_vel = std::min(msg->linear.x, max_linear_vel_);
+        double angular_vel = std::min(msg->angular.z, max_angular_vel_);
+
+        double left_wheel_vel = (2 * linear_vel - angular_vel * wheel_base_) / 2;
+        double right_wheel_vel = (2 * linear_vel + angular_vel * wheel_base_) / 2;
+
+        geometry_msgs::Twist cmd_vel;
+        cmd_vel.linear.x = left_wheel_vel;
+        cmd_vel.linear.y = right_wheel_vel;
+
+        vel_pub_.publish(cmd_vel);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher vel_pub_;
+    ros::Subscriber cmd_sub_;
+    double wheel_base_;
+    double max_angular_vel_;
+    double max_linear_vel_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""differential_drive_controller"");
+    DifferentialDriveController controller;
+
+    ros::spin();
+
+    return 0;
+}",1.4947114310769134
+79,Generate a ROS C++ node that calculates and publishes drive robot wheel based robot parameters.,"#include ""ros/ros.h""
+#include ""std_msgs/Float32.h""
+
+class WheelParametersCalculator {
+public:
+    WheelParametersCalculator() {
+        // Initialize ROS node handle
+        nh = ros::NodeHandle();
+
+        // Create publishers for left and right wheel parameters
+        left_wheel_pub = nh.advertise<std_msgs::Float32>(""/left_wheel_parameters"", 10);
+        right_wheel_pub = nh.advertise<std_msgs::Float32>(""/right_wheel_parameters"", 10);
+
+        // Subscribe to topic for robot base parameters
+        base_parameters_sub = nh.subscribe(""/base_parameters"", 10, &WheelParametersCalculator::baseParametersCallback, this);
+    }
+
+    void baseParametersCallback(const std_msgs::Float32::ConstPtr& msg) {
+        // Calculate left and right wheel parameters based on robot base parameters
+        float base_parameter = msg->data;
+        float left_wheel_param = base_parameter * 0.8;  // Example calculation
+        float right_wheel_param = base_parameter * 0.7; // Example calculation
+
+        // Publish left and right wheel parameters
+        std_msgs::Float32 left_wheel_msg;
+        left_wheel_msg.data = left_wheel_param;
+        left_wheel_pub.publish(left_wheel_msg);
+
+        std_msgs::Float32 right_wheel_msg;
+        right_wheel_msg.data = right_wheel_param;
+        right_wheel_pub.publish(right_wheel_msg);
+    }
+
+private:
+    ros::NodeHandle nh;
+    ros::Publisher left_wheel_pub;
+    ros::Publisher right_wheel_pub;
+    ros::Subscriber base_parameters_sub;
+};
+
+int main(int argc, char **argv) {
+    ros::init(argc, argv, ""wheel_parameters_calculator"");
+
+    WheelParametersCalculator calculator;
+
+    ros::spin();
+
+    return 0;
+}",0.7167337069178226
+81,Generate a ROS control C++ node that calculates and publishes drive wheel based on robot parameters.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class DriveWheelController {
+public:
+    DriveWheelController() {
+        ros::NodeHandle nh;
+        cmd_vel_sub_ = nh.subscribe(""/cmd_vel"", 1, &DriveWheelController::cmdVelCallback, this);
+        drive_wheel_pub_ = nh.advertise<geometry_msgs::Twist>(""/drive_wheel"", 1);
+        
+        // Initialize robot parameters
+        wheel_radius_ = 0.05; // in meters
+        base_width_ = 0.2; // in meters
+    }
+
+    void cmdVelCallback(const geometry_msgs::Twist::ConstPtr& msg) {
+        // Calculate drive wheel angular velocities based on cmd_vel input
+        double linear_vel = msg->linear.x;
+        double angular_vel = msg->angular.z;
+
+        // Calculate left and right wheel velocities
+        double left_wheel_vel = (linear_vel - angular_vel * base_width_ / 2) / wheel_radius_;
+        double right_wheel_vel = (linear_vel + angular_vel * base_width_ / 2) / wheel_radius_;
+
+        // Publish drive wheel velocities
+        geometry_msgs::Twist drive_wheel_msg;
+        drive_wheel_msg.linear.x = left_wheel_vel;
+        drive_wheel_msg.linear.y = right_wheel_vel;
+        drive_wheel_pub_.publish(drive_wheel_msg);
+    }
+
+private:
+    ros::NodeHandle nh;
+    ros::Subscriber cmd_vel_sub_;
+    ros::Publisher drive_wheel_pub_;
+    double wheel_radius_;
+    double base_width_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""drive_wheel_controller"");
+    DriveWheelController controller;
+
+    ros::spin();
+    
+    return 0;
+}",4.48063741623217
+84,Generate a ROS C++ node that calculates and publishes drive wheel based on robot,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+#include <std_msgs/Float64.h>
+
+class DriveWheelCalculator {
+public:
+    DriveWheelCalculator() : nh_(""""), private_nh_(""~"") {
+        cmd_vel_sub_ = nh_.subscribe(""/cmd_vel"", 1, &DriveWheelCalculator::cmdVelCallback, this);
+        left_drive_pub_ = nh_.advertise<std_msgs::Float64>(""/left_wheel_speed"", 1);
+        right_drive_pub_ = nh_.advertise<std_msgs::Float64>(""/right_wheel_speed"", 1);
+
+        // Set default wheelbase and wheel radius parameters
+        private_nh_.param(""wheelbase"", wheelbase_, 0.5);
+        private_nh_.param(""wheel_radius"", wheel_radius_, 0.1);
+    }
+
+    void cmdVelCallback(const geometry_msgs::Twist::ConstPtr& msg) {
+        double linear_vel = msg->linear.x;
+        double angular_vel = msg->angular.z;
+
+        double left_wheel_speed = (linear_vel - angular_vel * wheelbase_ / 2) / wheel_radius_;
+        double right_wheel_speed = (linear_vel + angular_vel * wheelbase_ / 2) / wheel_radius_;
+
+        std_msgs::Float64 left_speed_msg, right_speed_msg;
+        left_speed_msg.data = left_wheel_speed;
+        right_speed_msg.data = right_wheel_speed;
+
+        left_drive_pub_.publish(left_speed_msg);
+        right_drive_pub_.publish(right_speed_msg);
+    }
+
+private:
+    ros::NodeHandle nh_, private_nh_;
+    ros::Subscriber cmd_vel_sub_;
+    ros::Publisher left_drive_pub_, right_drive_pub_;
+    double wheelbase_, wheel_radius_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""drive_wheel_calculator_node"");
+    DriveWheelCalculator calculator;
+
+    ros::spin();
+
+    return 0;
+}",4.471460567260913
+86,Generate a ROS C++ node that that calculates and publishes drive wheel based on robot parameters.,"#include <ros/ros.h>
+#include <std_msgs/Float32.h>
+#include <geometry_msgs/Twist.h>
+
+// Robot parameters
+const double wheel_base = 0.5; // Distance between the two drive wheels
+const double wheel_radius = 0.1; // Radius of the drive wheels
+
+// ROS node initialization
+ros::NodeHandle nh;
+
+// Publisher for the drive wheel velocity
+ros::Publisher drive_wheel_pub = nh.advertise<std_msgs::Float32>(""/drive_wheel_velocity"", 10);
+
+// Callback function for receiving velocity commands
+void velocityCallback(const geometry_msgs::Twist::ConstPtr& cmd_vel) {
+    // Calculate linear and angular velocities
+    double linear_velocity = cmd_vel->linear.x;
+    double angular_velocity = cmd_vel->angular.z;
+
+    // Calculate drive wheel velocity based on robot parameters
+    double left_wheel_velocity = (linear_velocity - (angular_velocity * wheel_base / 2)) / wheel_radius;
+    double right_wheel_velocity = (linear_velocity + (angular_velocity * wheel_base / 2)) / wheel_radius;
+
+    // Publish the calculated drive wheel velocity
+    std_msgs::Float32 left_wheel_msg;
+    left_wheel_msg.data = left_wheel_velocity;
+    drive_wheel_pub.publish(left_wheel_msg);
+
+    std_msgs::Float32 right_wheel_msg;
+    right_wheel_msg.data = right_wheel_velocity;
+    drive_wheel_pub.publish(right_wheel_msg);
+}
+
+int main(int argc, char** argv) {
+    // Initialize ROS node
+    ros::init(argc, argv, ""drive_wheel_calculator"");
+
+    // Subscribe to velocity commands
+    ros::Subscriber velocity_sub = nh.subscribe(""/cmd_vel"", 10, velocityCallback);
+
+    // Spin to process callback functions
+    ros::spin();
+
+    return 0;
+}",0.7261746187616205
+87,Generate a ROS C++ node node that calculates and publishes differential drive based on robot parameters.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class DifferentialDrivePublisher {
+public:
+    DifferentialDrivePublisher() : nh(""~"") {
+        nh.param<std::string>(""cmd_vel_topic"", cmd_vel_topic, ""/cmd_vel"");
+        nh.param<double>(""wheel_distance"", wheel_distance, 0.5);
+        nh.param<double>(""max_linear_speed"", max_linear_speed, 1.0);
+        nh.param<double>(""max_angular_speed"", max_angular_speed, 1.0);
+
+        cmd_vel_pub = nh.advertise<geometry_msgs::Twist>(cmd_vel_topic, 10);
+    }
+
+    void calculateAndPublish(double linear_vel, double angular_vel) {
+        geometry_msgs::Twist msg;
+        msg.linear.x = std::min(std::max(linear_vel, -max_linear_speed), max_linear_speed);
+        msg.angular.z = std::min(std::max(angular_vel, -max_angular_speed), max_angular_speed);
+
+        cmd_vel_pub.publish(msg);
+    }
+
+private:
+    ros::NodeHandle nh;
+    ros::Publisher cmd_vel_pub;
+    std::string cmd_vel_topic;
+    double wheel_distance;
+    double max_linear_speed;
+    double max_angular_speed;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""differential_drive_node"");
+
+    DifferentialDrivePublisher differential_drive;
+
+    ros::Rate rate(10); // 10Hz control loop
+
+    while (ros::ok()) {
+        // Calculate desired linear and angular velocities based on your algorithm
+        double linear_vel = 0.5;  // Example linear velocity
+        double angular_vel = 0.2; // Example angular velocity
+
+        differential_drive.calculateAndPublish(linear_vel, angular_vel);
+
+        ros::spinOnce();
+        rate.sleep();
+    }
+
+    return 0;
+}",6.17361278326227
+88,Generate a ROS C++ planning node that calculates and publishes drive wheel based on robot parameters.,"#include <ros/ros.h>
+#include <std_msgs/Float64.h>
+#include <geometry_msgs/Twist.h>
+
+class DriveWheelPlanner {
+public:
+    DriveWheelPlanner() : nh_(""~"") {
+        nh_.param<double>(""wheel_base"", wheel_base_, 0.5);  // Distance between drive wheels
+        nh_.param<double>(""linear_vel"", linear_vel_, 0.5); // Desired linear velocity
+        nh_.param<double>(""angular_vel"", angular_vel_, 0.2); // Desired angular velocity
+
+        drive_wheel_pub_ = nh_.advertise<std_msgs::Float64>(""drive_wheel"", 10);
+
+        twist_sub_ = nh_.subscribe(""/cmd_vel"", 1, &DriveWheelPlanner::twistCallback, this);
+    }
+
+    void twistCallback(const geometry_msgs::Twist::ConstPtr& msg) {
+        double linear_x = msg->linear.x;
+        double angular_z = msg->angular.z;
+
+        // Calculate drive wheel based on linear and angular velocity
+        double drive_wheel = (2*linear_x + angular_z*wheel_base_) / 2;
+
+        std_msgs::Float64 drive_wheel_msg;
+        drive_wheel_msg.data = drive_wheel;
+
+        drive_wheel_pub_.publish(drive_wheel_msg);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher drive_wheel_pub_;
+    ros::Subscriber twist_sub_;
+
+    double wheel_base_;
+    double linear_vel_;
+    double angular_vel_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""drive_wheel_planner_node"");
+
+    DriveWheelPlanner planner;
+
+    ros::spin();
+
+    return 0;
+}",4.497936611839576
+93,Generate a C++ node queue that calculates and publishes drive wheel based on robot parameters.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class DriveWheelCalculatorNode {
+public:
+    DriveWheelCalculatorNode() : nh_(""~"") {
+        // Initialize ROS node handle
+        nh_.getParam(""wheel_radius"", wheel_radius_);
+        nh_.getParam(""robot_width"", robot_width_);
+
+        twist_sub_ = nh_.subscribe(""cmd_vel"", 1, &DriveWheelCalculatorNode::twistCallback, this);
+        drive_wheel_pub_ = nh_.advertise<geometry_msgs::Twist>(""drive_wheel"", 1);
+    }
+
+    void twistCallback(const geometry_msgs::Twist::ConstPtr& twist_msg) {
+        double v = twist_msg->linear.x; // Linear velocity
+        double w = twist_msg->angular.z; // Angular velocity
+
+        double right_wheel = (v + (robot_width_ / 2) * w) / wheel_radius_;
+        double left_wheel = (v - (robot_width_ / 2) * w) / wheel_radius_;
+
+        geometry_msgs::Twist drive_wheel_msg;
+        drive_wheel_msg.linear.x = left_wheel;
+        drive_wheel_msg.linear.y = right_wheel;
+
+        drive_wheel_pub_.publish(drive_wheel_msg);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Subscriber twist_sub_;
+    ros::Publisher drive_wheel_pub_;
+    double wheel_radius_;
+    double robot_width_;
+};
+
+int main(int argc, char **argv) {
+    ros::init(argc, argv, ""drive_wheel_calculator_node"");
+    DriveWheelCalculatorNode node;
+
+    ros::spin();
+
+    return 0;
+}",4.50507909721774
+95,Generate a ROS C++ node that calculates and publishes drive wheel planning based on robot parameters.,"#include <ros/ros.h>
+#include <std_msgs/Float32.h>
+#include <geometry_msgs/Twist.h>
+
+class DriveWheelPlannerNode {
+public:
+    DriveWheelPlannerNode() : nh_(""~"") {
+        nh_.param<double>(""robot_base_width"", robot_base_width_, 0.5); // Default robot base width = 0.5 meters
+
+        velocity_sub_ = nh_.subscribe(""cmd_vel"", 1, &DriveWheelPlannerNode::velocityCallback, this);
+        left_wheel_pub_ = nh_.advertise<std_msgs::Float32>(""left_wheel_speed"", 1);
+        right_wheel_pub_ = nh_.advertise<std_msgs::Float32>(""right_wheel_speed"", 1);
+    }
+
+    void velocityCallback(const geometry_msgs::Twist::ConstPtr& msg) {
+        double linear_vel = msg->linear.x;
+        double angular_vel = msg->angular.z;
+
+        double left_wheel_speed = (linear_vel - angular_vel * (robot_base_width_ / 2.0));
+        double right_wheel_speed = (linear_vel + angular_vel * (robot_base_width_ / 2.0));
+
+        std_msgs::Float32 left_wheel_msg, right_wheel_msg;
+        left_wheel_msg.data = left_wheel_speed;
+        right_wheel_msg.data = right_wheel_speed;
+
+        left_wheel_pub_.publish(left_wheel_msg);
+        right_wheel_pub_.publish(right_wheel_msg);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Subscriber velocity_sub_;
+    ros::Publisher left_wheel_pub_;
+    ros::Publisher right_wheel_pub_;
+
+    double robot_base_width_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""drive_wheel_planner_node"");
+    DriveWheelPlannerNode drive_wheel_planner_node;
+
+    ros::spin();
+
+    return 0;
+}",4.482756548652254
+99,Generate a ROS C++ node that calculates task and publishes differential drive based on robot parameters.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+#include <custom_msgs/TaskInfo.h>
+
+class TaskSchedulerNode {
+public:
+    TaskSchedulerNode() {
+        // Initialize ROS node handle
+        nh = ros::NodeHandle(""~"");
+
+        // Subscribe to task_info topic
+        task_info_sub = nh.subscribe(""task_info"", 1, &TaskSchedulerNode::taskInfoCallback, this);
+
+        // Publish to cmd_vel topic
+        cmd_vel_pub = nh.advertise<geometry_msgs::Twist>(""cmd_vel"", 1);
+
+        // Load robot parameters
+        nh.param(""wheel_base"", wheel_base, 0.5);
+        nh.param(""max_linear_speed"", max_linear_speed, 0.5);
+        nh.param(""max_angular_speed"", max_angular_speed, 0.5);
+    }
+
+    void taskInfoCallback(const custom_msgs::TaskInfo::ConstPtr& task_info_msg) {
+        // Calculate differential drive commands based on task information
+        geometry_msgs::Twist cmd_vel;
+        
+        // Implement the calculation logic based on the task info data
+        
+        // Publish the calculated differential drive commands
+        cmd_vel_pub.publish(cmd_vel);
+    }
+
+private:
+    ros::NodeHandle nh;
+    ros::Subscriber task_info_sub;
+    ros::Publisher cmd_vel_pub;
+
+    double wheel_base;
+    double max_linear_speed;
+    double max_angular_speed;
+};
+
+int main(int argc, char** argv) {
+    // Initialize ROS node
+    ros::init(argc, argv, ""task_scheduler_node"");
+    
+    TaskSchedulerNode task_scheduler_node;
+
+    // Spin to process callbacks
+    ros::spin();
+
+    return 0;
+}",0
+100,Generate a ROS C++ node that calculates calculates and publishes drive wheel based on robot mapping parameters.,"#include <ros/ros.h>
+#include <std_msgs/Float64.h>
+#include <sensor_msgs/Imu.h>
+#include <your_robot_msgs/EncoderTicks.h>
+
+class DriveWheelCalculatorNode {
+public:
+    DriveWheelCalculatorNode() {
+        drive_wheel_pub_ = nh_.advertise<std_msgs::Float64>(""drive_wheel"", 1);
+        encoder_sub_ = nh_.subscribe(""encoder_ticks"", 1, &DriveWheelCalculatorNode::encoderCallback, this);
+        imu_sub_ = nh_.subscribe(""imu_data"", 1, &DriveWheelCalculatorNode::imuCallback, this);
+    }
+
+    void encoderCallback(const your_robot_msgs::EncoderTicks::ConstPtr &encoder_msg) {
+        // Calculate drive wheel based on encoder ticks
+        double drive_wheel = encoder_msg->left_wheel_ticks + encoder_msg->right_wheel_ticks;
+
+        // Publish the drive wheel value
+        std_msgs::Float64 drive_wheel_msg;
+        drive_wheel_msg.data = drive_wheel;
+        drive_wheel_pub_.publish(drive_wheel_msg);
+    }
+
+    void imuCallback(const sensor_msgs::Imu::ConstPtr &imu_msg) {
+        // Use IMU data if needed for drive wheel calculation
+        // Can implement more complex logic based on the IMU data
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher drive_wheel_pub_;
+    ros::Subscriber encoder_sub_;
+    ros::Subscriber imu_sub_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""drive_wheel_calculator_node"");
+
+    DriveWheelCalculatorNode node;
+
+    ros::spin();
+
+    return 0;
+}",0
+101,Generate a ROS C++ node that queue calculates and drive wheel based on robot parameters.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+#include <robot_parameters/RobotParameters.h>
+
+class WheelDriveController {
+public:
+    WheelDriveController() : nh_(""""), private_nh_(""~"") {
+        wheel_diameter_ = private_nh_.param<double>(""wheel_diameter"", 0.1);
+        robot_base_width_ = private_nh_.param<double>(""robot_base_width"", 0.5);
+
+        twist_sub_ = nh_.subscribe(""/cmd_vel"", 1, &WheelDriveController::twistCallback, this);
+        wheel_pub_ = nh_.advertise<robot_parameters::RobotParameters>(""/wheel_parameters"", 1);
+    }
+
+    void twistCallback(const geometry_msgs::Twist::ConstPtr& msg) {
+        double linear_x = msg->linear.x;
+        double angular_z = msg->angular.z;
+
+        double left_wheel_vel = (linear_x - angular_z * robot_base_width_ / 2) / (wheel_diameter_ / 2);
+        double right_wheel_vel = (linear_x + angular_z * robot_base_width_ / 2) / (wheel_diameter_ / 2);
+
+        robot_parameters::RobotParameters wheel_params;
+        wheel_params.left_wheel_velocity = left_wheel_vel;
+        wheel_params.right_wheel_velocity = right_wheel_vel;
+
+        wheel_pub_.publish(wheel_params);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::NodeHandle private_nh_;
+    ros::Subscriber twist_sub_;
+    ros::Publisher wheel_pub_;
+
+    double wheel_diameter_;
+    double robot_base_width_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""wheel_drive_controller_node"");
+    WheelDriveController controller;
+
+    ros::spin();
+
+    return 0;
+}",0
+104,Generate a ROS C++ node that calculates and publishes differential drive publishes velocity commands.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+#include <std_msgs/Float64.h>
+
+class DifferentialDriveController {
+public:
+    DifferentialDriveController() : nh_(""~"") {
+        nh_.param(""wheel_separation"", wheel_separation_, 0.5); // Wheel separation in meters
+        nh_.param(""max_linear_speed"", max_linear_speed_, 1.0); // Max linear speed in m/s
+        nh_.param(""max_angular_speed"", max_angular_speed_, 1.0); // Max angular speed in rad/s
+
+        velocity_pub_ = nh_.advertise<geometry_msgs::Twist>(""cmd_vel"", 10);
+        left_sub_ = nh_.subscribe(""left_wheel_velocity"", 1, &DifferentialDriveController::leftVelocityCallback, this);
+        right_sub_ = nh_.subscribe(""right_wheel_velocity"", 1, &DifferentialDriveController::rightVelocityCallback, this);
+    }
+
+    void calculateVelocity() {
+        geometry_msgs::Twist cmd_vel;
+        cmd_vel.linear.x = (left_wheel_velocity_ + right_wheel_velocity_) / 2.0;
+        cmd_vel.angular.z = (right_wheel_velocity_ - left_wheel_velocity_) / wheel_separation_;
+        
+        velocity_pub_.publish(cmd_vel);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher velocity_pub_;
+    ros::Subscriber left_sub_;
+    ros::Subscriber right_sub_;
+
+    double wheel_separation_;
+    double max_linear_speed_;
+    double max_angular_speed_;
+    double left_wheel_velocity_;
+    double right_wheel_velocity_;
+
+    void leftVelocityCallback(const std_msgs::Float64::ConstPtr& msg) {
+        left_wheel_velocity_ = std::min(std::max(msg->data, -max_linear_speed_), max_linear_speed_);
+    }
+
+    void rightVelocityCallback(const std_msgs::Float64::ConstPtr& msg) {
+        right_wheel_velocity_ = std::min(std::max(msg->data, -max_linear_speed_), max_linear_speed_);
+    }
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""differential_drive_controller_node"");
+    DifferentialDriveController controller;
+
+    ros::Rate loop_rate(10); // 10 Hz
+    while (ros::ok()) {
+        controller.calculateVelocity();
+        ros::spinOnce();
+        loop_rate.sleep();
+    }
+
+    return 0;
+}",0.9330373227070705
+109,Generate a ROS C++ node calculates and publishes differential drive wheel data velocities on bot mapping parameters.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+#include <sensor_msgs/Joy.h>
+
+class DifferentialDriveNode {
+public:
+    DifferentialDriveNode() {
+        joy_sub_ = nh_.subscribe(""/joy"", 1, &DifferentialDriveNode::joyCallback, this);
+        cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>(""/cmd_vel"", 1);
+    }
+
+    void joyCallback(const sensor_msgs::Joy::ConstPtr& msg) {
+        // Calculate differential drive wheel velocities based on joystick input
+        double linear_vel = msg->axes[1]; // Left joystick vertical axis
+        double angular_vel = msg->axes[0]; // Left joystick horizontal axis
+
+        // Calculate left and right wheel velocities
+        double left_vel = linear_vel - angular_vel;
+        double right_vel = linear_vel + angular_vel;
+
+        // Publish the calculated wheel velocities
+        geometry_msgs::Twist cmd_vel_msg;
+        cmd_vel_msg.linear.x = left_vel; // left wheel velocity
+        cmd_vel_msg.linear.y = right_vel; // right wheel velocity
+        cmd_vel_pub_.publish(cmd_vel_msg);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Subscriber joy_sub_;
+    ros::Publisher cmd_vel_pub_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""differential_drive_node"");
+    DifferentialDriveNode node;
+
+    ros::spin();
+
+    return 0;
+}",4.511106857573366
+112,Generate a ROS C++ node that calculates and publishes differential drive rate based on machine parameters.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class DifferentialDriveController
+{
+public:
+    DifferentialDriveController()
+    {
+        cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>(""/cmd_vel"", 1);
+        rate_ = 10; // Rate at which the control commands will be published
+        timer_ = nh_.createTimer(ros::Duration(1.0 / rate_), &DifferentialDriveController::publishControlCommands, this);
+    }
+
+    void publishControlCommands(const ros::TimerEvent&)
+    {
+        // Calculate differential drive velocities based on machine parameters
+        double linear_vel = 1.0; // Example linear velocity
+        double angular_vel = 0.5; // Example angular velocity
+
+        geometry_msgs::Twist cmd_vel;
+        cmd_vel.linear.x = linear_vel;
+        cmd_vel.angular.z = angular_vel;
+
+        cmd_vel_pub_.publish(cmd_vel);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher cmd_vel_pub_;
+    ros::Timer timer_;
+    double rate_;
+};
+
+int main(int argc, char** argv)
+{
+    ros::init(argc, argv, ""differential_drive_controller"");
+    
+    DifferentialDriveController controller;
+
+    ros::spin();
+
+    return 0;
+}",9.736024345740406
+114,Generate a ROS control C++ node that calculates and publishes differential drive wheel velocities based on robot parameters.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class DifferentialDriveControllerNode {
+public:
+    DifferentialDriveControllerNode() : nh_(""~"") {
+        nh_.param(""wheel_base"", wheel_base_, 0.5); // Default value for wheel_base is 0.5 meters
+        nh_.param(""max_speed"", max_speed_, 1.0); // Default value for max_speed is 1.0 m/s
+        
+        cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>(""cmd_vel"", 10);
+        cmd_vel_sub_ = nh_.subscribe(""cmd_vel_input"", 10, &DifferentialDriveControllerNode::cmdVelCallback, this);
+    }
+
+    void cmdVelCallback(const geometry_msgs::Twist::ConstPtr& msg) {
+        double linear_vel = msg->linear.x;
+        double angular_vel = msg->angular.z;
+        
+        // Calculate left and right wheel velocities based on differential drive kinematics
+        double left_wheel_vel = linear_vel - angular_vel * wheel_base_ / 2.0;
+        double right_wheel_vel = linear_vel + angular_vel * wheel_base_ / 2.0;
+        
+        // Ensure that wheel velocities do not exceed maximum speed
+        if (left_wheel_vel > max_speed_) {
+            left_wheel_vel = max_speed_;
+        }
+        if (right_wheel_vel > max_speed_) {
+            right_wheel_vel = max_speed_;
+        }
+        
+        // Publish the calculated wheel velocities
+        geometry_msgs::Twist cmd_vel_output;
+        cmd_vel_output.linear.x = left_wheel_vel;
+        cmd_vel_output.linear.y = right_wheel_vel;
+        cmd_vel_pub_.publish(cmd_vel_output);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher cmd_vel_pub_;
+    ros::Subscriber cmd_vel_sub_;
+    double wheel_base_;
+    double max_speed_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""differential_drive_controller"");
+    
+    DifferentialDriveControllerNode controller_node;
+    
+    ros::spin();
+    
+    return 0;
+}",3.4462828940953942
+115,Generate a ROS C++ node calculates and publishes differential drive wheel velocities based on robot parameters.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class DifferentialDriveController {
+public:
+    DifferentialDriveController() : nh_(""~"") {
+        nh_.param(""wheel_base"", wheel_base_, 0.5);
+        nh_.param(""max_linear_vel"", max_linear_vel_, 1.0);
+        nh_.param(""max_angular_vel"", max_angular_vel_, 1.0);
+
+        cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>(""cmd_vel"", 10);
+    }
+
+    void calculateWheelVelocities() {
+        // Placeholder implementation for calculating wheel velocities
+        double linear_vel = 0.8 * max_linear_vel_;
+        double angular_vel = 0.5 * max_angular_vel_;
+
+        publishVelocities(linear_vel, angular_vel);
+    }
+
+    void publishVelocities(double linear_vel, double angular_vel) {
+        geometry_msgs::Twist twist_msg;
+        twist_msg.linear.x = linear_vel;
+        twist_msg.angular.z = angular_vel;
+
+        cmd_vel_pub_.publish(twist_msg);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher cmd_vel_pub_;
+
+    double wheel_base_;
+    double max_linear_vel_;
+    double max_angular_vel_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""differential_drive_controller"");
+    DifferentialDriveController controller;
+
+    ros::Rate loop_rate(10); // 10Hz control loop
+
+    while (ros::ok()) {
+        controller.calculateWheelVelocities();
+        ros::spinOnce();
+        loop_rate.sleep();
+    }
+
+    return 0;
+}",8.949291043207733
+117,Generate a ROS C++ node that calculates and publishes system differential drive wheel velocities based on robot parameters.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+#include <cmath>
+
+class DifferentialDriveController {
+public:
+    DifferentialDriveController() {
+        // Initialize ROS node handle
+        nh = ros::NodeHandle();
+
+        // Subscriber to receive robot parameters
+        robot_params_sub = nh.subscribe(""robot_parameters"", 1, &DifferentialDriveController::robotParamsCallback, this);
+
+        // Publisher to publish calculated wheel velocities
+        wheel_vel_pub = nh.advertise<geometry_msgs::Twist>(""wheel_velocities"", 1);
+    }
+
+    void robotParamsCallback(const geometry_msgs::Twist::ConstPtr& msg) {
+        wheel_base = msg->linear.x;
+        wheel_radius = msg->angular.z;
+    }
+
+    void calculateWheelVelocities() {
+        // Dummy calculation - Replace with actual logic based on robot kinematics
+        double linear_vel_x = 1.0;
+        double angular_vel_z = 0.5;
+
+        // Calculate wheel velocities based on differential drive kinematics
+        double left_vel = (linear_vel_x - angular_vel_z * wheel_base / 2.0) / wheel_radius;
+        double right_vel = (linear_vel_x + angular_vel_z * wheel_base / 2.0) / wheel_radius;
+
+        // Publish calculated wheel velocities
+        geometry_msgs::Twist wheel_velocities;
+        wheel_velocities.linear.x = left_vel;
+        wheel_velocities.linear.y = right_vel;
+        wheel_vel_pub.publish(wheel_velocities);
+    }
+
+private:
+    ros::NodeHandle nh;
+    ros::Subscriber robot_params_sub;
+    ros::Publisher wheel_vel_pub;
+
+    double wheel_base;
+    double wheel_radius;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""differential_drive_controller"");
+
+    DifferentialDriveController ddc;
+
+    ros::Rate loop_rate(10); // Control loop rate
+
+    while (ros::ok()) {
+        ddc.calculateWheelVelocities();
+        ros::spinOnce();
+        loop_rate.sleep();
+    }
+
+    return 0;
+}",9.14605990227931
+119,Generate a ROS C++ node that calculates and publishes differential drive rate based based on robot parameters.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class DifferentialDriveController {
+public:
+    DifferentialDriveController() : nh(""~"") {
+        nh.param(""wheel_radius"", wheel_radius, 0.1);
+        nh.param(""base_width"", base_width, 0.5);
+
+        cmd_vel_sub = nh.subscribe(""cmd_vel"", 1, &DifferentialDriveController::cmdVelCallback, this);
+        wheel_rates_pub = nh.advertise<geometry_msgs::Twist>(""wheel_rates"", 1);
+    }
+
+    void cmdVelCallback(const geometry_msgs::Twist::ConstPtr& cmd_vel_msg) {
+        double linear_vel = cmd_vel_msg->linear.x;
+        double angular_vel = cmd_vel_msg->angular.z;
+
+        double left_rate = (linear_vel - (angular_vel * base_width/2)) / wheel_radius;
+        double right_rate = (linear_vel + (angular_vel * base_width/2)) / wheel_radius;
+
+        geometry_msgs::Twist wheel_rates_msg;
+        wheel_rates_msg.linear.x = left_rate;
+        wheel_rates_msg.linear.y = right_rate;
+        wheel_rates_pub.publish(wheel_rates_msg);
+    }
+
+private:
+    ros::NodeHandle nh;
+    ros::Subscriber cmd_vel_sub;
+    ros::Publisher wheel_rates_pub;
+
+    double wheel_radius;
+    double base_width;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""differential_drive_controller_node"");
+
+    DifferentialDriveController differentialDriveController;
+
+    ros::spin();
+
+    return 0;
+}",1.5024848294275666
+120,Generate a ROS C++ node that calculates and publishes differential drive rate based on on robot parameters.,"// differential_drive_controller_node.cpp
+
+#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+#include <std_msgs/Float64.h>
+
+class DifferentialDriveControllerNode {
+public:
+    DifferentialDriveControllerNode() {
+        // Get robot parameters
+        ros::NodeHandle nh(""~"");
+        nh.param<double>(""wheel_base"", wheel_base_, 1.0);
+        nh.param<double>(""wheel_radius"", wheel_radius_, 0.1);
+
+        // Subscribe to cmd_vel topic to receive velocity commands
+        cmd_vel_sub_ = nh.subscribe(""cmd_vel"", 1, &DifferentialDriveControllerNode::cmdVelCallback, this);
+
+        // Initialize publisher to publish wheel rate commands
+        wheel_rate_pub_ = nh.advertise<std_msgs::Float64>(""wheel_rate_cmd"", 1);
+    }
+
+    void cmdVelCallback(const geometry_msgs::Twist::ConstPtr& msg) {
+        // Calculate wheel rates based on differential drive kinematics
+        double linear = msg->linear.x;
+        double angular = msg->angular.z;
+        double left_wheel_rate = (2 * linear - angular * wheel_base_) / (2 * wheel_radius_);
+        double right_wheel_rate = (2 * linear + angular * wheel_base_) / (2 * wheel_radius_);
+
+        // Publish the calculated wheel rates
+        std_msgs::Float64 left_wheel_rate_msg, right_wheel_rate_msg;
+        left_wheel_rate_msg.data = left_wheel_rate;
+        right_wheel_rate_msg.data = right_wheel_rate;
+        wheel_rate_pub_.publish(left_wheel_rate_msg);
+        wheel_rate_pub_.publish(right_wheel_rate_msg);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Subscriber cmd_vel_sub_;
+    ros::Publisher wheel_rate_pub_;
+    double wheel_base_;
+    double wheel_radius_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""differential_drive_controller_node"");
+    DifferentialDriveControllerNode node;
+    ros::spin();
+    return 0;
+}",1.4502134923918684
+122,Generate a ROS message C++ node that calculates and publishes differential drive wheel velocities based on robot parameters.,"#include <ros/ros.h>
+#include <your_robot_msgs/DriveCommands.h>
+
+class DifferentialDriveController {
+public:
+    DifferentialDriveController() : nh_(""~"") {
+        nh_.param(""wheel_base"", wheel_base_, 0.5); // default wheel base is 0.5 meters
+        nh_.param(""max_speed"", max_speed_, 1.0); // default max speed is 1.0 m/s
+
+        drive_commands_pub_ = nh_.advertise<your_robot_msgs::DriveCommands>(""drive_commands"", 10);
+        // Subscribe to any input messages if needed
+        // input_sub_ = nh_.subscribe(""input_topic"", 10, &DifferentialDriveController::inputCallback, this);
+    }
+
+    void calculateWheelVelocities() {
+        // Calculate wheel velocities based on your control algorithm or model
+        double left_wheel_vel = 0.5 * max_speed_;
+        double right_wheel_vel = 0.5 * max_speed_;
+
+        // Publish the calculated wheel velocities
+        your_robot_msgs::DriveCommands drive_commands;
+        drive_commands.left_velocity = left_wheel_vel;
+        drive_commands.right_velocity = right_wheel_vel;
+        drive_commands_pub_.publish(drive_commands);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher drive_commands_pub_;
+    // ros::Subscriber input_sub_;
+
+    double wheel_base_; // Distance between the wheels
+    double max_speed_;  // Maximum wheel speed
+
+    // Define any helper functions or callbacks here
+
+    // void inputCallback(const your_robot_msgs::InputMsgConstPtr& input_msg) {
+    //     // Process input message
+    // }
+};
+
+int main(int argc, char **argv) {
+    ros::init(argc, argv, ""differential_drive_controller_node"");
+
+    DifferentialDriveController controller;
+
+    ros::Rate loop_rate(10); // Control loop rate in Hz
+    while (ros::ok()) {
+        controller.calculateWheelVelocities();
+
+        ros::spinOnce();
+        loop_rate.sleep();
+    }
+
+    return 0;
+}",0
+123,Generate a ROS C++ node that calculates execution and publishes differential drive wheel velocities based on automaton parameters.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+#include <automaton_msgs/AutomatonParams.h>
+
+class AutomatonController {
+public:
+    AutomatonController() : nh_(""~"") {
+        // Initialize parameters
+        nh_.getParam(""robot_wheel_distance"", robot_wheel_distance_);
+        nh_.getParam(""max_linear_speed"", max_linear_speed_);
+        nh_.getParam(""max_angular_speed"", max_angular_speed_);
+
+        // Setup publishers and subscribers
+        twist_pub_ = nh_.advertise<geometry_msgs::Twist>(""cmd_vel"", 1);
+        params_sub_ = nh_.subscribe(""automaton_params"", 1, &AutomatonController::paramsCallback, this);
+    }
+
+    void paramsCallback(const automaton_msgs::AutomatonParams::ConstPtr& msg) {
+        // Calculate wheel speeds based on automaton parameters
+        double linear_velocity = std::min(msg->velocity, max_linear_speed_);  // Limit linear speed
+        double angular_velocity = std::min(msg->angular_velocity, max_angular_speed_);  // Limit angular speed
+
+        // Calculate differential drive wheel velocities
+        double left_wheel_velocity = linear_velocity - angular_velocity * robot_wheel_distance_ / 2.0;
+        double right_wheel_velocity = linear_velocity + angular_velocity * robot_wheel_distance_ / 2.0;
+
+        // Publish calculated wheel velocities
+        geometry_msgs::Twist twist_msg;
+        twist_msg.linear.x = left_wheel_velocity;
+        twist_msg.linear.y = right_wheel_velocity;
+        twist_pub_.publish(twist_msg);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher twist_pub_;
+    ros::Subscriber params_sub_;
+
+    double robot_wheel_distance_;
+    double max_linear_speed_;
+    double max_angular_speed_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""automaton_controller"");
+    AutomatonController controller;
+
+    ros::spin();
+
+    return 0;
+}",0
+124,Generate a control ROS C++ node that calculates and publishes differential drive wheel velocities based on robot parameters.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class DiffDriveController {
+public:
+    DiffDriveController() {
+        // Initialize node handle
+        nh_ = ros::NodeHandle();
+
+        // Create publisher for wheel velocities
+        wheel_vel_pub_ = nh_.advertise<geometry_msgs::Twist>(""/cmd_vel"", 10);
+
+        // Subscribe to topic for robot parameters
+        params_sub_ = nh_.subscribe(""/robot_parameters"", 1, &DiffDriveController::paramsCallback, this);
+    }
+
+    void paramsCallback(const geometry_msgs::Twist::ConstPtr& msg) {
+        // Update robot parameters
+        base_width_ = msg->linear.x;
+        max_linear_vel_ = msg->linear.y;
+        max_angular_vel_ = msg->angular.z;
+    }
+
+    void calculateWheelVelocities() {
+        // Placeholder calculation based on some logic
+        double left_vel = max_linear_vel_ + max_angular_vel_ * base_width_ / 2;
+        double right_vel = max_linear_vel_ - max_angular_vel_ * base_width_ / 2;
+
+        // Create Twist message for wheel velocities
+        geometry_msgs::Twist wheel_vel_msg;
+        wheel_vel_msg.linear.x = left_vel;
+        wheel_vel_msg.linear.y = right_vel;
+
+        // Publish wheel velocities
+        wheel_vel_pub_.publish(wheel_vel_msg);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher wheel_vel_pub_;
+    ros::Subscriber params_sub_;
+
+    // Robot parameters
+    double base_width_;
+    double max_linear_vel_;
+    double max_angular_vel_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""diff_drive_controller"");
+
+    DiffDriveController controller;
+
+    ros::Rate loop_rate(10);  // Control loop rate 10Hz
+
+    while (ros::ok()) {
+        controller.calculateWheelVelocities();
+        ros::spinOnce();
+        loop_rate.sleep();
+    }
+
+    return 0;
+}",8.654016875879611
+126,Generate a ROS C++ node that calculates and differential drive wheel velocities based on robot parameters.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+#include <std_msgs/Float64MultiArray.h>
+
+class DifferentialDriveController {
+public:
+    DifferentialDriveController() {
+        // Initialize ROS node handle
+        nh_ = ros::NodeHandle();
+
+        // Subscribe to velocity commands
+        vel_sub_ = nh_.subscribe(""/cmd_vel"", 1, &DifferentialDriveController::velCallback, this);
+        
+        // Publish wheel velocities
+        wheel_vel_pub_ = nh_.advertise<std_msgs::Float64MultiArray>(""/wheel_velocities"", 1);
+
+        // Define robot parameters
+        wheel_base_ = 0.5; // meters
+        wheel_radius_ = 0.1; // meters
+    }
+
+    void velCallback(const geometry_msgs::Twist::ConstPtr& msg) {
+        double linear_vel = msg->linear.x;
+        double angular_vel = msg->angular.z;
+
+        // Calculate wheel speeds
+        double left_wheel_vel = (linear_vel - (angular_vel * wheel_base_ / 2)) / wheel_radius_;
+        double right_wheel_vel = (linear_vel + (angular_vel * wheel_base_ / 2)) / wheel_radius_;
+
+        // Publish calculated wheel velocities
+        std_msgs::Float64MultiArray wheel_vel_msg;
+        wheel_vel_msg.data = {left_wheel_vel, right_wheel_vel};
+        wheel_vel_pub_.publish(wheel_vel_msg);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Subscriber vel_sub_;
+    ros::Publisher wheel_vel_pub_;
+
+    double wheel_base_;
+    double wheel_radius_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""differential_drive_controller"");
+    DifferentialDriveController controller;
+
+    ros::spin();
+
+    return 0;
+}",4.477352796902362
+130,Generate a ROS C++ that calculates and robot that publishes velocity commands.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class VelocityCalculatorNode {
+public:
+    VelocityCalculatorNode() {
+        // Initialize ROS node handle
+        nh_ = ros::NodeHandle(""~"");
+
+        // Create publisher to publish velocity commands
+        cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>(""/cmd_vel"", 10);
+
+        // Create a timer to calculate and publish velocity commands at a specified rate
+        timer_ = nh_.createTimer(ros::Duration(0.1), &VelocityCalculatorNode::timerCallback, this);
+    }
+
+    void timerCallback(const ros::TimerEvent& event) {
+        // Calculate velocity commands (e.g., linear x velocity = 0.1 m/s, angular z velocity = 0.2 rad/s)
+        geometry_msgs::Twist cmd_vel;
+        cmd_vel.linear.x = 0.1;
+        cmd_vel.angular.z = 0.2;
+
+        // Publish velocity commands
+        cmd_vel_pub_.publish(cmd_vel);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher cmd_vel_pub_;
+    ros::Timer timer_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""velocity_calculator_node"");
+
+    VelocityCalculatorNode velocity_calculator_node;
+
+    ros::spin();
+
+    return 0;
+}",6.73423285038403
+133,Generate a ROS C++ node that calculates and publishes differential drive rate based on machine robot parameters.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class DifferentialDriveController {
+public:
+    DifferentialDriveController() : nh(""~"") {
+        nh.param(""wheel_base"", wheel_base, 1.0);
+        nh.param(""max_angular_velocity"", max_angular_velocity, 1.0);
+
+        cmd_vel_sub = nh.subscribe(""cmd_vel"", 1, &DifferentialDriveController::cmdVelCallback, this);
+        diff_drive_rate_pub = nh.advertise<geometry_msgs::Twist>(""diff_drive_rate"", 1);
+    }
+
+    void cmdVelCallback(const geometry_msgs::Twist::ConstPtr& msg) {
+        double linear_vel = msg->linear.x;
+        double angular_vel = msg->angular.z;
+
+        // Calculate differential drive rates
+        double left_rate = (2*linear_vel - angular_vel*wheel_base) / 2;
+        double right_rate = (2*linear_vel + angular_vel*wheel_base) / 2;
+
+        // Normalize rates based on max_angular_velocity
+        double scale_factor = std::max(1.0, std::max(std::abs(left_rate), std::abs(right_rate)) / max_angular_velocity);
+        left_rate /= scale_factor;
+        right_rate /= scale_factor;
+
+        // Publish differential drive rates
+        geometry_msgs::Twist diff_drive_rate_msg;
+        diff_drive_rate_msg.linear.x = left_rate;
+        diff_drive_rate_msg.linear.y = right_rate;
+        diff_drive_rate_pub.publish(diff_drive_rate_msg);
+    }
+
+private:
+    ros::NodeHandle nh;
+    ros::Subscriber cmd_vel_sub;
+    ros::Publisher diff_drive_rate_pub;
+    double wheel_base;
+    double max_angular_velocity;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""differential_drive_controller"");
+    DifferentialDriveController controller;
+    ros::spin();
+    return 0;
+}",4.4614515293564425
+135,a ROS C++ node that calculates and publishes differential drive rate based on machine robot parameters.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class DifferentialDriveController
+{
+public:
+    DifferentialDriveController() : nh_(""~"")
+    {
+        nh_.param<double>(""wheel_base"", wheel_base_, 0.5); // distance between the two wheels
+        nh_.param<double>(""max_speed"", max_speed_, 1.0); // maximum linear speed of the robot
+        nh_.param<double>(""max_ang_vel"", max_ang_vel_, 1.0); // maximum angular velocity of the robot
+        
+        cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>(""cmd_vel"", 10);
+        joy_sub_ = nh_.subscribe(""joy"", 10, &DifferentialDriveController::joyCallback, this);
+    }
+
+    void joyCallback(const geometry_msgs::Twist::ConstPtr& joy_msg)
+    {
+        double linear_vel = joy_msg->linear.x; // joystick input for linear velocity
+        double angular_vel = joy_msg->angular.z; // joystick input for angular velocity
+        
+        // Calculate left and right wheel speeds based on linear and angular velocities
+        double left_wheel_rate = (2 * linear_vel - angular_vel * wheel_base_) / 2;
+        double right_wheel_rate = (2 * linear_vel + angular_vel * wheel_base_) / 2;
+        
+        // Limit the wheel speeds to stay within the maximum speed and angular velocity
+        if (std::abs(left_wheel_rate) > max_speed_)
+        {
+            left_wheel_rate = std::copysign(max_speed_, left_wheel_rate);
+        }
+        if (std::abs(right_wheel_rate) > max_speed_)
+        {
+            right_wheel_rate = std::copysign(max_speed_, right_wheel_rate);
+        }
+
+        // Publish the left and right wheel rates as Twist message
+        geometry_msgs::Twist cmd_vel;
+        cmd_vel.linear.x = left_wheel_rate;
+        cmd_vel.linear.y = right_wheel_rate;
+        cmd_vel_pub_.publish(cmd_vel);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher cmd_vel_pub_;
+    ros::Subscriber joy_sub_;
+
+    double wheel_base_;
+    double max_speed_;
+    double max_ang_vel_;
+};
+
+int main(int argc, char** argv)
+{
+    ros::init(argc, argv, ""differential_drive_controller"");
+    DifferentialDriveController controller;
+    ros::spin();
+    
+    return 0;
+}",3.425880054841188
+136,Generate a ROS C++ node that calculates and publishes differential drive wheel velocities based on robot,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+// Define the ROS Node class
+class DifferentialDriveNode {
+public:
+    DifferentialDriveNode() {
+        // Initialize ROS node handle
+        nh = ros::NodeHandle();
+
+        // Create a publisher to publish wheel velocities
+        wheel_vel_pub = nh.advertise<geometry_msgs::Twist>(""wheel_velocities"", 10);
+
+        // Subscribe to velocity commands
+        vel_sub = nh.subscribe(""cmd_vel"", 10, &DifferentialDriveNode::velocityCallback, this);
+    }
+
+    // Velocity callback to calculate wheel velocities
+    void velocityCallback(const geometry_msgs::Twist& msg) {
+        double linear_vel = msg.linear.x;
+        double angular_vel = msg.angular.z;
+
+        // Calculate left and right wheel velocities
+        double left_wheel_vel = linear_vel - angular_vel * wheel_base / 2;
+        double right_wheel_vel = linear_vel + angular_vel * wheel_base / 2;
+
+        // Create a Twist message for publishing wheel velocities
+        geometry_msgs::Twist wheel_vel_msg;
+        wheel_vel_msg.linear.x = left_wheel_vel;
+        wheel_vel_msg.linear.y = right_wheel_vel;
+
+        // Publish the wheel velocities
+        wheel_vel_pub.publish(wheel_vel_msg);
+    }
+
+private:
+    ros::NodeHandle nh;
+    ros::Publisher wheel_vel_pub;
+    ros::Subscriber vel_sub;
+
+    // Wheel base of the robot (distance between wheels)
+    const double wheel_base = 0.5; // Update with actual value
+
+};
+
+int main(int argc, char** argv) {
+    // Initialize ROS node
+    ros::init(argc, argv, ""differential_drive_node"");
+
+    // Create an instance of DifferentialDriveNode class
+    DifferentialDriveNode differential_drive_node;
+
+    ros::spin();
+
+    return 0;
+}",3.959196522443069
+138,Generate a ROS C++ node that calculates and rate publishes differential drive rate velocities planning based on robot parameters.,"#include ""ros/ros.h""
+#include ""geometry_msgs/Twist.h""
+
+class DifferentialDrivePlanner {
+public:
+    DifferentialDrivePlanner() : nh_(""~"") {
+        nh_.param(""wheel_base"", wheel_base_, 0.5); // Distance between wheels
+        nh_.param(""max_linear_vel"", max_linear_vel_, 1.0); // Maximum linear velocity
+        nh_.param(""max_angular_vel"", max_angular_vel_, 1.0); // Maximum angular velocity
+        nh_.param(""rate"", rate_, 10.0); // Publishing rate
+
+        cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>(""cmd_vel"", 10);
+        
+        timer_ = nh_.createTimer(ros::Duration(1.0/rate_), &DifferentialDrivePlanner::timerCallback, this);
+    }
+
+    void timerCallback(const ros::TimerEvent& event) {
+        // Calculate differential drive velocities based on some planning algorithm
+        double linear_vel = calculateLinearVelocity();
+        double angular_vel = calculateAngularVelocity();
+
+        // Limit velocities to max values
+        linear_vel = std::min(linear_vel, max_linear_vel_);
+        linear_vel = std::max(linear_vel, -max_linear_vel_);
+        angular_vel = std::min(angular_vel, max_angular_vel_);
+        angular_vel = std::max(angular_vel, -max_angular_vel_);
+        
+        publishCmdVel(linear_vel, angular_vel);
+    }
+
+    double calculateLinearVelocity() {
+        // Implement custom logic for linear velocity calculation
+        return 0.5;
+    }
+
+    double calculateAngularVelocity() {
+        // Implement custom logic for angular velocity calculation
+        return 0.3;
+    }
+
+    void publishCmdVel(double linear_vel, double angular_vel) {
+        geometry_msgs::Twist cmd_vel;
+        cmd_vel.linear.x = linear_vel;
+        cmd_vel.angular.z = angular_vel;
+        cmd_vel_pub_.publish(cmd_vel);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher cmd_vel_pub_;
+    ros::Timer timer_;
+    double wheel_base_;
+    double max_linear_vel_;
+    double max_angular_vel_;
+    double rate_;
+};
+
+int main(int argc, char **argv) {
+    ros::init(argc, argv, ""differential_drive_planner"");
+    DifferentialDrivePlanner planner;
+
+    ros::spin();
+    
+    return 0;
+}",5.624875808470417
+143,Generate a ROS C++ that calculates and publishes differential drive rate velocities based on machine parameters.,"#include <ros/ros.h>
+#include <std_msgs/Float64.h>
+#include <geometry_msgs/Twist.h>
+
+class DifferentialDriveController {
+public:
+    DifferentialDriveController() : nh_(""~"") {
+        nh_.param(""wheel_base"", wheel_base_, 0.5); // Distance between wheels
+        nh_.param(""max_angular_vel"", max_angular_vel_, 1.0); // Maximum angular velocity
+        nh_.param(""max_linear_vel"", max_linear_vel_, 1.0); // Maximum linear velocity
+
+        vel_pub_ = nh_.advertise<geometry_msgs::Twist>(""cmd_vel"", 10);
+        cmd_sub_ = nh_.subscribe(""cmd_machine_params"", 10, &DifferentialDriveController::machineParamsCallback, this);
+    }
+
+    void machineParamsCallback(const std_msgs::Float64ConstPtr& machine_params) {
+        // Calculate differential drive velocities based on machine parameters
+        double linear_vel = machine_params->data * max_linear_vel_;
+        double angular_vel = linear_vel / wheel_base_;
+
+        // Limit angular velocity within bounds
+        if (angular_vel > max_angular_vel_) {
+            angular_vel = max_angular_vel_;
+        } else if (angular_vel < -max_angular_vel_) {
+            angular_vel = -max_angular_vel_;
+        }
+
+        // Publish the calculated velocities
+        geometry_msgs::Twist vel_msg;
+        vel_msg.linear.x = linear_vel;
+        vel_msg.angular.z = angular_vel;
+        vel_pub_.publish(vel_msg);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher vel_pub_;
+    ros::Subscriber cmd_sub_;
+
+    double wheel_base_;
+    double max_angular_vel_;
+    double max_linear_vel_;
+};
+
+int main(int argc, char **argv) {
+    ros::init(argc, argv, ""differential_drive_controller"");
+
+    DifferentialDriveController controller;
+
+    ros::spin();
+
+    return 0;
+}",3.5572184618924143
+144,Generate a ROS C++ navigation node that calculates and publishes differential drive wheel velocities based on robot parameters.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class NavigationNode {
+public:
+    NavigationNode() : nh_(""~"") {
+        nh_.param(""wheel_base"", wheel_base_, 0.5);
+        nh_.param(""max_speed"", max_speed_, 1.0);
+
+        twist_pub_ = nh_.advertise<geometry_msgs::Twist>(""cmd_vel"", 10);
+        twist_sub_ = nh_.subscribe(""cmd_vel"", 10, &NavigationNode::twistCallback, this);
+    }
+
+    void twistCallback(const geometry_msgs::TwistConstPtr& msg) {
+        double linear_vel = msg->linear.x;
+        double angular_vel = msg->angular.z;
+
+        double left_wheel_vel = (2 * linear_vel - angular_vel * wheel_base_) / 2;
+        double right_wheel_vel = (2 * linear_vel + angular_vel * wheel_base_) / 2;
+
+        limitWheelVelocities(left_wheel_vel, right_wheel_vel);
+        
+        publishWheelVelocities(left_wheel_vel, right_wheel_vel);
+    }
+
+    void limitWheelVelocities(double& left_vel, double& right_vel) {
+        double max_wheel_speed = std::max(std::abs(left_vel), std::abs(right_vel));
+        if (max_wheel_speed > max_speed_) {
+            double scale_factor = max_speed_ / max_wheel_speed;
+            left_vel *= scale_factor;
+            right_vel *= scale_factor;
+        }
+    }
+
+    void publishWheelVelocities(double left_vel, double right_vel) {
+        geometry_msgs::Twist twist;
+        twist.linear.x = left_vel;
+        twist.linear.y = right_vel;
+
+        twist_pub_.publish(twist);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher twist_pub_;
+    ros::Subscriber twist_sub_;
+
+    double wheel_base_;
+    double max_speed_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""navigation_node"");
+
+    NavigationNode nav_node;
+
+    ros::spin();
+
+    return 0;
+}",3.9561498214572626
+145,Generate a ROS C++ node that calculates and drive wheel based on robot parameters.,"#include ""ros/ros.h""
+#include ""geometry_msgs/Twist.h""
+#include ""std_msgs/Float32.h""
+
+class WheelController {
+public:
+    WheelController() : wheel_separation_(0.5) {
+        // Initialize ROS node handle
+        nh_ = ros::NodeHandle(""~"");
+        
+        // Subscribe to cmd_vel topic to receive velocity commands
+        cmd_vel_sub_ = nh_.subscribe(""cmd_vel"", 1, &WheelController::cmdVelCallback, this);
+        
+        // Publish wheel speeds to the left/right_wheel_speed topics
+        left_wheel_speed_pub_ = nh_.advertise<std_msgs::Float32>(""left_wheel_speed"", 1);
+        right_wheel_speed_pub_ = nh_.advertise<std_msgs::Float32>(""right_wheel_speed"", 1);
+    }
+
+    void cmdVelCallback(const geometry_msgs::Twist::ConstPtr& msg) {
+        double linear_vel = msg->linear.x;
+        double angular_vel = msg->angular.z;
+        
+        double left_wheel_speed = (linear_vel - angular_vel * wheel_separation_ / 2.0);
+        double right_wheel_speed = (linear_vel + angular_vel * wheel_separation_ / 2.0);
+        
+        publishWheelSpeed(left_wheel_speed, right_wheel_speed);
+    }
+
+    void publishWheelSpeed(double left_speed, double right_speed) {
+        std_msgs::Float32 left_msg, right_msg;
+        left_msg.data = left_speed;
+        right_msg.data = right_speed;
+        
+        left_wheel_speed_pub_.publish(left_msg);
+        right_wheel_speed_pub_.publish(right_msg);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Subscriber cmd_vel_sub_;
+    ros::Publisher left_wheel_speed_pub_;
+    ros::Publisher right_wheel_speed_pub_;
+    double wheel_separation_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""wheel_controller_node"");
+
+    WheelController wheel_controller;
+
+    ros::spin();
+
+    return 0;
+}",4.4566701152771016
+146,Generate a ROS C++ node that calculates and publishes differential drive velocities based on actuator robot parameters.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+#include <std_msgs/Float64.h>
+
+class DifferentialDriveController {
+public:
+    DifferentialDriveController() {
+        // Initialize ROS node handle
+        nh = ros::NodeHandle(""~"");
+
+        // Subscribe to left and right wheel actuator positions
+        left_wheel_sub = nh.subscribe(""/left_wheel_position"", 1, &DifferentialDriveController::leftWheelCallback, this);
+        right_wheel_sub = nh.subscribe(""/right_wheel_position"", 1, &DifferentialDriveController::rightWheelCallback, this);
+
+        // Advertise twist message with differential drive velocities
+        twist_pub = nh.advertise<geometry_msgs::Twist>(""/cmd_vel"", 1);
+
+        // Initialize wheel separation distance and wheel radius
+        nh.getParam(""wheel_separation"", wheel_separation);
+        nh.getParam(""wheel_radius"", wheel_radius);
+        
+        // Initialize control loop rate
+        nh.getParam(""update_rate"", update_rate);
+        ros::Rate loop_rate(update_rate);
+        
+        while(ros::ok()) {
+            calculateVelocities();
+            loop_rate.sleep();
+        }
+    }
+
+    void leftWheelCallback(const std_msgs::Float64::ConstPtr &msg) {
+        left_wheel_position = msg->data;
+    }
+
+    void rightWheelCallback(const std_msgs::Float64::ConstPtr &msg) {
+        right_wheel_position = msg->data;
+    }
+
+    void calculateVelocities() {
+        double left_wheel_velocity = (left_wheel_position - prev_left_wheel_position) * wheel_radius * update_rate;
+        double right_wheel_velocity = (right_wheel_position - prev_right_wheel_position) * wheel_radius * update_rate;
+
+        double linear_velocity = (left_wheel_velocity + right_wheel_velocity) / 2.0;
+        double angular_velocity = (right_wheel_velocity - left_wheel_velocity) / wheel_separation;
+
+        geometry_msgs::Twist twist_msg;
+        twist_msg.linear.x = linear_velocity;
+        twist_msg.angular.z = angular_velocity;
+
+        twist_pub.publish(twist_msg);
+
+        // Update previous wheel positions for velocity calculation
+        prev_left_wheel_position = left_wheel_position;
+        prev_right_wheel_position = right_wheel_position;
+    }
+
+private:
+    ros::NodeHandle nh;
+    ros::Subscriber left_wheel_sub;
+    ros::Subscriber right_wheel_sub;
+    ros::Publisher twist_pub;
+    double wheel_separation;
+    double wheel_radius;
+    double update_rate;
+    double left_wheel_position;
+    double right_wheel_position;
+    double prev_left_wheel_position = 0.0;
+    double prev_right_wheel_position = 0.0;
+
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""differential_drive_controller"");
+
+    DifferentialDriveController controller;
+
+    ros::spin();
+
+    return 0;
+}",3.6453905358295917
+150,Generate a ROS control node that calculates and publishes differential drive wheel velocities based on robot parameters.,"#!/usr/bin/env python
+
+import rospy
+from geometry_msgs.msg import Twist
+
+class DifferentialDriveControlNode:
+    def __init__(self):
+        # Initialize the ROS node
+        rospy.init_node('differential_drive_control_node')
+
+        # Define the wheelbase and wheel radius of the robot
+        self.wheelbase = 0.5  # in meters
+        self.wheel_radius = 0.1  # in meters
+
+        # Setup the publisher to publish wheel velocities
+        self.vel_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
+
+        # Setup the subscriber to listen for desired linear and angular velocities
+        rospy.Subscriber('/desired_vel', Twist, self.callback)
+
+    def callback(self, msg):
+        # Calculate the linear and angular velocities
+        linear_vel = msg.linear.x
+        angular_vel = msg.angular.z
+
+        # Calculate the left and right wheel velocities
+        left_wheel_vel = (linear_vel - angular_vel*self.wheelbase/2) / self.wheel_radius
+        right_wheel_vel = (linear_vel + angular_vel*self.wheelbase/2) / self.wheel_radius
+
+        # Create a Twist message and publish the wheel velocities
+        twist_msg = Twist()
+        twist_msg.linear.x = left_wheel_vel
+        twist_msg.linear.y = right_wheel_vel
+        self.vel_pub.publish(twist_msg)
+
+    def run(self):
+        # Run the control node
+        rospy.spin()
+
+if __name__ == '__main__':
+    try:
+        control_node = DifferentialDriveControlNode()
+        control_node.run()
+    except rospy.ROSInterruptException:
+        pass",0
+152,Generate a ROS C++ node that calculates spin and publishes differential drive wheel velocities based on execution robot parameters.,"#include ""ros/ros.h""
+#include ""geometry_msgs/Twist.h""
+
+class VelocityCalculator {
+private:
+    ros::NodeHandle nh;
+    ros::Publisher cmd_vel_pub;
+    double wheel_base, max_angular_vel;
+
+public:
+    VelocityCalculator() : nh(""~"") {
+        nh.param(""wheel_base"", wheel_base, 0.5);
+        nh.param(""max_angular_vel"", max_angular_vel, 1.0);
+
+        cmd_vel_pub = nh.advertise<geometry_msgs::Twist>(""cmd_vel"", 1);
+
+        ros::Subscriber sub = nh.subscribe(""robot_parameters"", 1, &VelocityCalculator::calculateVelocities, this);
+    }
+
+    void calculateVelocities(const geometry_msgs::Twist::ConstPtr& params_msg) {
+        double linear_vel = params_msg->linear.x;
+        double angular_vel = params_msg->angular.z;
+
+        double left_wheel_vel = (2 * linear_vel - angular_vel * wheel_base) / 2;
+        double right_wheel_vel = (2 * linear_vel + angular_vel * wheel_base) / 2;
+
+        clampVelocities(left_wheel_vel, right_wheel_vel);
+
+        publishWheelVelocities(left_wheel_vel, right_wheel_vel);
+    }
+
+    void clampVelocities(double& left_vel, double& right_vel) {
+        if (std::abs(left_vel) > max_angular_vel || std::abs(right_vel) > max_angular_vel) {
+            double scale = max_angular_vel / std::max(std::abs(left_vel), std::abs(right_vel));
+            left_vel *= scale;
+            right_vel *= scale;
+        }
+    }
+
+    void publishWheelVelocities(double left_vel, double right_vel) {
+        geometry_msgs::Twist cmd_vel;
+        cmd_vel.linear.x = left_vel;
+        cmd_vel.linear.y = right_vel;
+        cmd_vel_pub.publish(cmd_vel);
+    }
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""velocity_calculator"");
+    VelocityCalculator vc;
+
+    ros::spin();
+
+    return 0;
+}",3.958891041560949
+156,Generate a ROS C++ node that calculates and publishes differential drive spin rate based on on robot parameters.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+#include <std_msgs/Float64.h>
+
+class DifferentialDriveSpinRateCalculator
+{
+private:
+    ros::NodeHandle nh_;
+    ros::Subscriber twist_sub_;
+    ros::Publisher spin_rate_pub_;
+
+    double wheel_separation_distance_;
+
+public:
+    DifferentialDriveSpinRateCalculator() : nh_(""~"")
+    {
+        nh_.param(""wheel_separation_distance"", wheel_separation_distance_, 0.5);
+
+        twist_sub_ = nh_.subscribe(""cmd_vel"", 1, &DifferentialDriveSpinRateCalculator::twistCallback, this);
+        spin_rate_pub_ = nh_.advertise<std_msgs::Float64>(""spin_rate"", 1);
+    }
+
+    void twistCallback(const geometry_msgs::TwistConstPtr& twist_msg)
+    {
+        double linear_vel_x = twist_msg->linear.x;
+        double angular_vel_z = twist_msg->angular.z;
+
+        // Calculate differential drive spin rate
+        double spin_rate = (linear_vel_x / wheel_separation_distance_) - (angular_vel_z / 2.0);
+
+        std_msgs::Float64 spin_rate_msg;
+        spin_rate_msg.data = spin_rate;
+        spin_rate_pub_.publish(spin_rate_msg);
+    }
+};
+
+int main(int argc, char **argv)
+{
+    ros::init(argc, argv, ""differential_drive_spin_rate_calculator_node"");
+
+    DifferentialDriveSpinRateCalculator differential_drive_spin_rate_calculator;
+
+    ros::spin();
+
+    return 0;
+}",1.51033024203179
+157,Generate a ROS C++ node that calculates queue and publishes differential drive wheel velocities based on robot parameters.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+#include <nav_msgs/Odometry.h>
+
+class DifferentialDriveController {
+public:
+    DifferentialDriveController() : nh(), private_nh(""~""), wheel_separation(0.5), wheel_radius(0.1) {
+        cmd_vel_sub = nh.subscribe(""cmd_vel"", 1, &DifferentialDriveController::cmdVelCallback, this);
+        odometry_pub = nh.advertise<nav_msgs::Odometry>(""odom"", 1);
+    }
+
+    void cmdVelCallback(const geometry_msgs::Twist::ConstPtr& msg) {
+        // Calculate differential drive wheel velocities based on twist message
+        double linear_vel = msg->linear.x;
+        double angular_vel = msg->angular.z;
+
+        double left_wheel_vel = (linear_vel - angular_vel * wheel_separation / 2.0) / wheel_radius;
+        double right_wheel_vel = (linear_vel + angular_vel * wheel_separation / 2.0) / wheel_radius;
+
+        // Publish odometry
+        nav_msgs::Odometry odom_msg;
+        // Fill in the odometry message with calculated values
+        // ...
+
+        odometry_pub.publish(odom_msg);
+    }
+
+private:
+    ros::NodeHandle nh;
+    ros::NodeHandle private_nh;
+    ros::Subscriber cmd_vel_sub;
+    ros::Publisher odometry_pub;
+    double wheel_separation;
+    double wheel_radius;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""differential_drive_controller_node"");
+
+    DifferentialDriveController controller;
+
+    ros::spin();
+
+    return 0;
+}",4.491149040355294
+158,Generate a ROS C++ node that calculates and publishes differential drive wheel velocities based on localization robot parameters.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+#include <nav_msgs/Odometry.h>
+
+class DifferentialDriveController {
+public:
+    DifferentialDriveController() : nh_(""~"") {
+        // Load parameters
+        nh_.param(""wheel_separation"", wheel_separation_, 0.5); // Distance between wheels
+        nh_.param(""wheel_radius"", wheel_radius_, 0.1); // Wheel radius
+
+        // Initialize subscribers and publishers
+        odom_sub_ = nh_.subscribe(""/odom"", 1, &DifferentialDriveController::odomCallback, this);
+        cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>(""/cmd_vel"", 1);
+    }
+
+    void odomCallback(const nav_msgs::Odometry::ConstPtr& msg) {
+        // Calculate linear and angular velocities
+        double vx = msg->twist.twist.linear.x;
+        double vth = msg->twist.twist.angular.z;
+      
+        // Apply differential drive kinematics
+        double v_left = (vx - vth * wheel_separation_ / 2.0) / wheel_radius_;
+        double v_right = (vx + vth * wheel_separation_ / 2.0) / wheel_radius_;
+
+        // Create Twist message with calculated wheel velocities
+        geometry_msgs::Twist cmd_vel;
+        cmd_vel.linear.x = v_left;
+        cmd_vel.angular.z = v_right;
+
+        // Publish the calculated wheel velocities
+        cmd_vel_pub_.publish(cmd_vel);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Subscriber odom_sub_;
+    ros::Publisher cmd_vel_pub_;
+
+    double wheel_separation_; // Distance between wheels
+    double wheel_radius_; // Wheel radius
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""differential_drive_controller"");
+    DifferentialDriveController controller;
+
+    ros::spin();
+
+    return 0;
+}",4.462019058820387
+159,Generate a ROS C++ node that calculates and publishes differential drive rate based on robot parameters.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+#include <std_msgs/Float64MultiArray.h>
+
+class DifferentialDriveController{
+private:
+    ros::NodeHandle nh;
+    ros::Subscriber vel_sub;
+    ros::Publisher rate_pub;
+    double wheel_base;
+    double wheel_radius;
+
+public:
+    DifferentialDriveController() : nh(""~""){
+        vel_sub = nh.subscribe(""/cmd_vel"", 10, &DifferentialDriveController::velocityCallback, this);
+        rate_pub = nh.advertise<std_msgs::Float64MultiArray>(""/wheel_rate"", 10);
+
+        // Get robot parameters
+        nh.param(""wheel_base"", wheel_base, 0.5);  // Default wheel_base is 0.5 meters
+        nh.param(""wheel_radius"", wheel_radius, 0.1);  // Default wheel_radius is 0.1 meters
+    }
+
+    void velocityCallback(const geometry_msgs::Twist::ConstPtr& msg){
+        double linear_vel = msg->linear.x;
+        double angular_vel = msg->angular.z;
+
+        // Calculate left and right wheel rates
+        double left_rate = (linear_vel - angular_vel * wheel_base / 2.0) / wheel_radius;
+        double right_rate = (linear_vel + angular_vel * wheel_base / 2.0) / wheel_radius;
+
+        // Publish the wheel rates
+        std_msgs::Float64MultiArray rates_msg;
+        rates_msg.data.push_back(left_rate);
+        rates_msg.data.push_back(right_rate);
+        rate_pub.publish(rates_msg);
+    }
+};
+
+int main(int argc, char **argv){
+    ros::init(argc, argv, ""differential_drive_controller_node"");
+    DifferentialDriveController controller;
+    ros::spin();
+    return 0;
+}",4.488665551480933
+160,Generate a ROS C++ node that calculates and publishes differential drive wheel velocities on machine parameters.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+#include <std_msgs/Float64.h>
+
+class DifferentialDriveController
+{
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher left_wheel_vel_pub_;
+    ros::Publisher right_wheel_vel_pub_;
+    ros::Subscriber machine_parameters_sub_;
+
+    double max_speed_;
+    double wheel_base_;
+
+public:
+    DifferentialDriveController() : nh_(""~"")
+    {
+        left_wheel_vel_pub_ = nh_.advertise<std_msgs::Float64>(""/left_wheel_velocity"", 1);
+        right_wheel_vel_pub_ = nh_.advertise<std_msgs::Float64>(""/right_wheel_velocity"", 1);
+        machine_parameters_sub_ = nh_.subscribe(""/machine_parameters"", 1, &DifferentialDriveController::machineParametersCallback, this);
+
+        nh_.param(""max_speed"", max_speed_, 1.0);
+        nh_.param(""wheel_base"", wheel_base_, 0.5);
+    }
+
+    void machineParametersCallback(const geometry_msgs::Twist::ConstPtr& msg)
+    {
+        double linear_vel = msg->linear.x;
+        double angular_vel = msg->angular.z;
+
+        double left_vel = (2 * linear_vel - angular_vel * wheel_base_) / 2;
+        double right_vel = (2 * linear_vel + angular_vel * wheel_base_) / 2;
+
+        std_msgs::Float64 left_wheel_vel;
+        left_wheel_vel.data = left_vel;
+        std_msgs::Float64 right_wheel_vel;
+        right_wheel_vel.data = right_vel;
+
+        left_wheel_vel_pub_.publish(left_wheel_vel);
+        right_wheel_vel_pub_.publish(right_wheel_vel);
+    }
+};
+
+int main(int argc, char** argv)
+{
+    ros::init(argc, argv, ""differential_drive_controller"");
+    DifferentialDriveController controller;
+
+    ros::spin();
+
+    return 0;
+}",4.476574814687527
+161,Generate a ROS C++ message node that calculates and publishes differential drive wheel velocities based on robot parameters.,"#include <ros/ros.h>
+#include <your_robot_msgs/RobotParams.h>
+#include <geometry_msgs/Twist.h>
+#include <math.h>
+
+// Global variables to store the robot parameters
+double wheel_base; // distance between the two wheels
+double wheel_radius; // radius of the wheels
+
+// Callback function for the robot parameters subscriber
+void robotParamsCallback(const your_robot_msgs::RobotParams::ConstPtr& msg)
+{
+    wheel_base = msg->wheel_base;
+    wheel_radius = msg->wheel_radius;    
+}
+
+// Callback function to calculate wheel velocities and publish twist messages
+void calculateWheelVelocities()
+{
+    ros::NodeHandle nh;
+    ros::Publisher twist_pub = nh.advertise<geometry_msgs::Twist>(""cmd_vel"", 10);
+    ros::Rate loop_rate(10);
+
+    while (ros::ok())
+    {
+        // Calculate wheel velocities based on some logic
+        double linear_vel = 1.0; // for example, some fixed linear velocity
+        double angular_vel = 0.5; // for example, some fixed angular velocity
+
+        double left_wheel_vel = (2 * linear_vel - angular_vel * wheel_base) / (2 * wheel_radius);
+        double right_wheel_vel = (2 * linear_vel + angular_vel * wheel_base) / (2 * wheel_radius);
+
+        // Create and publish twist message
+        geometry_msgs::Twist twist_msg;
+        twist_msg.linear.x = linear_vel;
+        twist_msg.angular.z = angular_vel;
+        twist_pub.publish(twist_msg);
+
+        ros::spinOnce();
+        loop_rate.sleep();
+    }  
+}
+
+int main(int argc, char** argv)
+{
+    ros::init(argc, argv, ""velocity_calculator_node"");
+    ros::NodeHandle nh;
+
+    // Subscribe to robot params
+    ros::Subscriber robot_params_sub = nh.subscribe(""robot_params"", 10, robotParamsCallback);
+
+    // Call the function to calculate wheel velocities and publish twist messages
+    calculateWheelVelocities();
+
+    ros::spin();
+
+    return 0;
+}",0
+162,Generate actuator a ROS C++ node that calculates and robot that publishes parameter velocity commands.,"#include <ros/ros.h>
+#include <std_msgs/Float32.h>
+
+class ActuatorNode {
+public:
+    ActuatorNode() : nh(""~"") {
+        nh.param<float>(""p_gain"", p_gain, 0.5);
+        nh.param<float>(""setpoint"", setpoint, 0.0);
+
+        vel_pub = nh.advertise<std_msgs::Float32>(""cmd_velocity"", 10);
+        feedback_sub = nh.subscribe(""feedback"", 10, &ActuatorNode::feedbackCallback, this);
+    }
+
+    void run() {
+        // Main loop
+        ros::Rate rate(10); // 10 Hz
+        while (ros::ok()) {
+            std_msgs::Float32 vel_msg;
+            vel_msg.data = calculateVelocity();
+
+            vel_pub.publish(vel_msg);
+
+            ros::spinOnce();
+            rate.sleep();
+        }
+    }
+
+private:
+    ros::NodeHandle nh;
+    ros::Publisher vel_pub;
+    ros::Subscriber feedback_sub;
+
+    float p_gain;
+    float setpoint;
+
+    void feedbackCallback(const std_msgs::Float32::ConstPtr& feedback_msg) {
+        // Placeholder for feedback processing
+        // Adjust parameters based on feedback received
+    }
+
+    float calculateVelocity() {
+        // Placeholder for velocity calculation using PID control
+        float error = setpoint - 0.0; // Use actual feedback value instead of 0.0
+        float velocity = p_gain * error;
+
+        return velocity;
+    }
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""actuator_node"");
+
+    ActuatorNode actuator_node;
+    actuator_node.run();
+
+    return 0;
+}",5.69134614930196
+163,Generate a ROS C++ node that calculates and publishes differential drive rate velocities based on robot parameters.,"/*
+ * differential_drive_controller_node.cpp
+ *
+ * A ROS node that calculates and publishes differential drive rate velocities based on robot parameters.
+ *
+ * Usage:
+ *  - Subscribes to /cmd_vel topic for desired linear and angular velocities.
+ *  - Publishes calculated left and right wheel velocities to /left_wheel/cmd_vel and /right_wheel/cmd_vel topics respectively.
+ *
+ * Parameters:
+ *  - wheel_distance: Distance between the wheels of the robot (in meters).
+ *  - wheel_radius: Radius of the wheels (in meters).
+ */
+
+#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+#include <std_msgs/Float64.h>
+
+class DifferentialDriveController {
+public:
+    DifferentialDriveController() {
+        nh.param(""wheel_distance"", wheel_distance_, 0.5); // default to 0.5 meters
+        nh.param(""wheel_radius"", wheel_radius_, 0.1); // default to 0.1 meters
+
+        cmd_vel_sub_ = nh.subscribe(""/cmd_vel"", 1, &DifferentialDriveController::cmdVelCallback, this);
+        left_wheel_pub_ = nh.advertise<std_msgs::Float64>(""/left_wheel/cmd_vel"", 1);
+        right_wheel_pub_ = nh.advertise<std_msgs::Float64>(""/right_wheel/cmd_vel"", 1);
+    }
+
+    void cmdVelCallback(const geometry_msgs::Twist::ConstPtr& msg) {
+        double linear_vel = msg->linear.x;
+        double angular_vel = msg->angular.z;
+
+        // Calculate left and right wheel velocities
+        double left_velocity = linear_vel - angular_vel * wheel_distance_ / 2;
+        double right_velocity = linear_vel + angular_vel * wheel_distance_ / 2;
+
+        // Publish calculated velocities
+        std_msgs::Float64 left_wheel_vel, right_wheel_vel;
+        left_wheel_vel.data = left_velocity / wheel_radius_;
+        right_wheel_vel.data = right_velocity / wheel_radius_;
+        left_wheel_pub_.publish(left_wheel_vel);
+        right_wheel_pub_.publish(right_wheel_vel);
+    }
+
+private:
+    ros::NodeHandle nh;
+    ros::Subscriber cmd_vel_sub_;
+    ros::Publisher left_wheel_pub_;
+    ros::Publisher right_wheel_pub_;
+    double wheel_distance_;
+    double wheel_radius_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""differential_drive_controller_node"");
+    DifferentialDriveController controller;
+
+    ros::spin();
+
+    return 0;
+}",3.91900598869027
+166,Generate actuator a ROS C++ node that calculates and publishes differential drive rate based on machine robot parameters.,"#include <ros/ros.h>
+#include <std_msgs/Float64.h>
+#include <geometry_msgs/Twist.h>
+#include <cmath>
+
+class ActuatorNode {
+public:
+    ActuatorNode() {
+        ros::NodeHandle nh;
+
+        // Parameters
+        nh.param<double>(""/robot_wheel_separation"", wheel_separation_, 0.5);
+        nh.param<double>(""/robot_wheel_radius"", wheel_radius_, 0.1);
+
+        // Subscribers
+        twist_sub_ = nh.subscribe(""/cmd_vel"", 1, &ActuatorNode::twistCallback, this);
+
+        // Publishers
+        left_wheel_pub_ = nh.advertise<std_msgs::Float64>(""/left_wheel_rate"", 1);
+        right_wheel_pub_ = nh.advertise<std_msgs::Float64>(""/right_wheel_rate"", 1);
+    }
+
+    void twistCallback(const geometry_msgs::Twist::ConstPtr& msg) {
+        double linear_vel = msg->linear.x;
+        double angular_vel = msg->angular.z;
+
+        double left_wheel_rate = (linear_vel - (angular_vel * wheel_separation_ / 2)) / wheel_radius_;
+        double right_wheel_rate = (linear_vel + (angular_vel * wheel_separation_ / 2)) / wheel_radius_;
+
+        publishWheelRates(left_wheel_rate, right_wheel_rate);
+    }
+
+    void publishWheelRates(double left_rate, double right_rate) {
+        std_msgs::Float64 left_msg, right_msg;
+        left_msg.data = left_rate;
+        right_msg.data = right_rate;
+
+        left_wheel_pub_.publish(left_msg);
+        right_wheel_pub_.publish(right_msg);
+    }
+
+private:
+    ros::NodeHandle nh;
+    ros::Subscriber twist_sub_;
+    ros::Publisher left_wheel_pub_, right_wheel_pub_;
+    double wheel_separation_, wheel_radius_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""actuator_node"");
+    ActuatorNode node;
+
+    ros::spin();
+
+    return 0;
+}",4.463976135223268
+168,Generate a ROS task C++ node that calculates and publishes differential wheel velocities based on robot parameters.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+// Robot parameters
+const double wheel_base = 0.5; // Distance between the two wheels
+const double wheel_radius = 0.1; // Radius of the wheels
+
+// ROS node
+ros::NodeHandle *nh;
+ros::Publisher velocity_publisher;
+
+// Callback function to calculate wheel velocities
+void calculateVelocities(const geometry_msgs::Twist::ConstPtr &command_msg) {
+    // Extract linear and angular velocities
+    double linear_velocity = command_msg->linear.x;
+    double angular_velocity = command_msg->angular.z;
+
+    // Calculate left and right wheel velocities
+    double left_velocity = (linear_velocity - angular_velocity * wheel_base / 2.0) / wheel_radius;
+    double right_velocity = (linear_velocity + angular_velocity * wheel_base / 2.0) / wheel_radius;
+
+    // Publish wheel velocities
+    geometry_msgs::Twist wheel_velocities;
+    wheel_velocities.linear.x = left_velocity;
+    wheel_velocities.linear.y = right_velocity;
+    velocity_publisher.publish(wheel_velocities);
+}
+
+int main(int argc, char** argv) {
+    // Initialize ROS node
+    ros::init(argc, argv, ""wheel_velocities_calculator"");
+    nh = new ros::NodeHandle();
+
+    // Publisher for wheel velocities
+    velocity_publisher = nh->advertise<geometry_msgs::Twist>(""wheel_velocities"", 10);
+
+    // Subscriber for the robot command (linear and angular velocities)
+    ros::Subscriber command_subscriber = nh->subscribe(""cmd_vel"", 10, calculateVelocities);
+
+    // Spin
+    ros::spin();
+
+    // Cleanup
+    delete nh;
+
+    return 0;
+}",3.730279004058866
+169,Generate a ROS C++ node that calculates data and publishes differential drive rate based on on robot parameters.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+#include <std_msgs/Float32.h>
+
+class DifferentialDriveController {
+public:
+    DifferentialDriveController() : nh_(""~"") {
+        nh_.param(""wheel_base"", wheel_base_, 0.5); // Default wheel base of 0.5 meters
+        nh_.param(""max_linear_speed"", max_linear_speed_, 1.0); // Default max linear speed of 1.0 m/s
+        
+        twist_sub_ = nh_.subscribe(""cmd_vel"", 1, &DifferentialDriveController::twistCallback, this);
+        rate_pub_ = nh_.advertise<std_msgs::Float32>(""diff_drive_rate"", 1);
+    }
+
+    void twistCallback(const geometry_msgs::Twist::ConstPtr& msg) {
+        double linear_speed = msg->linear.x;
+        double angular_speed = msg->angular.z;
+
+        double diff_drive_rate = (linear_speed - angular_speed * wheel_base_) / 2.0;
+        std_msgs::Float32 rate_msg;
+        rate_msg.data = diff_drive_rate;
+        rate_pub_.publish(rate_msg);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Subscriber twist_sub_;
+    ros::Publisher rate_pub_;
+    double wheel_base_;
+    double max_linear_speed_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""differential_drive_controller"");
+    DifferentialDriveController controller;
+    ros::spin();
+    return 0;
+}",1.5155904889840706
+170,Generate a ROS C++ node that rate calculates and publishes differential drive wheel velocities based on robot parameters.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+#include <std_msgs/Float64.h>
+
+class DifferentialDriveVelocityCalculator
+{
+public:
+    DifferentialDriveVelocityCalculator() : nh_()
+    {
+        nh_.param<double>(""/robot/wheelbase"", wheelbase_, 1.0);
+        nh_.param<double>(""/robot/max_wheel_speed"", max_wheel_speed_, 2.0);
+
+        cmd_vel_sub_ = nh_.subscribe(""/cmd_vel"", 1, &DifferentialDriveVelocityCalculator::cmdVelCallback, this);
+
+        left_wheel_vel_pub_ = nh_.advertise<std_msgs::Float64>(""/left_wheel_vel"", 1);
+        right_wheel_vel_pub_ = nh_.advertise<std_msgs::Float64>(""/right_wheel_vel"", 1);
+    }
+
+    void cmdVelCallback(const geometry_msgs::Twist::ConstPtr& cmd_vel_msg)
+    {
+        double linear_vel = cmd_vel_msg->linear.x;
+        double angular_vel = cmd_vel_msg->angular.z;
+
+        double left_wheel_vel = (linear_vel - 0.5 * angular_vel * wheelbase_) / max_wheel_speed_;
+        double right_wheel_vel = (linear_vel + 0.5 * angular_vel * wheelbase_) / max_wheel_speed_;
+
+        std_msgs::Float64 left_wheel_vel_msg;
+        std_msgs::Float64 right_wheel_vel_msg;
+
+        left_wheel_vel_msg.data = left_wheel_vel;
+        right_wheel_vel_msg.data = right_wheel_vel;
+
+        left_wheel_vel_pub_.publish(left_wheel_vel_msg);
+        right_wheel_vel_pub_.publish(right_wheel_vel_msg);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Subscriber cmd_vel_sub_;
+    ros::Publisher left_wheel_vel_pub_;
+    ros::Publisher right_wheel_vel_pub_;
+
+    double wheelbase_;
+    double max_wheel_speed_;
+};
+
+int main(int argc, char **argv)
+{
+    ros::init(argc, argv, ""differential_drive_velocity_calculator"");
+    DifferentialDriveVelocityCalculator vel_calculator;
+
+    ros::spin();
+
+    return 0;
+}",4.455774855727495
+171,Generate a ROS ROS C++ node that calculates and robot publishes differential localization drive wheel for parameter a two-wheeled mobile platform.,"#include <ros/ros.h>
+#include <std_msgs/Float64.h>
+#include <geometry_msgs/Twist.h>
+
+class DifferentialDriveController {
+public:
+    DifferentialDriveController() {
+        // Initialize ROS node handle
+        nh = ros::NodeHandle();
+
+        // Setup publisher for left and right wheel velocities
+        left_wheel_vel_pub = nh.advertise<std_msgs::Float64>(""/left_wheel_velocity"", 10);
+        right_wheel_vel_pub = nh.advertise<std_msgs::Float64>(""/right_wheel_velocity"", 10);
+
+        // Subscribe to the cmd_vel topic to receive velocity commands
+        cmd_vel_sub = nh.subscribe(""/cmd_vel"", 10, &DifferentialDriveController::cmdVelCallback, this);
+    }
+
+    void run() {
+        ros::Rate rate(10); // 10 Hz loop rate
+
+        while (ros::ok()) {
+            // Calculate left and right wheel velocities based on current differential drive model
+            // Replace this with your differential drive calculations
+            double left_vel = 0.0;
+            double right_vel = 0.0;
+
+            // Publish left and right wheel velocities
+            publishWheelVelocities(left_vel, right_vel);
+
+            ros::spinOnce();
+            rate.sleep();
+        }
+    }
+
+private:
+    ros::NodeHandle nh;
+    ros::Publisher left_wheel_vel_pub;
+    ros::Publisher right_wheel_vel_pub;
+    ros::Subscriber cmd_vel_sub;
+
+    void cmdVelCallback(const geometry_msgs::Twist::ConstPtr& msg) {
+        // Extract linear and angular velocities from Twist message
+        double linear_vel = msg->linear.x;
+        double angular_vel = msg->angular.z;
+
+        // Calculate left and right wheel velocities based on linear and angular velocities
+        // Replace this with your differential drive calculations
+        double left_vel = 0.0;
+        double right_vel = 0.0;
+
+        // Publish left and right wheel velocities
+        publishWheelVelocities(left_vel, right_vel);
+    }
+
+    void publishWheelVelocities(double left_vel, double right_vel) {
+        // Create Float64 messages for left and right wheel velocities
+        std_msgs::Float64 left_vel_msg;
+        std_msgs::Float64 right_vel_msg;
+
+        left_vel_msg.data = left_vel;
+        right_vel_msg.data = right_vel;
+
+        // Publish left and right wheel velocities
+        left_wheel_vel_pub.publish(left_vel_msg);
+        right_wheel_vel_pub.publish(right_vel_msg);
+    }
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""differential_drive_controller"");
+
+    DifferentialDriveController controller;
+    controller.run();
+
+    return 0;
+}",0.503077371213493
+173,Generate a ROS C++ node that calculates publishes differential drive wheel velocities based on mobile platform.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+#include <std_msgs/Float64.h>
+
+class DifferentialDriveController {
+public:
+    DifferentialDriveController() : nh_(""~"") {
+        wheel_radius_ = 0.1; // in meters
+        wheel_base_ = 0.5; // in meters
+
+        left_wheel_vel_pub_ = nh_.advertise<std_msgs::Float64>(""left_wheel_velocity"", 10);
+        right_wheel_vel_pub_ = nh_.advertise<std_msgs::Float64>(""right_wheel_velocity"", 10);
+
+        cmd_vel_sub_ = nh_.subscribe(""cmd_vel"", 10, &DifferentialDriveController::cmdVelCallback, this);
+    }
+
+    void cmdVelCallback(const geometry_msgs::Twist::ConstPtr& cmd_vel_msg) {
+        double linear_vel = cmd_vel_msg->linear.x;
+        double angular_vel = cmd_vel_msg->angular.z;
+
+        double left_wheel_vel = (linear_vel - angular_vel * wheel_base_ / 2) / wheel_radius_;
+        double right_wheel_vel = (linear_vel + angular_vel * wheel_base_ / 2) / wheel_radius_;
+
+        publishWheelVelocities(left_wheel_vel, right_wheel_vel);
+    }
+
+    void publishWheelVelocities(double left_wheel_vel, double right_wheel_vel) {
+        std_msgs::Float64 left_vel_msg, right_vel_msg;
+
+        left_vel_msg.data = left_wheel_vel;
+        right_vel_msg.data = right_wheel_vel;
+
+        left_wheel_vel_pub_.publish(left_vel_msg);
+        right_wheel_vel_pub_.publish(right_vel_msg);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher left_wheel_vel_pub_;
+    ros::Publisher right_wheel_vel_pub_;
+    ros::Subscriber cmd_vel_sub_;
+
+    double wheel_radius_;
+    double wheel_base_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""differential_drive_controller"");
+    DifferentialDriveController controller;
+
+    ros::spin();
+
+    return 0;
+}",4.458489273507091
+175,Generate a ROS C++ node that calculates publishes differential drive rate velocities based on robot parameters.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class DifferentialDriveController {
+public:
+    DifferentialDriveController() : nh_(""~"") {
+        nh_.param(""wheel_base"", wheel_base_, 0.5);
+        nh_.param(""wheel_radius"", wheel_radius_, 0.1);
+        
+        cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>(""cmd_vel"", 10);
+        vel_sub_ = nh_.subscribe(""desired_velocity"", 10, &DifferentialDriveController::velocityCallback, this);
+    }
+
+    void velocityCallback(const geometry_msgs::Twist::ConstPtr& msg) {
+        double linear_vel = msg->linear.x;
+        double angular_vel = msg->angular.z;
+
+        double left_vel = (2 * linear_vel - angular_vel * wheel_base_) / (2 * wheel_radius_);
+        double right_vel = (2 * linear_vel + angular_vel * wheel_base_) / (2 * wheel_radius_);
+
+        publishVelocity(left_vel, right_vel);
+    }
+
+    void publishVelocity(double left_vel, double right_vel) {
+        geometry_msgs::Twist cmd_vel_msg;
+        cmd_vel_msg.linear.x = left_vel;
+        cmd_vel_msg.linear.y = right_vel;
+
+        cmd_vel_pub_.publish(cmd_vel_msg);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher cmd_vel_pub_;
+    ros::Subscriber vel_sub_;
+
+    double wheel_base_;
+    double wheel_radius_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""differential_drive_controller_node"");
+    
+    DifferentialDriveController controller;
+
+    ros::spin();
+
+    return 0;
+}",4.488989368254942
+176,Generate a ROS C++ node that and publishes differential drive wheel velocities based on robot parameters.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+#include <string>
+
+class VelocityCalculator {
+public:
+    VelocityCalculator() : nh_(""~"") {
+        nh_.param(""wheel_base"", wheel_base_, 0.5);
+        nh_.param(""max_linear_velocity"", max_linear_velocity_, 1.0);
+        nh_.param(""max_angular_velocity"", max_angular_velocity_, 1.0);
+        
+        cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>(""/cmd_vel"", 10);
+        cmd_vel_sub_ = nh_.subscribe(""/desired_velocity"", 10, &VelocityCalculator::velocityCallback, this);
+    }
+
+    void velocityCallback(const geometry_msgs::Twist::ConstPtr& msg) {
+        // Calculate the left and right wheel velocities based on linear and angular velocities
+        double linear = std::min(msg->linear.x, max_linear_velocity_);
+        double angular = std::min(msg->angular.z, max_angular_velocity_);
+        
+        double left_velocity = (linear - angular * wheel_base_ / 2.0);
+        double right_velocity = (linear + angular * wheel_base_ / 2.0);
+
+        // Publish the calculated wheel velocities
+        geometry_msgs::Twist wheel_velocities;
+        wheel_velocities.linear.x = left_velocity;
+        wheel_velocities.linear.y = right_velocity;
+
+        cmd_vel_pub_.publish(wheel_velocities);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher cmd_vel_pub_;
+    ros::Subscriber cmd_vel_sub_;
+
+    double wheel_base_;
+    double max_linear_velocity_;
+    double max_angular_velocity_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""velocity_calculator_node"");
+    VelocityCalculator velocity_calculator;
+
+    ros::spin();
+
+    return 0;
+}",4.467536173419128
+179,Generate a ROS C++ node that calculates and differential drive rate based spin on machine robot parameters.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+#include <std_msgs/Float32MultiArray.h>
+
+class DifferentialDriveController {
+public:
+    DifferentialDriveController() : nh(""~"") {
+        nh.getParam(""wheel_base"", wheel_base);
+        nh.getParam(""wheel_radius"", wheel_radius);
+
+        cmd_vel_sub = nh.subscribe(""/cmd_vel"", 1, &DifferentialDriveController::cmdVelCallback, this);
+        wheel_speeds_pub = nh.advertise<std_msgs::Float32MultiArray>(""/wheel_speeds"", 1);
+    }
+
+    void cmdVelCallback(const geometry_msgs::Twist::ConstPtr& msg) {
+        // Calculate wheel speeds based on twist command
+        float linear_vel = msg->linear.x;
+        float angular_vel = msg->angular.z;
+
+        float left_wheel_speed = (2 * linear_vel - angular_vel * wheel_base) / (2 * wheel_radius);
+        float right_wheel_speed = (2 * linear_vel + angular_vel * wheel_base) / (2 * wheel_radius);
+
+        std_msgs::Float32MultiArray wheel_speeds_msg;
+        wheel_speeds_msg.data.push_back(left_wheel_speed);
+        wheel_speeds_msg.data.push_back(right_wheel_speed);
+
+        wheel_speeds_pub.publish(wheel_speeds_msg);
+    }
+
+private:
+    ros::NodeHandle nh;
+    ros::Subscriber cmd_vel_sub;
+    ros::Publisher wheel_speeds_pub;
+    double wheel_base;
+    double wheel_radius;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""differential_drive_controller"");
+    DifferentialDriveController controller;
+
+    ros::spin();
+
+    return 0;
+}",4.487889942288429
+183,Generate a ROS C++ node that calculates and publishes differential drive speed based on on robot parameters.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class DifferentialDriveController
+{
+public:
+    DifferentialDriveController()
+    {
+        ros::NodeHandle nh;
+        cmd_vel_pub_ = nh.advertise<geometry_msgs::Twist>(""cmd_vel"", 10);
+        
+        // Parameters
+        nh.param(""wheel_separation"", wheel_separation_, 0.5);
+        nh.param(""wheel_radius"", wheel_radius_, 0.1);
+        
+        // Subscribe to velocity commands
+        vel_sub_ = nh.subscribe(""cmd_vel_in"", 10, &DifferentialDriveController::velocityCallback, this);
+    }
+
+    void velocityCallback(const geometry_msgs::Twist::ConstPtr& msg)
+    {
+        double linear_vel = msg->linear.x;
+        double angular_vel = msg->angular.z;
+        
+        double right_wheel_speed = (linear_vel + angular_vel * wheel_separation_ / 2) / wheel_radius_;
+        double left_wheel_speed = (linear_vel - angular_vel * wheel_separation_ / 2) / wheel_radius_;
+        
+        // Publish wheel speeds
+        geometry_msgs::Twist cmd_vel;
+        cmd_vel.linear.x = left_wheel_speed;
+        cmd_vel.linear.y = right_wheel_speed;
+        cmd_vel_pub_.publish(cmd_vel);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher cmd_vel_pub_;
+    ros::Subscriber vel_sub_;
+    
+    double wheel_separation_;
+    double wheel_radius_;
+};
+
+int main(int argc, char** argv)
+{
+    ros::init(argc, argv, ""differential_drive_controller"");
+    DifferentialDriveController controller;
+    ros::spin();
+    return 0;
+}",1.484751918646615
+186,Generate a ROS C++ node that and publishes differential drive rate based on on robot system parameters.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+#include <std_msgs/Float64.h>
+
+class DifferentialDriveController
+{
+public:
+    DifferentialDriveController()
+    {
+        nh.getParam(""/robot_wheel_base"", wheel_base);
+        nh.getParam(""/robot_wheel_radius"", wheel_radius);
+
+        left_wheel_pub = nh.advertise<std_msgs::Float64>(""/left_wheel_rate"", 10);
+        right_wheel_pub = nh.advertise<std_msgs::Float64>(""/right_wheel_rate"", 10);
+        cmd_vel_sub = nh.subscribe(""/cmd_vel"", 10, &DifferentialDriveController::cmdVelCallback, this);
+    }
+
+    void cmdVelCallback(const geometry_msgs::Twist::ConstPtr& msg)
+    {
+        double linear_vel = msg->linear.x;
+        double angular_vel = msg->angular.z;
+
+        double left_rate = (linear_vel - (angular_vel * wheel_base / 2)) / wheel_radius;
+        double right_rate = (linear_vel + (angular_vel * wheel_base / 2)) / wheel_radius;
+
+        publishWheelRates(left_rate, right_rate);
+    }
+
+    void publishWheelRates(double left_rate, double right_rate)
+    {
+        std_msgs::Float64 left_msg;
+        std_msgs::Float64 right_msg;
+
+        left_msg.data = left_rate;
+        right_msg.data = right_rate;
+
+        left_wheel_pub.publish(left_msg);
+        right_wheel_pub.publish(right_msg);
+    }
+
+private:
+    ros::NodeHandle nh;
+    ros::Publisher left_wheel_pub;
+    ros::Publisher right_wheel_pub;
+    ros::Subscriber cmd_vel_sub;
+
+    double wheel_base;
+    double wheel_radius;
+};
+
+int main(int argc, char** argv)
+{
+    ros::init(argc, argv, ""differential_drive_controller"");
+    DifferentialDriveController controller;
+    ros::spin();
+    return 0;
+}",1.4676412688119953
+187,Generate a ROS C++ node that calculates and publishes differential drive velocities based on robot parameters.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+#include <math.h>
+
+class DifferentialDriveController {
+public:
+    DifferentialDriveController() : nh_(""~"") {
+        nh_.param(""wheel_base"", wheel_base_, 0.5); // Distance between two wheels
+        nh_.param(""wheel_radius"", wheel_radius_, 0.1); // Wheel radius
+
+        cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>(""cmd_vel"", 10);
+        twist_sub_ = nh_.subscribe(""cmd_vel_input"", 10, &DifferentialDriveController::twistCallback, this);
+    }
+
+    void twistCallback(const geometry_msgs::Twist::ConstPtr& msg) {
+        double linear_vel = msg->linear.x;
+        double angular_vel = msg->angular.z;
+
+        // Calculate left and right wheel velocities based on differential drive kinematics
+        double left_vel = (linear_vel - angular_vel * wheel_base_ / 2.0) / wheel_radius_;
+        double right_vel = (linear_vel + angular_vel * wheel_base_ / 2.0) / wheel_radius_;
+
+        // Create a Twist message and publish
+        geometry_msgs::Twist cmd_vel;
+        cmd_vel.linear.x = left_vel;
+        cmd_vel.linear.y = right_vel;
+        cmd_vel.angular.z = angular_vel;
+
+        cmd_vel_pub_.publish(cmd_vel);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher cmd_vel_pub_;
+    ros::Subscriber twist_sub_;
+    double wheel_base_; // Distance between two wheels
+    double wheel_radius_; // Wheel radius
+};
+
+int main(int argc, char **argv) {
+    ros::init(argc, argv, ""differential_drive_controller"");
+    DifferentialDriveController controller;
+
+    ros::spin();
+
+    return 0;
+}",4.472645272243451
+189,Generate a ROS C++ node that node calculates and publishes differential drive wheel velocities based on robot parameters.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+#include <iostream>
+
+class DifferentialDriveController {
+public:
+    DifferentialDriveController() : nh_(""""), linear_vel_(0.0), angular_vel_(0.0) {
+        cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>(""/cmd_vel"", 10);
+    }
+
+    void calculateWheelVelocities() {
+        // Calculate differential drive wheel velocities based on linear and angular velocities
+        double left_wheel_vel = linear_vel_ - angular_vel_;
+        double right_wheel_vel = linear_vel_ + angular_vel_;
+
+        // Publish the calculated wheel velocities
+        geometry_msgs::Twist cmd_vel;
+        cmd_vel.linear.x = left_wheel_vel;
+        cmd_vel.linear.y = right_wheel_vel;
+        cmd_vel_pub_.publish(cmd_vel);
+    }
+
+    void setLinearVelocity(double linear_vel) {
+        linear_vel_ = linear_vel;
+    }
+
+    void setAngularVelocity(double angular_vel) {
+        angular_vel_ = angular_vel;
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher cmd_vel_pub_;
+    double linear_vel_;
+    double angular_vel_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""differential_drive_controller_node"");
+    DifferentialDriveController controller;
+
+    // Set robot parameters
+    double linear_vel = 1.0;  // Set linear velocity
+    double angular_vel = 0.5; // Set angular velocity
+
+    controller.setLinearVelocity(linear_vel);
+    controller.setAngularVelocity(angular_vel);
+
+    ros::Rate loop_rate(10); // 10 Hz
+    while (ros::ok()) {
+        controller.calculateWheelVelocities();
+        ros::spinOnce();
+        loop_rate.sleep();
+    }
+
+    return 0;
+}",6.171899855373734
+190,Generate a ROS C++ node that calculates and publishes differential drive rate based on machine machine parameters.,"// header files
+#include <ros/ros.h>
+#include <your_robot_msgs/RobotParameters.h>
+#include <your_robot_msgs/DriveRate.h>
+
+// global variables to store the machine parameters
+double wheel_radius;
+double wheel_base;
+
+// callback function for receiving machine parameters
+void machineParametersCallback(const your_robot_msgs::RobotParameters::ConstPtr& params) {
+    wheel_radius = params->wheel_radius;
+    wheel_base = params->wheel_base;
+}
+
+// main function
+int main(int argc, char** argv) {
+    // initialize the ROS node
+    ros::init(argc, argv, ""drive_rate_calculator"");
+    ros::NodeHandle nh;
+
+    // create subscribers and publishers
+    ros::Subscriber params_sub = nh.subscribe(""/robot_parameters"", 10, machineParametersCallback);
+    ros::Publisher drive_rate_pub = nh.advertise<your_robot_msgs::DriveRate>(""/drive_rate"", 10);
+
+    // set the loop rate (in Hz)
+    ros::Rate loop_rate(10);
+
+    while (ros::ok()) {
+        // calculate the differential drive rate
+        your_robot_msgs::DriveRate drive_rate_msg;
+        drive_rate_msg.left_rate = 1.0;   // calculate based on wheel radius, wheel base, etc.
+        drive_rate_msg.right_rate = 1.0;  // calculate based on wheel radius, wheel base, etc.
+
+        // publish the calculated drive rate
+        drive_rate_pub.publish(drive_rate_msg);
+
+        // sleep to maintain the loop rate
+        loop_rate.sleep();
+
+        // spin once to handle callbacks
+        ros::spinOnce();
+    }
+
+    return 0;
+}",0
+192,Generate a ROS C++ node that calculates and publishes differential drive frequency velocities based on robot parameters.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class DifferentialDriveControlNode {
+public:
+    DifferentialDriveControlNode() : nh_(""""), private_nh_(""~"") {
+        // Initialize ROS parameters
+        private_nh_.param(""wheel_base"", wheel_base_, 0.5);  // Distance between wheels in meters
+        private_nh_.param(""max_linear_speed"", max_linear_speed_, 1.0);  // Maximum linear speed in m/s
+        private_nh_.param(""max_angular_speed"", max_angular_speed_, 1.0);  // Maximum angular speed in rad/s
+
+        // Create a publisher to publish velocity commands
+        vel_pub_ = nh_.advertise<geometry_msgs::Twist>(""cmd_vel"", 10);
+
+        // Create a subscriber to listen for input commands
+        cmd_sub_ = nh_.subscribe(""cmd_input"", 10, &DifferentialDriveControlNode::cmdInputCallback, this);
+    }
+
+    void cmdInputCallback(const geometry_msgs::Twist::ConstPtr& msg) {
+        double linear_vel = msg->linear.x;
+        double angular_vel = msg->angular.z;
+
+        // Calculate left and right wheel velocities based on differential drive kinematics
+        double left_wheel_vel = (2 * linear_vel - angular_vel * wheel_base_) / 2;
+        double right_wheel_vel = (2 * linear_vel + angular_vel * wheel_base_) / 2;
+
+        // Limit wheel velocities to maximum values
+        left_wheel_vel = std::min(std::max(-max_linear_speed_, left_wheel_vel), max_linear_speed_);
+        right_wheel_vel = std::min(std::max(-max_linear_speed_, right_wheel_vel), max_linear_speed_);
+
+        // Create and publish velocity command
+        geometry_msgs::Twist vel_msg;
+        vel_msg.linear.x = (left_wheel_vel + right_wheel_vel) / 2;
+        vel_msg.angular.z = (right_wheel_vel - left_wheel_vel) / wheel_base_;
+        vel_pub_.publish(vel_msg);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::NodeHandle private_nh_;
+    ros::Publisher vel_pub_;
+    ros::Subscriber cmd_sub_;
+
+    double wheel_base_;
+    double max_linear_speed_;
+    double max_angular_speed_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""differential_drive_control_node"");
+    DifferentialDriveControlNode node;
+
+    ros::spin();
+
+    return 0;
+}",3.923402840187346
+193,Generate a interface ROS C++ node that calculates and publishes differential drive wheel velocities based on robot parameters.,"// differential_drive_controller_node.cpp
+
+#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+#include <std_msgs/Float64.h>
+
+class DifferentialDriveControllerNode {
+public:
+    DifferentialDriveControllerNode() : nh(""~"") {
+        nh.getParam(""wheel_base"", wheel_base);
+        nh.getParam(""wheel_radius"", wheel_radius);
+
+        twist_sub = nh.subscribe(""/cmd_vel"", 1, &DifferentialDriveControllerNode::twistCallback, this);
+        left_vel_pub = nh.advertise<std_msgs::Float64>(""/left_wheel_velocity"", 1);
+        right_vel_pub = nh.advertise<std_msgs::Float64>(""/right_wheel_velocity"", 1);
+    }
+
+    void twistCallback(const geometry_msgs::Twist& twist_msg) {
+        double linear_velocity = twist_msg.linear.x;
+        double angular_velocity = twist_msg.angular.z;
+
+        double left_velocity = (linear_velocity - angular_velocity * wheel_base / 2) / wheel_radius;
+        double right_velocity = (linear_velocity + angular_velocity * wheel_base / 2) / wheel_radius;
+
+        publishWheelVelocities(left_velocity, right_velocity);
+    }
+
+    void publishWheelVelocities(double left_velocity, double right_velocity) {
+        std_msgs::Float64 left_vel_msg, right_vel_msg;
+        left_vel_msg.data = left_velocity;
+        right_vel_msg.data = right_velocity;
+
+        left_vel_pub.publish(left_vel_msg);
+        right_vel_pub.publish(right_vel_msg);
+    }
+
+private:
+    ros::NodeHandle nh;
+    ros::Subscriber twist_sub;
+    ros::Publisher left_vel_pub, right_vel_pub;
+    double wheel_base, wheel_radius;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""differential_drive_controller_node"");
+    DifferentialDriveControllerNode controller;
+
+    ros::spin();
+
+    return 0;
+}",4.459377769206112
+194,Generate a ROS C++ node that calculates and publishes drive wheel velocities based on robot parameters.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class DriveWheelVelocitiesNode {
+public:
+    DriveWheelVelocitiesNode() : nh_(""~"") {
+        nh_.param(""wheel_separation"", wheel_separation_, 0.5); // distance between wheels in meters
+        nh_.param(""max_linear_velocity"", max_linear_velocity_, 1.0); // maximum linear velocity in m/s
+        nh_.param(""max_angular_velocity"", max_angular_velocity_, 1.0); // maximum angular velocity in rad/s
+        cmd_vel_sub_ = nh_.subscribe(""cmd_vel"", 1, &DriveWheelVelocitiesNode::cmdVelCallback, this);
+        wheel_vel_pub_ = nh_.advertise<geometry_msgs::Twist>(""wheel_velocities"", 1);
+    }
+
+    void cmdVelCallback(const geometry_msgs::Twist& cmd_vel) {
+        // Calculate drive wheel velocities
+        double vx = std::min(std::max(cmd_vel.linear.x, -max_linear_velocity_), max_linear_velocity_);
+        double wz = std::min(std::max(cmd_vel.angular.z, -max_angular_velocity_), max_angular_velocity_);
+
+        double vr = vx + wz * wheel_separation_ / 2.0;
+        double vl = vx - wz * wheel_separation_ / 2.0;
+
+        // Publish drive wheel velocities
+        geometry_msgs::Twist wheel_velocities;
+        wheel_velocities.linear.x = vr;
+        wheel_velocities.linear.y = vl;
+        wheel_vel_pub_.publish(wheel_velocities);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Subscriber cmd_vel_sub_;
+    ros::Publisher wheel_vel_pub_;
+
+    double wheel_separation_;
+    double max_linear_velocity_;
+    double max_angular_velocity_;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""drive_wheel_velocities_node"");
+    DriveWheelVelocitiesNode node;
+
+    ros::spin();
+
+    return 0;
+}",4.465684885298172
+197,Generate a ROS C++ node that calculates and publishes differential drive rate based on on robot sensor parameters.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+#include <sensor_msgs/LaserScan.h>
+
+class DifferentialDriveController {
+public:
+    DifferentialDriveController() : nh(""~"") {
+        nh.param(""wheel_base"", wheel_base, 0.5);
+        nh.param(""max_angular_vel"", max_angular_vel, 1.0);
+        
+        laser_sub = nh.subscribe(""/scan"", 1, &DifferentialDriveController::laserCallback, this);
+        cmd_vel_pub = nh.advertise<geometry_msgs::Twist>(""/cmd_vel"", 1);
+    }
+
+    void laserCallback(const sensor_msgs::LaserScan::ConstPtr& msg) {
+        // Calculate differential drive rate based on sensor parameters
+        double min_distance = *std::min_element(msg->ranges.begin(), msg->ranges.end());
+        double desired_angular_vel = 0.5 / min_distance; // Example control law
+        
+        // Limit the angular velocity
+        if (desired_angular_vel > max_angular_vel) {
+            desired_angular_vel = max_angular_vel;
+        }
+
+        // Publish the control command
+        geometry_msgs::Twist twist_cmd;
+        twist_cmd.linear.x = 0.5; // Set a constant linear velocity
+        twist_cmd.angular.z = desired_angular_vel;
+        cmd_vel_pub.publish(twist_cmd);
+    }
+
+private:
+    ros::NodeHandle nh;
+    ros::Subscriber laser_sub;
+    ros::Publisher cmd_vel_pub;
+    double wheel_base;
+    double max_angular_vel;
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""differential_drive_controller"");
+    
+    DifferentialDriveController controller;
+
+    ros::spin();
+
+    return 0;
+}",0.9777195040661018
+198,Generate a ROS C++ node that calculates and publishes differential drive wheel velocities based on bot parameters.,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class DifferentialDriveNode {
+public:
+    DifferentialDriveNode() {
+        cmd_vel_sub_ = nh_.subscribe(""cmd_vel"", 1, &DifferentialDriveNode::cmdVelCallback, this);
+        wheel_vel_pub_ = nh_.advertise<geometry_msgs::Twist>(""wheel_velocities"", 1);
+    }
+
+    void cmdVelCallback(const geometry_msgs::Twist::ConstPtr& cmd_vel_msg) {
+        double linear_vel = cmd_vel_msg->linear.x;
+        double angular_vel = cmd_vel_msg->angular.z;
+
+        double left_vel = linear_vel - (wheel_base * angular_vel / 2);
+        double right_vel = linear_vel + (wheel_base * angular_vel / 2);
+
+        // Limit wheel velocities
+        left_vel = std::min(max_wheel_vel, std::max(-max_wheel_vel, left_vel));
+        right_vel = std::min(max_wheel_vel, std::max(-max_wheel_vel, right_vel));
+
+        publishWheelVelocities(left_vel, right_vel);
+    }
+
+    void publishWheelVelocities(double left_vel, double right_vel) {
+        geometry_msgs::Twist wheel_vel_msg;
+        wheel_vel_msg.linear.x = left_vel;
+        wheel_vel_msg.linear.y = right_vel;
+        wheel_vel_pub_.publish(wheel_vel_msg);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Subscriber cmd_vel_sub_;
+    ros::Publisher wheel_vel_pub_;
+
+    const double wheel_base = 0.5; // Distance between wheels
+    const double max_wheel_vel = 2.0; // Maximum wheel velocity
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""differential_drive_node"");
+    DifferentialDriveNode differential_drive_node;
+    ros::spin();
+    return 0;
+}",4.474931419975023
+199,Generate a ROS C++ node that calculates and publishes differential wheel planning based on robot navigation parameters.,"// differential_wheel_planner_node.cpp
+
+#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+// Constants for robot's dimensions
+const double WHEEL_BASE = 0.5;  // Distance between two wheels
+const double WHEEL_RADIUS = 0.1;  // Radius of the wheels
+
+// Publisher for sending planned wheel velocities
+ros::Publisher wheel_vel_pub;
+
+// Callback function to calculate and publish differential wheel velocities
+void twistCallback(const geometry_msgs::Twist::ConstPtr& twist_msg) {
+    // Extract linear and angular velocities from Twist message
+    double linear_vel = twist_msg->linear.x;
+    double angular_vel = twist_msg->angular.z;
+
+    // Calculate differential wheel velocities based on navigation parameters
+    double left_wheel_vel = (2 * linear_vel - angular_vel * WHEEL_BASE) / (2 * WHEEL_RADIUS);
+    double right_wheel_vel = (2 * linear_vel + angular_vel * WHEEL_BASE) / (2 * WHEEL_RADIUS);
+
+    // Create message to publish wheel velocities
+    geometry_msgs::Twist wheel_twist_msg;
+    wheel_twist_msg.linear.x = left_wheel_vel;
+    wheel_twist_msg.linear.y = right_wheel_vel;
+
+    // Publish the calculated wheel velocities
+    wheel_vel_pub.publish(wheel_twist_msg);
+}
+
+int main(int argc, char** argv) {
+    // Initialize the ROS node
+    ros::init(argc, argv, ""differential_wheel_planner_node"");
+    ros::NodeHandle nh;
+
+    // Subscribe to Twist messages for navigation parameters
+    ros::Subscriber twist_sub = nh.subscribe(""cmd_vel"", 10, twistCallback);
+
+    // Advertise the planned wheel velocities
+    wheel_vel_pub = nh.advertise<geometry_msgs::Twist>(""wheel_velocities"", 10);
+
+    // Spin to process callbacks
+    ros::spin();
+
+    return 0;
+}",3.5616152391420135

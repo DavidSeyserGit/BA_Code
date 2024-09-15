@@ -1,4 +1,4 @@
-make a ROS1 subscriber in python
-code ROS sub in python 
-create a subscriber for ROS in python
-generate a python sub node
+Generate a ROS C++ node that calculates and publishes differential drive wheel velocities based on robot parameters.
+Create a C++ ROS controller for a two-wheeled robot that publishes velocity commands.
+Implement a ROS node for computing and broadcasting wheel speeds of a differential drive robot.
+Write a C++ program using ROS to calculate and publish wheel velocities for a two-wheeled mobile platform.

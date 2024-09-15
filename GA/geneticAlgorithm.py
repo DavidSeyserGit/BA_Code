@@ -64,7 +64,7 @@ def getPrompts(filename):
     return [prompt.strip() for prompt in prompts]
 
 def writeAndCompile(code, path):
-    with open(f"{path}/src/test/scripts/test_py.py", "w") as file: 
+    with open(f"{path}/src/test/src/test_cpp.cpp", "w") as file: 
             try:
                 file.write(code)
             except Exception as e:
@@ -269,7 +269,7 @@ def genetic_algorithm(population, generations):
         logging.debug(bestPrompts)
         logging.debug(newPopulation)
         
-        with open(f'geneticAlgoritm_{args.benchmark}_{args.model}_py_V1.csv', 'w', newline='') as csvfile:
+        with open(f'geneticAlgoritm_{args.benchmark}_{args.model}_cpp_V1.csv', 'w', newline='') as csvfile:
             fieldNames = ['generation', 'prompt', 'code', 'fitness']
             writer = csv.DictWriter(csvfile, fieldnames=fieldNames)
             writer.writeheader()

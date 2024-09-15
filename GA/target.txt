@@ -1,23 +1,34 @@
-#!/usr/bin/env python
-import rospy
-from std_msgs.msg import String
+#include "ros/ros.h"
+#include "motorcontroller/robot_msg.h"
 
-def callback(data):
-    rospy.loginfo(rospy.get_caller_id() + "I heard %s", data.data)
-    
-def listener():
+double velx;
+double baseline;
+double diameter;
+double theta_dot = 0; //angle is constant so rate of change of angle is zero;
 
-    # In ROS, nodes are uniquely named. If two nodes with the same
-    # name are launched, the previous one is kicked off. The
-    # anonymous=True flag means that rospy will choose a unique
-    # name for our 'listener' node so that multiple listeners can
-    # run simultaneously.
-    rospy.init_node('listener', anonymous=True)
+int main(int argc, char **argv)
+{
+    ros::init(argc, argv, "controller");
+    ros::NodeHandle nh;
+    ros::Publisher pub;
+    pub = nh.advertise<motorcontroller::robot_msg>("wheel_velocity", 1000);
 
-    rospy.Subscriber("chatter", String, callback)
+    ros::Rate loop_rate(10);
 
-    # spin() simply keeps python from exiting until this node is stopped
-    rospy.spin()
+    nh.getParam("/velocity", velx);
+    nh.getParam("/baseline", baseline);
+    nh.getParam("/wheel_diameter", diameter);
 
-if __name__ == '__main__':
-    listener()
+    while(ros::ok())
+    {
+        motorcontroller::robot_msg msg;
+        msg.left_wheel_velocity = (velx-(baseline/2)*theta_dot)/(diameter/2);
+        msg.right_wheel_velocity = (velx+(baseline/2)*theta_dot)/(diameter/2);
+
+        ROS_INFO_STREAM("" << msg);
+        pub.publish(msg);
+        ros::spinOnce();
+        loop_rate.sleep();
+
+    }
+}

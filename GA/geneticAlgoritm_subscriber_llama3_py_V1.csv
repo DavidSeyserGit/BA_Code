@@ -1,0 +1,620 @@
+generation,prompt,code,fitness
+0,make a ROS1 subscriber in python,"import rospy
+from std_msgs.msg import String
+
+def talker():
+    pub = rospy.Publisher('chatter', String, 10)
+    rospy.init_node('talker')
+    rate = rospy.Rate(10) # 10 Hz
+    while not rospy.is_shutdown():
+        hello_str = ""hello world %s"" % rospy.get_rostime()
+        pub.publish(hello_str)
+        rate.sleep()
+
+if __name__ == '__main__':
+    talker()",4.248330410518621
+0,code ROS sub in python,"import roslibpy
+
+# Create a ROS node
+node = roslibpy.Node()
+
+# Define a callback function for incoming messages
+def callback(message):
+    print(""Received message:"", message.data)
+
+# Subscribe to a topic (e.g., ""chatter"")
+topic = 'chatter'
+subscription = node.subscribe(topic, callback)
+
+# Run the node
+node.spin()",4.693392375298622
+0,create a subscriber for ROS in python,sudo apt-get install ros-kinetic-ros,6.208786448496027
+0,generate a python sub node,"import xml.etree.ElementTree as ET
+
+# Create the root element
+root = ET.Element(""node"")
+
+# Add some child elements to the root
+child1 = ET.SubElement(root, ""child"")
+child1.set(""attr"", ""value1"")
+
+child2 = ET.SubElement(root, ""child"")
+child2.set(""attr"", ""value2"")
+
+child3 = ET.SubElement(root, ""child"")
+child3.set(""attr"", ""value3"")
+
+# Print the XML subtree
+print(ET.tostring(root, encoding=""unicode"").decode())",6.177939680306535
+1,create a subscriber sub node,roscreate-pkg my_subscriber_package,6.390944839474251
+2,create planning a subscriber sub ROS in python,"pip install ros
+pip install rospy",6.306063296917076
+3,create a subscriber sub sub ROS in python,"mkdir my_package
+cd my_package",3.4550689454721555
+4,create mapping a subscriber sub sub ROS in python,pip install rospy,3.5809867889948785
+5,create planning a subscriber sensor sub ROS in python,"import rospy
+from std_msgs.msg import Float32
+from std_msgs.msg import Int32
+from geometry_msgs.msg import PoseStamped
+
+class SubscriberSensor:
+    def __init__(self):
+        self.pub = rospy.Publisher('subscriber_sensor_data', PoseStamped, queue_size=10)
+        self.sub = rospy.Subscriber('input_topic', Float32, self.callback)
+
+    def callback(self, data):
+        # Here you can do any processing or filtering based on your requirements
+        pose_msg = PoseStamped()
+        pose_msg.header.stamp = rospy.Time.now()
+        pose_msg.pose.position.x = data.data  # Replace with your desired calculation
+        pose_msg.pose.orientation.w = 1.0  # Default orientation (identity)
+        self.pub.publish(pose_msg)
+
+if __name__ == '__main__':
+    rospy.init_node('subscriber_sensor', anonymous=True)
+    sensor = SubscriberSensor()
+    rospy.spin()",4.618267903563656
+7,create a a subscriber ROS in,"#include <ros/ros.h>
+#include <std_msgs/String.h>
+
+int main(int argc, char** argv) {
+  // Initialize the ROS node
+  ros::init(argc, argv, ""subscriber_publisher"");
+  ros::NodeHandle nh;
+
+  // Create a subscriber to the ""chatter"" topic
+  ros::Subscriber sub = nh.subscribe(""chatter"", 10);
+
+  // Create a publisher to the ""my_topic"" topic
+  ros::Publisher pub = nh.advertise<std_msgs::String>(""my_topic"", 10);
+
+  while (ros::ok()) {
+    // Spin once to process any incoming messages
+    ros::spinOnce();
+
+    // Check if there are any new messages in the queue
+    while (sub.getQueueSize() > 0) {
+      // Get the latest message from the ""chatter"" topic
+      std_msgs::String msg = sub.read();
+      ROS_INFO(""Received message: %s"", msg.data.c_str());
+
+      // Publish a new message to the ""my_topic"" topic
+      std_msgs::String my_msg;
+      my_msg.data = ""Hello, world! ("" + msg.data + "")"";
+      pub.publish(my_msg);
+    }
+
+    // Sleep for 0.1 seconds before checking again
+    ros::Duration(0.1).sleep();
+  }
+
+  return 0;
+}",0.5621270696350984
+8,create a a subscriber sub ROS in python,"import rospy
+from std_msgs.msg import String
+
+def talker():
+    pub = rospy.Publisher('chatter', String, queue_size=10)
+    rospy.init_node('talker')
+    rate = rospy.Rate(1.0)
+
+    while not rospy.is_shutdown():
+        msg = ""Hello, world!""
+        pub.publish(msg)
+        rate.sleep()
+
+if __name__ == '__main__':
+    try:
+        talker()
+    except rospy.ROSInterruptException:
+        pass",1.2224012489172749
+10,create a subscriber subscriber sub ROS in python,"import rospy
+from std_msgs.msg import String
+
+def talker():
+    # Initialize the publisher
+    pub = rospy.Publisher('chatter', String, 10)
+    
+    # Set up the subscriber
+    sub = rospy.Subscriber('chatter', String)
+
+    while not rospy.is_shutdown():
+        # Get a message from user
+        msg = raw_input(""Enter something: "")
+
+        # Publish the message.
+        pub.publish(msg)
+
+        # Now wait for the response
+        data = sub.read()
+        print(data.data)
+
+if __name__ == '__main__':
+    try:
+        # Initialize the ROS node
+        rospy.init_node('talker', anonymous=True)
+        talker()
+    except rospy.ROSInterruptException:
+        pass",0.9326377803391019
+11,process create planning a subscriber sub ROS in python,sudo apt-get install ros-indigo-rospy,6.201821110066193
+14,create a a subscriber sensor sub ROS queue in python,sudo apt-get install ros-kinetic-sensor-msgs,3.185487986004931
+21,create a a subscriber sub system ROS in python,"import rospy
+from my_msg.msg import MyMessage  # Assuming you have a custom message type ""MyMessage"" defined in a file ""my_msg/msg/MyMessage.msg""
+
+class MySubscriber:
+    def __init__(self):
+        self.sub = rospy.Subscriber(""my_topic"", MyMessage, self callback)
+
+    def callback(self, msg):
+        # This is where your subscriber logic goes
+        print(""Received message:"", msg.data)
+        # You can also publish a new message or do other things here
+
+if __name__ == '__main__':
+    rospy.init_node('my_subscriber_node')
+    my_sub = MySubscriber()
+    rospy.spin()",1.6875989141474461
+22,create a subscriber sub python,"import pika
+import time
+
+# Set up connection to RabbitMQ
+connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
+channel = connection.channel()
+
+# Declare queue binding
+channel.queue_declare(exclusive=True,queue='subscriber_queue')
+
+# Bind the queue
+channel.queue_bind(queue='subscriber_queue', exchange='subscribers')
+
+def callback(ch, method, properties, body):
+    print(""Received message from producer: %s"" % body)
+    # Process the message here
+
+# Start consuming messages
+channel.basic_consume(queue='subscriber_queue', on_message_callback=callback)
+
+print('Waiting for messages...')
+connection.ioloop.start()",4.6594982674833
+24,create a sub in python,"class Submarine:
+    def __init__(self, name, length, depth):
+        self.name = name
+        self.length = length
+        self.depth = depth
+        self.speed = 0
+        self.position = [0, 0]  # initial position (x, y)
+
+    def dive(self, depth_change):
+        self.depth += depth_change
+
+    def surface(self):
+        self.depth = 0
+
+    def move_forward(self, distance):
+        self.position[0] += distance
+
+    def move_backward(self, distance):
+        self.position[0] -= distance
+
+    def move_upward(self, distance):
+        self.position[1] += distance
+
+    def move_downward(self, distance):
+        self.position[1] -= distance
+
+    def __str__(self):
+        return f""{self.name} ({self.length} meters long, {self.depth} meters deep) at position ({self.position[0]}, {self.position[1]}): speed={self.speed}""
+
+# Create a submarine
+my_sub = Submarine(""Navy"", 50, 10)
+
+print(my_sub)",4.60784757307783
+27,create subscriber subscriber sub ROS in python,sudo apt-get install ros-kinetic-rospy,3.202076056087729
+29,create a subscriber system sub sub ROS in python,"import rospy
+from std_msgs.msg import String
+
+class SubscriberNode:
+    def __init__(self):
+        self.subscriber = rospy.Subscriber('chatter', String, self.callback)
+
+    def callback(self, msg):
+        print(""Received message: {}"".format(msg.data))
+
+if __name__ == '__main__':
+    rospy.init_node('subscriber_node')
+    node = SubscriberNode()
+    rospy.spin()",1.7094934862670152
+34,system create a subscriber sub sub ROS in python,"import rospy
+
+class SubscriberNode:
+    def __init__(self):
+        self.node_name = 'subscriber_node'
+        
+    def run(self):
+        # Initialize the node
+        rospy.init_node(self.node_name)
+        
+        # Define the topic and message type for this subscriber
+        topic_name = '/my_topic'  # replace with your topic name
+        msg_type = 'std_msgs/String'  # replace with your message type
+        
+        # Create a Subscriber object to subscribe to the topic
+        self.subscriber = rospy.Subscriber(topic_name, msg_type)
+        
+        while not rospy.is_shutdown():
+            try:
+                # Wait for messages on this topic
+                msg = self.subscriber.recv()
+                
+                # Do something with the received message
+                print(msg.data)
+                
+            except rospy.ROSException as e:
+                print('Error: ' + str(e))
+                
+        # Stop the node
+        rospy.shutdown()
+
+if __name__ == '__main__':
+    node = SubscriberNode()
+    node.run()",0.6670861710149802
+35,create a subscriber sub sensor sub ROS in python,"import rospy
+from std_msgs.msg import String
+
+class MySubscriberNode:
+    def __init__(self):
+        self.node_name = 'my_subscriber_node'
+        self.topic_name = 'my_topic'
+
+    def start_node(self):
+        rospy.init_node(self.node_name)
+        self.sub = rospy.Subscriber(self.topic_name, String)
+        rospy.spin()
+
+if __name__ == '__main__':
+    node = MySubscriberNode()
+    node.start_node()",1.7268654247515585
+47,create a a subscriber sub ROS planning in python,"<?xml version=""1.0""?>
+<package>
+  <name>my_planner</name>
+  <version>0.0.0</version>
+</package>",1.142745522714458
+50,create a subscriber subscriber sensor sub ROS in python,"import rclpy
+from std_msgs.msg import Float64
+from sensor_msgs.msg import Temperature
+
+class SensorNode:
+    def __init__(self):
+        self.node = rclpy.node.Node('temperature_sensor')
+
+    def main(self):
+        temperature_publisher = self.node.create_publisher(Temperature, 'temperature', 10)
+        while rclpy.clock.ok():
+            temp_msg = Temperature()
+            temp_msg.temperature = float(input(""Enter the temperature: ""))
+            temperature_publisher.publish(temp_msg)
+
+def main():
+    node = SensorNode()
+    node.main()
+
+if __name__ == '__main__':
+    rclpy.init()
+    main()",1.209258152345944
+62,create a subscriber sub ROS planning in python,"sudo apt-get update
+sudo apt-get install ros-kinetic-rospy",6.175422625232025
+63,create create planning a subscriber sub ROS in python,"import rospy
+
+class Subscriber:
+    def __init__(self, topic_name):
+        self.topic_name = topic_name
+        self.subscriber = rospy.Subscriber(self.topic_name, 'std_msgs/String')
+
+    def start_subscribing(self):
+        while not rospy.is_shutdown():
+            try:
+                data = self.subscriber.recv()
+                print(""Received message: "", data.data)
+            except:
+                pass
+
+    def stop_subscribing(self):
+        self.subscriber.unregister()
+        self.subscriber.destroy()
+
+# Example usage
+if __name__ == '__main__':
+    rospy.init_node('subscriber')
+    subscriber = Subscriber('my_topic')
+    subscriber.start_subscribing()",1.1646379146925483
+68,create a sub sub ROS in python,"import rospy
+from std_msgs.msg import String
+
+class MyRobot:
+    def __init__(self):
+        # Initialize ROS node
+        self.node_name = 'my_robot'
+        rospy.init_node(self.node_name)
+
+        # Create publishers and subscribers
+        self.pub_topic = 'my_pub_topic'
+        self.sub_topic = 'my_sub_topic'
+
+        self.pub = rospy.Publisher(self.pub_topic, String, queue_size=10)
+        self.sub = rospy.Subscriber(self.sub_topic, String, self.callback)
+
+    def callback(self, msg):
+        # Callback function when a message is received from the subscriber
+        print('Received message: %s' % msg.data)
+
+    def start(self):
+        # Start the ROS node and spin forever
+        rate = rospy.Rate(10)  # 10 Hz
+        while not rospy.is_shutdown():
+            self.pub.publish('Hello, world!')
+            rate.sleep()
+
+if __name__ == '__main__':
+    robot = MyRobot()
+    robot.start()",1.1099571648199777
+71,create a a node subscriber sub node ROS in python,"sudo apt-get install ros-kinetic-ros
+pip install rospkg",3.182434848348259
+72,create planning a subscriber sub in python,"class Plan:
+    def __init__(self, name, price):
+        self.name = name
+        self.price = price
+        self.subscribers = []
+
+    def add_subscriber(self, subscriber):
+        self.subscribers.append(subscriber)
+
+    def remove_subscriber(self, subscriber):
+        if subscriber in self.subscribers:
+            self.subscribers.remove(subscriber)
+        else:
+            print(""Subscriber not found"")
+
+class Subscriber:
+    def __init__(self, name):
+        self.name = name
+
+# Create plans
+basic_plan = Plan(""Basic"", 10.0)
+premium_plan = Plan(""Premium"", 20.0)
+
+# Create subscribers
+john = Subscriber(""John"")
+jane = Subscriber(""Jane"")
+bob = Subscriber(""Bob"")
+
+# Add subscribers to plans
+basic_plan.add_subscriber(john)
+basic_plan.add_subscriber(jane)
+premium_plan.add_subscriber(bob)
+
+# Print the number of subscribers for each plan
+print(f""Basic Plan: {len(basic_plan.subscribers)} subscribers"")
+print(f""Premium Plan: {len(premium_plan.subscribers)} subscribers"")
+
+# Remove a subscriber from a plan
+basic_plan.remove_subscriber(jane)
+print(f""After removing Jane, Basic Plan has {len(basic_plan.subscribers)} subscribers"")",3.785598614508748
+73,create planning a subscriber sub ROS in process python,"import rospy
+from std_msgs.msg import String
+
+class SubscriberNode:
+    def __init__(self):
+        self.node_name = ""subscriber_node""
+        self.pub_topic = ""my_topic""
+
+    def subscribe(self):
+        rospy.init_node(self.node_name)
+        self.sub = rospy.Subscriber(self.pub_topic, String, self.callback)
+
+    def callback(self, msg):
+        print(f""Received message: {msg.data}"")
+
+if __name__ == ""__main__"":
+    node = SubscriberNode()
+    node.subscribe()",4.719569385921849
+75,create a sub rate sub ROS in python,"import pandas as pd
+from zipline.algorithm import TradingAlgorithm
+from zipline.data import DataSpecs
+
+class SubRateOfReturn(TradingAlgorithm):
+    def __init__(self, initial_capital=10000, leverage=2.0):
+        self.initial_capital = initial_capital
+        self.leverage = leverage
+        self.position_size = 0
+        self.current_value = initial_capital
+        self.history = {}
+
+    def handle_data(self, data):
+        # Calculate the daily return of the strategy
+        current_value = self.current_value
+        previous_close = data['close'].iloc[-2]
+        current_close = data['close'].iloc[-1]
+
+        if current_close > previous_close:
+            self.position_size += (current_close - previous_close) / current_close * self.leverage
+        elif current_close < previous_close:
+            self.position_size -= (previous_close - current_close) / current_close * self.leverage
+
+        # Update the portfolio value and history
+        self.current_value = (1 + self.position_size) * current_value
+        self.history[data.index[0]] = {'value': self.current_value, 'position_size': self.position_size}
+
+    def update(self):
+        pass  # No need to update anything here
+
+    def analyze(self):
+        return pd.DataFrame(self.history).T
+
+
+# Define the data specs for our strategy
+data_specs = DataSpecs(
+    start_date='2010-01-01',
+    end_date='2020-12-31',
+    asset_classes=['stocks'],
+)
+
+# Run the strategy using zipline's backtesting engine
+algorithm = SubRateOfReturn()
+results = algorithm.run(data_specs)",0.5765005014032201
+79,create a sensor a subscriber sub ROS in python,"import rospy
+
+class SensorSubscriber:
+    def __init__(self):
+        self.sub = rospy.Subscriber('sensor_data', 'sensor_msgs/Float32MultiArray', selfcallback)
+
+    def callback(self, msg):
+        # Process the sensor data here
+        print(msg.data)  # prints the sensor data as a list of floats
+
+if __name__ == '__main__':
+    rospy.init_node('sensor_subscriber')
+    sensor_sub = SensorSubscriber()
+    rospy.spin()",1.7083961334074047
+94,create a a subscriber sub in python,"subscriptions = {}
+
+def subscribe(subscriber_id, topic):
+    if subscriber_id not in subscriptions:
+        subscriptions[subscriber_id] = []
+    subscriptions[subscriber_id].append(topic)
+
+def unsubscribe(subscriber_id, topic):
+    if subscriber_id in subscriptions:
+        if topic in subscriptions[subscribed_id]:
+            subscriptions[subscriber_id].remove(topic)
+            if len(subscriptions[subscriber_id]) == 0:
+                del subscriptions[subscriber_id]
+
+def notify_topics(topics):
+    for subscriber_id, topics in subscriptions.items():
+        for topic in topics:
+            if topic in topics:
+                print(f""Sending notification to {subscriber_id} for topic {topic}"")",0.4918656893219788
+96,create a a subscriber sub ROS actuator in python,"import rospy
+
+class Subscriber:
+    def __init__(self):
+        self.sub = rospy.Subscriber('chatter', String, self.callback)
+
+    def callback(self, data):
+        print(data.data)
+
+if __name__ == '__main__':
+    rospy.init_node('subscriber')
+    subscriber = Subscriber()
+    rospy.spin()",1.691804677763038
+102,create a subscriber planning subscriber sub ROS in python,"import rospy
+from std_msgs.msg import String
+
+class SubscriberNode:
+    def __init__(self):
+        self.node_name = ""my_subscriber_node""
+        rospy.init_node(self.node_name)
+        self.sub_topic = ""/my_topic""  # Topic name
+        self.sub_rate = 10.0  # Subscriber rate (Hz)
+
+    def subscribe(self):
+        self.sub = rospy.Subscriber(self.sub_topic, String, self.callback)
+        rospy.spin()
+
+    def callback(self, data):
+        print(""Received message: %s"" % data.data)
+
+if __name__ == ""__main__"":
+    subscriber_node = SubscriberNode()
+    subscriber_node.subscribe()",1.6982084395505597
+104,create a sub sub ROS task in python,"import rospy
+from std_msgs.msg import String
+
+class MyTask:
+    def __init__(self):
+        self.name = ""my_task""
+
+    def execute(self):
+        # Create a publisher to publish a message
+        pub = rospy.Publisher(""my_topic"", String, 10)
+
+        # Publish the message
+        pub.publish(""Hello from my task!"")
+
+if __name__ == '__main__':
+    rospy.init_node(""my_node"")
+    task = MyTask()
+    sub_task = SubTask(task)
+    rospy.spin()
+
+class SubTask:
+    def __init__(self, parent):
+        self.parent = parent
+
+    def execute(self):
+        # Create a publisher to publish a message
+        pub = rospy.Publisher(""sub_topic"", String, 10)
+
+        # Publish the message
+        pub.publish(""Hello from sub task!"")
+
+        # Execute the parent task
+        self.parent.execute()",1.648028047383855
+106,create a subscriber subscriber sub system ROS in python,rosrun --create-pkg my_publisher_subscriber,3.2557121723530154
+109,create a subscriber in python,sudo apt-get install ros-kinetic-desktop-full,6.189558532316857
+115,create control a subscriber sub sub ROS in python,"import roslib
+import rospy
+
+# Create a ROS node
+rospy.init_node('my_subscriber')
+
+# Create a subscriber to a topic named 'chatter'
+sub = rospy.Subscriber('chatter', String, callback=my_callback)
+
+def my_callback(data):
+    # This function will be called whenever a message is received on the 'chatter' topic
+    print(""Received message: {}"".format(data))
+
+rospy.spin()  # Keep the node running until it's shut down",3.192312276286092
+118,create a sensor subscriber sub sub ROS in python,"import rospy
+
+class SensorSubscriber:
+    def __init__(self):
+        self.node_name = 'sensor_subscriber'
+        rospy.init_node(self.node_name)
+
+    def run(self):
+        # Define the topic name and message type for the sensor data
+        topic_name = '/sensors/data'  # Replace with your actual topic name
+        msg_type = 'sensor_msgs/SensorData'
+
+        # Create a subscriber object
+        sub = rospy.Subscriber(topic_name, msg_type, self.callback)
+
+    def callback(self, msg):
+        # Process the sensor data message here
+        print(""Received sensor data:"", msg.data)
+
+if __name__ == '__main__':
+    node = SensorSubscriber()
+    node.run()",1.1849259246416644

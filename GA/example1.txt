@@ -1,2 +1,4 @@
-generate a ROS1 noetic publisher in python
-code a ROS publisher in python with the topic chatter
+Create a ROS node in C++ that publishes odometry data for a differential drive robot moving in a circular path.
+Write a ROS C++ program that simulates and publishes the motion of a robot around its Instantaneous Center of Rotation (ICR).
+Generate a ROS C++ node that calculates and publishes odometry and TF data for a robot moving with constant angular velocity.
+Implement a ROS C++ publisher that simulates circular robot motion and broadcasts odometry and transform data.

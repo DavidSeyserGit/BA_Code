@@ -1,0 +1,1087 @@
+generation,prompt,code,fitness
+0,make a ROS1 subscriber in python,"#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import String
+
+def callback(data):
+    rospy.loginfo(rospy.get_caller_id() + ""I heard %s"", data.data)
+
+def listener():
+    rospy.init_node('my_subscriber_node', anonymous=True)
+    rospy.Subscriber(""chatter"", String, callback)
+    rospy.spin()
+
+if __name__ == '__main__':
+    listener()",4.864428775734655
+0,code ROS sub in python,"#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import String
+
+def callback(data):
+    rospy.loginfo(""I heard: %s"", data.data)
+
+def listener():
+    rospy.init_node('listener', anonymous=True)
+    rospy.Subscriber(""/your_topic_name"", String, callback)
+    rospy.spin()
+
+if __name__ == '__main__':
+    listener()",4.815079854257319
+0,create a subscriber for ROS in python,"#!/usr/bin/env python
+
+import rospy
+from custom_msg_pkg.msg import SensorMsg # Import the custom message type
+
+def sensor_data_callback(data):
+    """"""
+    Callback function to handle incoming sensor data.
+
+    Args:
+        data (SensorMsg): The incoming sensor data message
+    """"""
+    rospy.loginfo(""Received sensor data: %s"", data.data)
+
+def sensor_data_subscriber():
+    """"""
+    ROS Subscriber Node for sensor data.
+    """"""
+    rospy.init_node('sensor_data_subscriber', anonymous=True)
+    rospy.Subscriber('/sensor_data', SensorMsg, sensor_data_callback)
+    rospy.spin() # Keeps the node running
+
+if __name__ == '__main__':
+    try:
+        sensor_data_subscriber()
+    except rospy.ROSInterruptException:
+        pass",4.204758480618568
+0,generate a python sub node,"#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import String
+
+def callback(data):
+    rospy.loginfo(""I heard %s"", data.data)
+
+def listener():
+    rospy.init_node('listener', anonymous=True)
+    rospy.Subscriber(""chatter"", String, callback)
+    rospy.spin()
+
+if __name__ == '__main__':
+    listener()",4.832185993022819
+1,make a python sub node,"#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import String
+
+def callback(data):
+    rospy.loginfo(""Received data: %s"", data.data)
+
+def listener():
+    rospy.init_node('listener', anonymous=True)
+    rospy.Subscriber(""chatter"", String, callback)
+    rospy.spin()
+
+if __name__ == '__main__':
+    try:
+        listener()
+    except rospy.ROSInterruptException:
+        pass",4.794240035861933
+4,make a ROS1 subscriber node,"#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import String
+
+def callback(data):
+    rospy.loginfo(""I heard: %s"", data.data)
+
+def listener():
+    rospy.init_node('listener', anonymous=True)
+    rospy.Subscriber(""my_topic"", String, callback)
+    rospy.spin()
+
+if __name__ == '__main__':
+    listener()",4.821375197636622
+5,make a ROS1 subscriber ROS in python,"#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import String
+
+def callback(data):
+    rospy.loginfo(rospy.get_caller_id() + ""I heard %s"", data.data)
+
+def listener():
+    rospy.init_node('listener', anonymous=True)
+    rospy.Subscriber(""/chatter"", String, callback)
+    rospy.spin()
+
+if __name__ == '__main__':
+    listener()",4.860461440795848
+6,make a subscriber ROS in python,"#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import String
+
+def callback(data):
+    rospy.loginfo(""I heard: %s"", data.data)
+
+def listener():
+    rospy.init_node('listener', anonymous=True)
+    rospy.Subscriber(""my_topic"", String, callback)
+    rospy.spin()
+
+if __name__ == '__main__':
+    listener()",4.81994150588035
+8,make a ROS1 subscriber in in python,"#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import String
+
+def callback(data):
+    rospy.loginfo(""I heard: %s"", data.data)
+
+def listener():
+    rospy.init_node('listener', anonymous=True)
+    rospy.Subscriber(""/chatter"", String, callback)
+    rospy.spin()
+
+if __name__ == '__main__':
+    try:
+        listener()
+    except rospy.ROSInterruptException:
+        pass",1.7891420753648477
+9,make ROS1 subscriber ROS in python,"#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import String
+
+def callback(data):
+    rospy.loginfo(""I heard %s"", data.data)
+
+def listener():
+    rospy.init_node('listener', anonymous=True)
+    rospy.Subscriber(""chatter"", String, callback)
+    rospy.spin()
+
+if __name__ == '__main__':
+    listener()",4.829471060896122
+13,make a ROS1 subscriber message ROS in,"#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import Int32
+
+def callback(data):
+    rospy.loginfo(""Received: %s"", data.data)
+
+def listener():
+    rospy.init_node('listener', anonymous=True)
+    rospy.Subscriber('my_topic', Int32, callback)
+    rospy.spin()
+
+if __name__ == '__main__':
+    listener()",4.7990488248373895
+14,make a ROS1 subscriber ROS python,"#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import String
+
+def callback(data):
+    rospy.loginfo(""Received data: %s"", data.data)
+
+def listener():
+    rospy.init_node('my_subscriber', anonymous=True)
+    rospy.Subscriber(""/my_topic"", String, callback)
+    rospy.spin()
+
+if __name__ == '__main__':
+    try:
+        listener()
+    except rospy.ROSInterruptException:
+        pass",4.776474276466471
+18,make a ROS1 subscriber message in in python,"#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import String
+
+def callback(data):
+    rospy.loginfo(""I heard: %s"", data.data)
+
+def subscriber():
+    rospy.init_node('my_subscriber', anonymous=True)
+    rospy.Subscriber('my_topic', String, callback)
+    rospy.spin()
+
+if __name__ == '__main__':
+    subscriber()",1.7965328821311761
+19,make a ROS1 for ROS in,"#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import String
+
+def publisher():
+    # Initialize the ROS node
+    rospy.init_node('simple_publisher', anonymous=True)
+
+    # Create a publisher with topic name 'hello_topic' and message type String
+    pub = rospy.Publisher('hello_topic', String, queue_size=10)
+
+    # Set the publishing rate to 1 Hz
+    rate = rospy.Rate(1)
+
+    while not rospy.is_shutdown():
+        # Create a string message
+        message = ""Hello, ROS!""
+
+        # Publish the message
+        pub.publish(message)
+
+        # Print the message for debugging
+        rospy.loginfo(message)
+
+        # Wait according to the publishing rate
+        rate.sleep()
+
+if __name__ == '__main__':
+    try:
+        publisher()
+    except rospy.ROSInterruptException:
+        pass",3.9305692873279865
+20,make a ROS1 subscriber in navigation python,"#!/usr/bin/env python
+
+import rospy
+from nav_msgs.msg import Odometry
+
+def odom_callback(msg):
+    """"""
+    Callback function to handle received odometry messages.
+    """"""
+    rospy.loginfo(""Received Odometry Message:\n%s"", msg)
+
+def odom_subscriber():
+    """"""
+    ROS Node to subscribe to the `/odom` topic and receive odometry messages.
+    """"""
+    rospy.init_node('odom_subscriber', anonymous=True)
+    
+    rospy.Subscriber('/odom', Odometry, odom_callback)
+
+    rospy.loginfo(""Odometry Subscriber Node Started..."")
+    
+    # Keep the node running
+    rospy.spin()
+
+if __name__ == '__main__':
+    try:
+        odom_subscriber()
+    except rospy.ROSInterruptException:
+        pass",4.713098859395699
+27,make a interface ROS1 subscriber ROS in python,"#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import String
+
+def callback(msg):
+    rospy.loginfo(""Received: %s"", msg.data)
+
+def subscriber():
+    rospy.init_node('subscriber_node', anonymous=True)
+    rospy.Subscriber(""/chatter"", String, callback)
+    rospy.spin()
+
+if __name__ == '__main__':
+    try:
+        subscriber()
+    except rospy.ROSInterruptException:
+        pass",4.770798088668755
+38,make a ROS1 planning subscriber ROS in python,"#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import String
+
+def planning_callback(data):
+    rospy.loginfo(""Received planning message: %s"", data.data)
+    # Add your planning processing logic here
+
+def planning_subscriber():
+    rospy.init_node('planning_subscriber', anonymous=True)
+    rospy.Subscriber(""planning_topic"", String, planning_callback)
+    rospy.spin()
+
+if __name__ == '__main__':
+    try:
+        planning_subscriber()
+    except rospy.ROSInterruptException:
+        pass",4.765763679786973
+41,make a ROS1 in python,"#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import String
+
+def publish_to_topic():
+    rospy.init_node('publisher_node', anonymous=True)
+    pub = rospy.Publisher('my_topic', String, queue_size=10)
+    rate = rospy.Rate(1)  # 1 Hz
+
+    while not rospy.is_shutdown():
+        message = ""Hello, world!""
+        rospy.loginfo(message)
+        pub.publish(message)
+        rate.sleep()
+
+if __name__ == '__main__':
+    try:
+        publish_to_topic()
+    except rospy.ROSInterruptException:
+        pass",4.240411718183651
+46,make a ROS1 parameter subscriber ROS in python,"#!/usr/bin/env python
+
+import rospy
+
+def parameter_callback(parameter_value):
+    rospy.loginfo(""Parameter value received: %s"", parameter_value)
+
+def parameter_subscriber():
+    rospy.init_node('parameter_subscriber', anonymous=True)
+    
+    rospy.Subscriber(""~my_parameter"", str, parameter_callback)  # Subscribing to the parameter
+    
+    rospy.spin()
+
+if __name__ == '__main__':
+    try:
+        parameter_subscriber()
+    except rospy.ROSInterruptException:
+        pass",4.723279155707374
+53,make a ROS1 navigation subscriber ROS in python,"#!/usr/bin/env python
+
+import rospy
+from geometry_msgs.msg import PoseStamped
+
+def goal_callback(goal):
+    rospy.loginfo(""Received Goal: x={}, y={}, z={}"".format(goal.pose.position.x, goal.pose.position.y, goal.pose.position.z))
+
+def navigation_subscriber():
+    rospy.init_node('navigation_subscriber', anonymous=True)
+    rospy.Subscriber('move_base_simple/goal', PoseStamped, goal_callback)
+    rospy.spin()
+
+if __name__ == '__main__':
+    try:
+        navigation_subscriber()
+    except rospy.ROSInterruptException:
+        pass",4.7208565129291475
+54,make a parameter ROS1 subscriber ROS in python,"#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import String
+
+class ParameterSubscriberNode:
+    def __init__(self):
+        rospy.init_node('parameter_subscriber_node')
+
+        # Define parameters
+        self.update_rate = rospy.get_param('~update_rate', 1.0)  # Default update rate is 1 Hz
+
+        # Subscriber
+        self.sub = rospy.Subscriber('topic_name', String, self.callback)
+
+    def callback(self, msg):
+        rospy.loginfo(""Received: %s"", msg.data)
+
+    def run(self):
+        rate = rospy.Rate(self.update_rate)
+        while not rospy.is_shutdown():
+            # Do processing here
+            rate.sleep()
+
+if __name__ == '__main__':
+    try:
+        node = ParameterSubscriberNode()
+        node.run()
+    except rospy.ROSInterruptException:
+        pass",4.16008991634402
+55,make a ROS1 subscriber python,"#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import String
+
+def chatter_callback(msg):
+    rospy.loginfo(""Received: %s"", msg.data)
+
+def subscriber_node():
+    rospy.init_node('subscriber_node', anonymous=True)
+    rospy.Subscriber(""/chatter"", String, chatter_callback)
+    rospy.spin()
+
+if __name__ == '__main__':
+    try:
+        subscriber_node()
+    except rospy.ROSInterruptException:
+        pass",4.757343986846714
+63,make a ROS1 subscriber subscriber ROS in python,"#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import String
+
+def callback(data):
+    rospy.loginfo(""I heard: %s"", data.data)
+
+def listener():
+    rospy.init_node('listener', anonymous=True)
+    rospy.Subscriber('chatter', String, callback)
+    rospy.spin()
+
+if __name__ == '__main__':
+    listener()",1.8230509305956222
+72,make a ROS1 subscriber ROS in,"#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import String
+
+def callback(data):
+    rospy.loginfo(""Received data: %s"", data.data)
+
+def listener():
+    rospy.init_node('listener', anonymous=True)
+    rospy.Subscriber(""chatter"", String, callback)
+    rospy.spin()
+
+if __name__ == '__main__':
+    try:
+        listener()
+    except rospy.ROSInterruptException:
+        pass",4.790948499811777
+75,make a ROS1 subscriber in navigation rate python,"#!/usr/bin/env python
+
+import rospy
+from nav_msgs.msg import Odometry
+
+class NavigationSubscriber:
+    def __init__(self):
+        rospy.init_node('navigation_subscriber', anonymous=True)
+        rospy.Subscriber('/odom', Odometry, self.odometry_callback)
+        self.rate = rospy.Rate(1)  # 1 Hz
+
+    def odometry_callback(self, data):
+        # Process the received odometry data here
+        rospy.loginfo(""Received Odometry Data: %s"", data)
+
+    def run(self):
+        while not rospy.is_shutdown():
+            self.rate.sleep()
+
+if __name__ == '__main__':
+    try:
+        navigation_subscriber = NavigationSubscriber()
+        navigation_subscriber.run()
+    except rospy.ROSInterruptException:
+        pass",4.172335187539134
+79,make a parameter ROS1 subscriber queue ROS in python,"#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import String
+
+class CustomSubscriberNode:
+    def __init__(self):
+        rospy.init_node('custom_subscriber_node', anonymous=True)
+
+        # Define ROS parameters for queue size
+        self.queue_size = rospy.get_param('~queue_size', 10)
+
+        # Subscribe to the 'custom_topic' topic with the defined queue size
+        self.sub = rospy.Subscriber('custom_topic', String, self.callback, queue_size=self.queue_size)
+
+    def callback(self, msg):
+        rospy.loginfo('Received message: %s', msg.data)
+
+def main():
+    node = CustomSubscriberNode()
+    rospy.spin()
+
+if __name__ == '__main__':
+    main()",4.230621942209046
+81,make a ROS1 subscriber ROS navigation in python,"#!/usr/bin/env python
+
+import rospy
+from nav_msgs.msg import Odometry
+
+def odom_callback(msg):
+    # Process and print received Odometry message
+    rospy.loginfo(""Received Odometry message:\n%s"", msg)
+
+def odom_subscriber():
+    # Initialize ROS Node
+    rospy.init_node('odom_subscriber', anonymous=True)
+
+    # Create a Subscriber for the /odom topic
+    rospy.Subscriber('/odom', Odometry, odom_callback)
+
+    # Spin to prevent the node from exiting
+    rospy.spin()
+
+if __name__ == '__main__':
+    try:
+        odom_subscriber()
+    except rospy.ROSInterruptException:
+        pass",4.228390146970651
+82,make a ROS1 subscriber in ROS in python,"#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import String
+
+def callback(data):
+    rospy.loginfo(""I heard: %s"", data.data)
+
+def listener():
+    rospy.init_node('listener', anonymous=True)
+    rospy.Subscriber(""chatter"", String, callback)
+    rospy.spin()
+
+if __name__ == '__main__':
+    listener()",1.826963358553873
+93,process make a ROS1 subscriber ROS in python,"#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import String
+
+def callback(data):
+    rospy.loginfo(rospy.get_caller_id() + ""I heard %s"", data.data)
+
+def subscriber():
+    rospy.init_node('my_subscriber', anonymous=True)
+
+    rospy.Subscriber(""chatter"", String, callback)
+
+    rospy.spin()
+
+if __name__ == '__main__':
+    try:
+        subscriber()
+    except rospy.ROSInterruptException:
+        pass",4.80928593695495
+95,make a ROS1 navigation subscriber in in python,"#!/usr/bin/env python
+
+import rospy
+from geometry_msgs.msg import PoseStamped
+
+def goal_callback(msg):
+    global goal_position
+    goal_position = msg.pose.position
+    rospy.loginfo(""Received new goal position: x = {:.2f}, y = {:.2f}, z = {:.2f}"".format(goal_position.x, goal_position.y, goal_position.z))
+
+def navigation_subscriber():
+    rospy.init_node('navigation_subscriber', anonymous=True)
+    rospy.Subscriber(""move_base/goal"", PoseStamped, goal_callback)
+    rospy.spin()
+
+if __name__ == '__main__':
+    try:
+        navigation_subscriber()
+    except rospy.ROSInterruptException:
+        pass",1.7274049847694872
+99,make a ROS1 ROS1 subscriber ROS in python,"#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import String
+
+def callback(data):
+    rospy.loginfo(""Received data: %s"", data.data)
+
+def subscriber_node():
+    # Initialize the ROS Node
+    rospy.init_node('subscriber_node', anonymous=True)
+    
+    # Subscribe to the topic
+    rospy.Subscriber(""/topic_name"", String, callback)
+    
+    # Spin to keep the node running
+    rospy.spin()
+
+if __name__ == '__main__':
+    try:
+        subscriber_node()
+    except rospy.ROSInterruptException:
+        pass",1.7830441891897806
+101,make a ROS1 subscriber ROS data in python,"#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import String
+
+def callback(data):
+    rospy.loginfo(""Received data: %s"", data.data)
+
+def listener():
+    rospy.init_node('ros_data_subscriber', anonymous=True)
+    rospy.Subscriber(""/ros_data"", String, callback)
+    rospy.spin()
+
+if __name__ == '__main__':
+    try:
+        listener()
+    except rospy.ROSInterruptException:
+        pass",4.777868417261607
+113,make sensor a subscriber ROS in python,"#!/usr/bin/env python
+
+import rospy
+from sensor_msgs.msg import LaserScan
+
+def callback(data):
+    # Process sensor data here
+    rospy.loginfo(rospy.get_caller_id() + ""I heard %s"", data.ranges)
+
+def sensor_subscriber():
+    rospy.init_node('sensor_subscriber', anonymous=True)
+
+    rospy.Subscriber(""sensor_topic"", LaserScan, callback)
+
+    rospy.spin()
+
+if __name__ == '__main__':
+    try:
+        sensor_subscriber()
+    except rospy.ROSInterruptException:
+        pass",4.7492354557290435
+115,make a ROS1 subscriber in in robot python,"#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import String
+
+def callback(msg):
+    rospy.loginfo(""Received message: %s"", msg.data)
+
+def listener():
+    rospy.init_node('robot_subscriber', anonymous=True)
+    rospy.Subscriber('robot_topic', String, callback)
+    rospy.spin()
+
+if __name__ == '__main__':
+    try:
+        listener()
+    except rospy.ROSInterruptException:
+        pass",1.7694308994197927
+120,make a ROS1 parameter subscriber in in python,"#!/usr/bin/env python
+
+import rospy
+
+def parameter_callback(parameter_name):
+    param_value = rospy.get_param(parameter_name)
+    rospy.loginfo(f""Parameter '{parameter_name}' has been updated. New value: {param_value}"")
+
+if __name__ == '__main__':
+    rospy.init_node('parameter_subscriber_node')
+
+    # Define the parameter you want to subscribe to
+    parameter_name = '/my_parameter'
+
+    # Subscribe to the parameter with the specified callback function
+    rospy.Subscriber('~parameter_updates', ParameterType, parameter_callback, parameter_name)
+
+    rospy.spin()",1.7099723305962087
+131,make a python sub,"#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import String
+
+def sensor_data_callback(msg):
+    rospy.loginfo(""Received sensor data: %s"", msg.data)
+
+def sensor_subscriber():
+    rospy.init_node('sensor_subscriber', anonymous=True)
+    rospy.Subscriber('sensor_data', String, sensor_data_callback)
+    rospy.spin()
+
+if __name__ == '__main__':
+    try:
+        sensor_subscriber()
+    except rospy.ROSInterruptException:
+        pass",4.7596180113589766
+139,make a ROS1 ROS in python,"#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import String
+
+class SimpleROSNode:
+    def __init__(self):
+        rospy.init_node('simple_ros_node', anonymous=True)
+        
+        # Subscriber to listen to messages on topic 'input_topic'
+        rospy.Subscriber('input_topic', String, self.callback)
+        
+        # Publisher to publish messages to topic 'output_topic'
+        self.pub = rospy.Publisher('output_topic', String, queue_size=10)
+        
+        rospy.spin()
+    
+    def callback(self, data):
+        # Process the received message
+        received_msg = data.data
+        processed_msg = ""Processed: "" + received_msg
+        
+        # Publish the processed message to 'output_topic'
+        self.pub.publish(processed_msg)
+        rospy.loginfo(""Published: %s"", processed_msg)
+
+if __name__ == '__main__':
+    try:
+        SimpleROSNode()
+    except rospy.ROSInterruptException:
+        pass",4.619890727674551
+140,a ROS1 subscriber in in process python,"#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import String
+
+def callback(data):
+    rospy.loginfo(""Received message: %s"", data.data)
+
+def subscriber_node():
+    rospy.init_node('subscriber_node', anonymous=True)
+    rospy.Subscriber('chatter', String, callback)
+    rospy.spin()
+
+if __name__ == '__main__':
+    try:
+        subscriber_node()
+    except rospy.ROSInterruptException:
+        pass",1.7794986844715295
+143,make a ROS1 sub node,"#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import String
+
+def callback(data):
+    rospy.loginfo(""I heard: %s"", data.data)
+
+def listener():
+    rospy.init_node('my_subscriber_node', anonymous=True)
+    rospy.Subscriber('my_topic', String, callback)
+    rospy.spin()
+
+if __name__ == '__main__':
+    try:
+        listener()
+    except rospy.ROSInterruptException:
+        pass",4.787786573104386
+144,make a ROS1 subscriber robot ROS in python,"#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import String
+
+def callback(data):
+    rospy.loginfo(""Received data: %s"", data.data)
+    # Add your custom code here to process the received data
+
+def subscriber_node():
+    rospy.init_node('my_subscriber_node', anonymous=True)
+    rospy.Subscriber(""my_topic"", String, callback)
+    rospy.spin()
+
+if __name__ == '__main__':
+    try:
+        subscriber_node()
+    except rospy.ROSInterruptException:
+        pass",4.8041001980919695
+149,a ROS1 subscriber in python,"#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import String
+
+def callback(data):
+    rospy.loginfo(rospy.get_caller_id() + ""I heard %s"", data.data)
+
+def listener():
+    rospy.init_node('listener', anonymous=True)
+
+    rospy.Subscriber(""chatter"", String, callback)
+
+    rospy.spin()
+
+if __name__ == '__main__':
+    listener()",4.8677681449620485
+151,a ROS1 subscriber subscriber in python,"#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import String
+
+def callback(data):
+    rospy.loginfo(rospy.get_caller_id() + 'I heard %s', data.data)
+
+def listener():
+    rospy.init_node('listener', anonymous=True)
+    rospy.Subscriber('chatter', String, callback)
+    rospy.spin()
+
+if __name__ == '__main__':
+    listener()",1.8556880933277604
+152,a ROS1 subscriber sub node,"#!/usr/bin/env python
+
+import rospy
+from sensor_msgs.msg import Imu
+
+def imu_callback(data):
+    """"""
+    Callback function to handle incoming IMU data.
+    """"""
+    rospy.loginfo(""Received IMU data:\n{}"".format(data))
+
+def imu_subscriber():
+    """"""
+    Initialize the ROS node and subscribe to the IMU topic.
+    """"""
+    rospy.init_node('imu_subscriber', anonymous=True)
+    rospy.Subscriber('/sensor_data', Imu, imu_callback)
+    rospy.spin()
+
+if __name__ == '__main__':
+    imu_subscriber()",4.789284449234805
+153,a ROS1 subscriber in in python,"#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import String
+
+def callback(data):
+    rospy.loginfo(""Received data: %s"", data.data)
+
+def subscriber():
+    rospy.init_node('my_subscriber', anonymous=True)
+    rospy.Subscriber('my_topic', String, callback)
+    rospy.spin()
+
+if __name__ == '__main__':
+    try:
+        subscriber()
+    except rospy.ROSInterruptException:
+        pass",1.7711224276143511
+155,a ROS1 subscriber ROS1 subscriber ROS python,"#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import String
+
+def callback(data):
+    rospy.loginfo(""I heard: %s"", data.data)
+
+def listener():
+    rospy.init_node('listener', anonymous=True)
+    rospy.Subscriber(""chatter"", String, callback)
+    rospy.spin()
+
+if __name__ == '__main__':
+    listener()",1.8260892326797462
+159,a ROS1 ROS1 subscriber in python,"#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import String
+
+def callback(data):
+    rospy.loginfo(""Received data: %s"", data.data)
+
+def listener():
+    rospy.init_node('listener', anonymous=True)
+    rospy.Subscriber(""chatter"", String, callback)
+    rospy.spin()
+
+if __name__ == '__main__':
+    listener()",1.82731090820268
+160,a a ROS1 subscriber in python,"#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import String
+
+def callback(data):
+    rospy.loginfo(rospy.get_caller_id() + 'Received: %s', data.data)
+
+def listener():
+    rospy.init_node('listener', anonymous=True)
+    rospy.Subscriber('chatter', String, callback)
+    rospy.spin()
+
+if __name__ == '__main__':
+    listener()",1.848112548031108
+164,a ROS1 subscriber in in,"#!/usr/bin/env python
+
+import rospy
+from sensor_msgs.msg import Image
+
+def image_callback(msg):
+    # Callback function to handle incoming image messages
+    rospy.loginfo(""Received an image message with timestamp: %s"", msg.header.stamp)
+    # Add further processing of the image message here
+
+def image_subscriber():
+    rospy.init_node('image_subscriber', anonymous=True)
+    rospy.Subscriber(""/camera/image"", Image, image_callback)
+    rospy.loginfo(""Image subscriber node started. Listening to /camera/image topic..."")
+    rospy.spin()
+
+if __name__ == '__main__':
+    try:
+        image_subscriber()
+    except rospy.ROSInterruptException:
+        pass",1.7242719532965092
+170,a ROS1 ROS1 planning subscriber ROS in python,"#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import String
+
+def planning_callback(data):
+    rospy.loginfo(""Received planning data: %s"", data.data)
+
+def planning_subscriber():
+    rospy.init_node('planning_subscriber', anonymous=True)
+    rospy.Subscriber('planning_topic', String, planning_callback)
+    rospy.spin()
+
+if __name__ == '__main__':
+    try:
+        planning_subscriber()
+    except rospy.ROSInterruptException:
+        pass",1.757316464290354
+175,a ROS1 subscriber for ROS in python,"#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import String
+
+def callback(data):
+    rospy.loginfo(""Received data: %s"", data.data)
+
+def listener():
+    rospy.init_node('listener', anonymous=True)
+    rospy.Subscriber(""chatter"", String, callback)
+    rospy.spin()
+
+if __name__ == '__main__':
+    try:
+        listener()
+    except rospy.ROSInterruptException:
+        pass",4.7891751007969985
+178,a ROS1 subscriber in in in python,"#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import String
+
+def callback(data):
+    rospy.loginfo(""I heard %s"", data.data)
+
+def listener():
+    rospy.init_node('listener', anonymous=True)
+    rospy.Subscriber('chatter', String, callback)
+    rospy.spin()
+
+if __name__ == '__main__':
+    try:
+        listener()
+    except rospy.ROSInterruptException:
+        pass",1.7897630344482653
+181,a ROS1 robot subscriber in in python,"#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import String
+
+def callback(data):
+    rospy.loginfo(rospy.get_caller_id() + 'I heard %s', data.data)
+
+def listener():
+    rospy.init_node('robot_subscriber_node', anonymous=True)
+    rospy.Subscriber('chatter', String, callback)
+    rospy.spin()
+
+if __name__ == '__main__':
+    listener()",1.8604023495013893
+183,ROS1 subscriber subscriber in python,"#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import String
+
+def callback(data):
+    rospy.loginfo(rospy.get_caller_id() + ""I heard %s"", data.data)
+
+def listener():
+    rospy.init_node('listener', anonymous=True)
+    rospy.Subscriber(""chatter"", String, callback)
+    rospy.spin()
+
+if __name__ == '__main__':
+    listener()",1.862006160002947
+184,a ROS1 in in python,"#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import String
+
+def callback(data):
+    rospy.loginfo(""Received data: %s"", data.data)
+    processed_data = data.data.upper()
+    rospy.loginfo(""Processed data: %s"", processed_data)
+    pub.publish(processed_data)
+
+if __name__ == '__main__':
+    rospy.init_node('simple_node', anonymous=True)
+    
+    sub = rospy.Subscriber('input_topic', String, callback)
+    pub = rospy.Publisher('output_topic', String, queue_size=10)
+    
+    rospy.spin()",1.8157665260694191
+185,a ROS1 subscriber ROS1 subscriber queue ROS in python,"#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import String
+
+def callback(data):
+    rospy.loginfo(""I heard: %s"", data.data)
+
+def listener():
+    rospy.init_node('my_subscriber_node', anonymous=True)
+    rospy.Subscriber('ros_topic', String, callback)
+    rospy.spin()
+
+if __name__ == '__main__':
+    listener()",1.8132690265659992
+191,a data ROS1 subscriber subscriber in python,"#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import String
+
+def data_callback(data):
+    rospy.loginfo(rospy.get_caller_id() + 'I heard %s', data.data)
+
+def data_subscriber():
+    rospy.init_node('data_subscriber', anonymous=True)
+    rospy.Subscriber('/data_topic', String, data_callback)
+    rospy.spin()
+
+if __name__ == '__main__':
+    try:
+        data_subscriber()
+    except rospy.ROSInterruptException:
+        pass",1.7836233130728427
+193,a ROS1 subscriber in subscriber ROS in python,"#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import String
+
+def callback(data):
+    rospy.loginfo(""I heard: %s"", data.data)
+
+def listener():
+    rospy.init_node('listener', anonymous=True)
+    rospy.Subscriber(""/chatter"", String, callback)
+    rospy.spin()
+
+if __name__ == '__main__':
+    listener()",1.824569274711176
+196,a subscriber subscriber in python,"#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import String
+
+def callback(data):
+    rospy.loginfo(""I heard %s"", data.data)
+
+def listener():
+    rospy.init_node('listener', anonymous=True)
+    rospy.Subscriber(""chatter"", String, callback)
+    rospy.spin()
+
+if __name__ == '__main__':
+    listener()",1.829738440575266

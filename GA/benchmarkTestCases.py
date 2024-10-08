@@ -14,37 +14,45 @@ def list_topics():
     return set(result.stdout.decode('utf-8').split())
 
 def rosCleanUp():
-    subprocess.run("rosnode cleanup", shell=True, check=True)
+    subprocess.run("yes | rosnode cleanup", shell=True)
+    subprocess.run("rosnode kill -a", shell=True, executable='/bin/bash')
 
 def rosEnviroment():
     try:
         subprocess.run("source /opt/ros/noetic/setup.bash", shell=True, check=True, executable='/bin/bash')
-        subprocess.run("source /home/david/catkin_ws/devel/setup.bash", cwd="/home/david", shell=True, check=True, executable='/bin/bash')
+        subprocess.run("source /mnt/d/test_ws/devel/setup.bash", cwd="/home/david", shell=True, check=True, executable='/bin/bash')
     except subprocess.CalledProcessError as e:
         logging.error(f"Error setting up environment: {e}")
+     
+def killProcess(proc):
+    try:
+        os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
+    except Exception as e:
+        logging.error(f"Error killing process {proc.pid}: {str(e)}")
+        
 
-def pubTest(pkgName):
+def pubTest(pkgName, fileName):
     logging.basicConfig(level=logging.INFO)
     rosEnviroment() #setting the enviroment variables for ROS
     rosCleanUp() #deleting the ROS nodes
-    topics_before = list_topics()
-    logging.info(f"Topics before running publisher: {topics_before}")
+    topicsBefore = list_topics()
+    logging.info(f"Topics before running publisher: {topicsBefore}")
 
     logging.info("Running rosrun command")
-    publisher_process = subprocess.Popen(f"rosrun {pkgName} test.py", cwd="/home/david/", shell=True, executable='/bin/bash', preexec_fn=os.setsid)
+    publisher = subprocess.Popen(f"rosrun {pkgName} {fileName}", cwd="/home/david/", shell=True, executable='/bin/bash', preexec_fn=os.setsid)
 
     time.sleep(3)
 
-    topics_after = list_topics()
-    logging.info(f"Topics after running publisher: {topics_after}")
+    topicsAfter = list_topics()
+    logging.info(f"Topics after running publisher: {topicsAfter}")
 
-    new_topics = topics_after - topics_before
-    if not new_topics:
+    newTopics = topicsAfter - topicsBefore
+    if not newTopics:
         logging.warning("No new topics detected")
-        os.killpg(os.getpgid(publisher_process.pid), signal.SIGTERM)
+        os.killpg(os.getpgid(publisher.pid), signal.SIGTERM)
         return 0.7
 
-    new_topic = new_topics.pop()
+    new_topic = newTopics.pop()
     logging.info(f"Detected new topic: {new_topic}")
 
     try:
@@ -56,22 +64,94 @@ def pubTest(pkgName):
         )
         if echo_output.stdout:
             logging.info(f"Received message: {echo_output.stdout.decode('utf-8')}")
-            return 1.1
+            return 2
         else:
             logging.warning("No data received from publisher")
             return 0.7
+        
     except subprocess.TimeoutExpired:
         logging.warning("No data received from publisher within timeout")
         return 0.7
+    
     finally:
-        os.killpg(os.getpgid(publisher_process.pid), signal.SIGTERM)
-def subTest():
-    #start the ROS code
-    #publish a message (subprocess)
-    #run the file
-    #check if the file makes an output 
-    pass
+        os.killpg(os.getpgid(publisher.pid), signal.SIGTERM)
 
+def subTest(pkgName, fileName):
+    logging.basicConfig(level=logging.INFO)
+    rosEnviroment()  # Setting the environment variables for ROS
+    rosCleanUp()  # Deleting the ROS nodes
+    
+    topicsBefore = list_topics()
+    logging.info(f"Topics before running subscriber: {topicsBefore}")
+    
+    subscriber = subprocess.Popen(
+        f"rosrun {pkgName} {fileName}",
+        cwd="/home/david/",
+        shell=True,
+        executable='/bin/bash',
+        preexec_fn=os.setsid,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+
+    time.sleep(3)  # Wait for the subscriber to initialize
+
+    topicsAfter = list_topics()
+    newTopics = set(topicsAfter) - set(topicsBefore)
+    logging.info(f"Topics after running subscriber: {newTopics}")
+
+    if not newTopics:
+        logging.warning("No new topics detected")
+        killProcess(subscriber)
+        return 0.7
+
+    newTopic = newTopics.pop()
+    logging.info(f"Publishing to new topic: {newTopic}")
+    publisher = subprocess.Popen(
+        ["rostopic", "pub", "-r", "1", newTopic, "std_msgs/String", "hello"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        preexec_fn=os.setsid
+    )
+    
+    rosout = subprocess.Popen(
+        ["rostopic", "echo", "/rosout"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        preexec_fn=os.setsid
+    )
+
+    try:
+        start_time = time.time()
+        while time.time() - start_time < 10:
+            if rosout.poll() is not None:
+                logging.info("rosout process ended unexpectedly")
+                break
+            
+            rlist, _, _ = select.select([rosout.stdout], [], [], 0.1)
+            if rlist:
+                line = rosout.stdout.readline()
+                if line:
+                    logging.info("Subscriber received a message")
+                    return 2
+
+    except Exception as e:
+        logging.error(f"Exception occurred: {str(e)}")
+        return False
+    finally:
+        killProcess(rosout)
+        killProcess(publisher)
+        killProcess(subscriber)
+
+    logging.warning("Timeout reached without receiving any message")
+    return 0.7
+            
+def tfTest(pkgName):
+    return 1
+      
 if __name__ == "__main__":
-    result = pubTest("test")
+    result = pubTest("motorcontroller", "controller")
     print(result)
+    

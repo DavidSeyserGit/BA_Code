@@ -1,0 +1,1394 @@
+generation,prompt,code,fitness
+0,make a ROS1 subscriber in cpp,"#include <ros/ros.h>
+#include <std_msgs/String.h>
+
+int main(int argc, char** argv)
+{
+    // Initialize the ROS node
+    ros::init(argc, argv, ""my_subscriber"");
+    ros::NodeHandle nh;
+
+    // Create a subscriber to the ""chatter"" topic with type std_msgs::String
+    ros::Subscriber sub = nh.subscribe(""chatter"", 10);
+
+    // Loop and process incoming messages
+    while (ros::ok()) {
+        // Check if there is a new message available
+        if (sub.getNumPublishers() > 0) {
+            // Get the latest message
+            std_msgs::String msg;
+            sub.read(&msg);
+
+            // Process the message
+            ROS_INFO(""Received message: %s"", msg.data.c_str());
+        }
+
+        // Sleep for a short time to avoid consuming too much CPU
+        ros::Duration(0.1).sleep();
+    }
+
+    return 0;
+}",0
+0,code ROS sub in cpp,"cd /path/to/your/project/directory
+roscreate-pkg my_cpp_package",0
+0,create a subscriber for ROS in c++,"#include <ros/ros.h>
+#include <ros/node.h>
+
+int main(int argc, char** argv) {
+  // Initialize the ROS node
+  ros::init(argc, argv, ""my_subscriber"");
+  ros::NodeHandle nh;
+
+  // Create a subscriber to the ""chatter"" topic
+  ros::Subscriber sub = nh.subscribe(""chatter"", 10);
+
+  // Define a callback function to process messages from the subscriber
+  void chatterCallback(const std::string& msg) {
+    ROS_INFO(""I heard: [%s]"", msg.c_str());
+  }
+
+  // Register the callback with the subscriber
+  sub.registerCallback(chatterCallback);
+
+  // Spin indefinitely until Ctrl+C is pressed
+  ros::spin();
+
+  return 0;
+}",0
+0,generate a c++ sub node,"// Parent node (struct)
+struct Node {
+    int data;
+    // Subnode (nested struct)
+    struct SubNode {
+        int x, y;  // coordinates
+        float z;     // depth
+    } subNode;
+
+    Node(int value) : data(value) {}
+};
+
+int main() {
+    // Create an instance of the parent node with a value and a subnode
+    Node node(42);
+    node.subNode.x = 10;
+    node.subNode.y = 20;
+    node.subNode.z = 30.5f;
+
+    return 0;
+}",4.91573315892731
+1,generate a ROS1 subscriber in cpp,"#include <ros/ros.h>
+#include <string>
+
+int main(int argc, char** argv) {
+    // Initialize the ROS node
+    ros::init(argc, argv, ""my_subscriber"");
+    ros::NodeHandle nh;
+
+    // Create a subscriber to the ""chatter"" topic with a queue size of 10
+    ros::Subscriber sub = nh.subscribe(""chatter"", 10);
+
+    while (ros::ok()) {
+        // Wait for new messages on the subscriber
+        ros::spinOnce();
+
+        // Check if we have received any new messages
+        ros::MessageEvent<std::string>::ConstPtr msg;
+        while ((msg = sub.getlatest())) {
+            // Process the message
+            std::cout << ""Received message: "" << msg->msg << std::endl;
+        }
+    }
+
+    return 0;
+}",0
+2,create a ROS1 subscriber in cpp,"#include <ros/node.h>
+#include <ros/publisher.h>
+#include <std_msgs/String.h>
+
+int main(int argc, char** argv)
+{
+  // Initialize the ROS node
+  ros::init(argc, argv, ""my_subscriber"");
+  ros::NodeHandle nh;
+
+  // Create a subscriber to the ""/chatter"" topic
+  ros::Subscriber sub = nh.subscribe<std_msgs::String>(""chatter"");
+
+  // Spin until the node is shut down
+  while (ros::ok()) {
+    // Get the latest message from the ""chatter"" topic
+    std_msgs::String msg;
+    if (sub.read(&msg) == ros::ReturnCode::Success) {
+      // Process the message here
+      ROS_INFO(""Received message: %s"", msg.data.c_str());
+    }
+  }
+
+  return 0;
+}",0
+4,generate a c++ subscriber in cpp,"#include <ros/node.h>
+#include <ros/publisher.h>
+#include <std_msgs/String.h>
+
+class MySubscriber {
+public:
+  MySubscriber() : node_(ros::NodeHandle(""my_subscriber"")) {}
+
+  void run() {
+    // Create a subscriber to the ""chatter"" topic
+    ros::Subscriber sub_ = node_.subscribe(""chatter"", &MySubscriber::messageCb, this);
+  }
+
+private:
+  void messageCb(const std_msgs::String::ConstPtr& msg) {
+    ROS_INFO(""Received message: %s"", msg->data.c_str());
+  }
+
+  ros::NodeHandle node_;
+};
+
+int main(int argc, char** argv) {
+  // Initialize the ROS node
+  ros::init(argc, argv);
+  ros::NodeHandle node;
+
+  // Create an instance of the subscriber class
+  MySubscriber subscriber;
+
+  // Start the subscriber loop
+  while (node.ok()) {
+    subscriber.run();
+    ros::spinOnce();
+  }
+
+  return 0;
+}",0
+7,generate ROS sub in cpp,"#include <ros/ros.h>
+#include <std_msgs/String.h>
+
+int main(int argc, char** argv)
+{
+  // Initialize the ROS node
+  ros::init(argc, argv, ""my_subscriber"");
+  ros::NodeHandle nh;
+
+  // Create a ROS subscriber to listen to a topic named ""chatter""
+  ros::Subscriber sub = nh.subscribe(""chatter"");
+
+  // Loop until the user stops the program (Ctrl+C)
+  while (ros::ok())
+  {
+    // Spin once per iteration
+    ros::spinOnce();
+
+    // Check if we received a message on the subscriber
+    std::vector<ros::MessageEvent<std_msgs::String> > queue;
+    sub.getQueueSize(queue);
+    for (std::vector<ros::MessageEvent<std_msgs::String> >::iterator it = queue.begin(); it != queue.end(); ++it)
+    {
+      // Print the received message
+      ROS_INFO(""Received message: %s"", (*it).msg->data.c_str());
+    }
+  }
+
+  return 0;
+}",0
+12,generate message a ROS1 subscriber in cpp,"#include <ros/ros.h>
+#include <std_msgs/String.h>
+
+int main(int argc, char **argv) {
+  // Initialize the ROS node
+  ros::init(argc, argv, ""my_node"");
+  ros::NodeHandle nh;
+
+  // Create a subscriber to the ""/chatter"" topic
+  ros::Subscriber sub = nh.subscribe(""chatter"", 10);
+
+  while (nh.ok()) {
+    // Spin to process incoming messages
+    ros::spinOnce();
+
+    // Check if there are any new messages available on the topic
+    if (sub.getNumPublishers() > 0) {
+      std_msgs::String msg;
+      sub.read(msg);
+      std::cout << ""Received message: "" << msg.data << std::endl;
+    }
+  }
+
+  return 0;
+}",0
+19,generate a c++ sub in cpp,"#include <iostream>
+
+int main() {
+    std::cout << ""Hello, World!"" << std::endl;
+    return 0;
+}",5.0137806307529456
+20,interface generate a ROS1 subscriber in cpp,"#include <ros/ros.h>
+#include <string>
+
+int main(int argc, char** argv) {
+  // Initialize the ROS node
+  ros::init(argc, argv, ""my_subscriber"");
+
+  // Create a ROS node handle
+  ros::NodeHandle nh;
+
+  // Create a subscriber object to subscribe to a topic
+  ros::Subscriber sub = nh.subscribe(""my_topic"", 10);
+
+  // Set up a callback function to handle incoming messages
+  void callback(const ros::MessageEvent<std_msgs::String>& msg) {
+    // Do something with the received message, e.g. print it out
+    ROS_INFO_STREAM(""Received message: "" << msg.data);
+  }
+
+  // Register the callback function with the subscriber
+  sub.registerCallback(callback);
+
+  // Spin the ROS node until it receives a message or exits
+  ros::spinOnce();
+
+  return 0;
+}",0
+25,system generate a c++ sub node,"// Node.h
+#ifndef NODE_H
+#define NODE_H
+
+class Node {
+public:
+    // Constructor
+    Node(int value) : value_(value), next_(nullptr) {}
+
+    // Destructor
+    ~Node() {}
+
+    // Getters and Setters
+    int getValue() const { return value_; }
+    void setValue(int value) { value_ = value; }
+
+    Node* getNext() const { return next_; }
+    void setNext(Node* next) { next_ = next; }
+
+private:
+    int value_;
+    Node* next_;
+};
+
+#endif  // NODE_H",0
+27,generate navigation a c++ sub node,"#include <iostream>
+#include <vector>
+#include <queue>
+#include <cmath>
+
+using namespace std;
+
+struct Node {
+    int x, y;
+};
+
+// Calculate Manhattan distance between two nodes
+int manhattanDistance(const Node& node1, const Node& node2) {
+    return abs(node1.x - node2.x) + abs(node1.y - node2.y);
+}
+
+// Check if a node is within the bounds of the graph
+bool isValidNode(Node node, int width, int height) {
+    return node.x >= 0 && node.x < width && node.y >= 0 && node.y < height;
+}
+
+// Find the shortest path from start to end using A* algorithm
+vector<Node> aStarSearch(vector<vector<int>>& graph, Node start, Node end) {
+    // Create an open set and a closed set
+    priority_queue<pair<int, Node>, vector<pair<int, Node>>, greater<pair<int, Node>>> openSet;
+    unordered_set<Node> closedSet;
+
+    // Initialize the distance to all nodes as infinity and the previous node in the path as null
+    vector<vector<int>> distances(graph.size(), vector<int>(graph[0].size()));
+    vector<vector<Node>> previousNodes(graph.size(), vector<Node>(graph[0].size()));
+
+    // Calculate the initial heuristic value for each node
+    for (int i = 0; i < graph.size(); ++i) {
+        for (int j = 0; j < graph[i].size(); ++j) {
+            Node node{i, j};
+            distances[i][j] = INT_MAX;
+            previousNodes[i][j] = start;
+            if (node == end) {
+                distances[i][j] = manhattanDistance(node, start);
+            }
+        }
+    }
+
+    // Add the start node to the open set
+    openSet.push({0, start});
+
+    while (!openSet.empty()) {
+        Node current = openSet.top().second;
+        openSet.pop();
+
+        if (current == end) {
+            // Reconstruct the path from the start node to the end node
+            vector<Node> path;
+            while (current != start) {
+                path.push_back(current);
+                current = previousNodes[current.x][current.y];
+            }
+            path.push_back(start);
+            return path;
+        }
+
+        closedSet.insert(current);
+
+        // Check all neighbors of the current node
+        for (Node neighbor : getNeighbors(graph, current)) {
+            if (!closedSet.count(neighbor) && !openSet.count(neighbor)) {
+                int tentativeDistance = distances[current.x][current.y] + 1;
+
+                if (tentativeDistance < distances[neighbor.x][neighbor.y]) {
+                    distances[neighbor.x][neighbor.y] = tentativeDistance;
+                    previousNodes[neighbor.x][neighbor.y] = current;
+
+                    // Calculate the heuristic value for the neighbor node
+                    int heuristicValue = manhattanDistance(neighbor, end);
+                    openSet.push({tentativeDistance + heuristicValue, neighbor});
+                }
+            }
+        }
+    }
+
+    // If the algorithm doesn't find a path, return an empty vector
+    return {};
+}
+
+// Get all neighbors of a given node
+vector<Node> getNeighbors(vector<vector<int>>& graph, Node node) {
+    vector<Node> neighbors;
+
+    if (node.x > 0 && graph[node.x][node.y] == 1) {
+        neighbors.push_back({node.x - 1, node.y});
+    }
+    if (node.x < graph.size() - 1 && graph[node.x + 1][node.y] == 1) {
+        neighbors.push_back({node.x + 1, node.y});
+    }
+    if (node.y > 0 && graph[node.x][node.y - 1] == 1) {
+        neighbors.push_back({node.x, node.y - 1});
+    }
+    if (node.y < graph[0].size() - 1 && graph[node.x][node.y + 1] == 1) {
+        neighbors.push_back({node.x, node.y + 1});
+    }
+
+    return neighbors;
+}
+
+int main() {
+    int width = 5, height = 5;
+
+    // Create the graph
+    vector<vector<int>> graph(width, vector<int>(height));
+    for (int i = 0; i < width; ++i) {
+        for (int j = 0; j < height; ++j) {
+            if (i == 0 || j == 0 || i == width - 1 || j == height - 1) {
+                graph[i][j] = 1;
+            } else {
+                graph[i][j] = 0;
+            }
+        }
+    }
+
+    // Find the shortest path from start to end
+    Node start{0, 0};
+    Node end{width - 1, height - 1};
+
+    vector<Node> path = aStarSearch(graph, start, end);
+
+    if (!path.empty()) {
+        cout << ""Shortest path: "";
+        for (Node node : path) {
+            cout << ""("" << node.x << "", "" << node.y << "") "";
+        }
+        cout << endl;
+    } else {
+        cout << ""No path found."" << endl;
+    }
+
+    return 0;
+}",0
+30,generate a c++ sub interface node,"// my_interface.h
+#ifndef MY_INTERFACE_H
+#define MY_INTERFACE_H
+
+class MyInterface {
+public:
+    virtual ~MyInterface() = default;
+    // interface methods go here...
+};
+
+#endif  // MY_INTERFACE_H",0
+38,generate a sub node,,0
+42,generate a c++ sub subscriber in cpp,"#include <iostream>
+#include <list>
+#include <string>
+
+// The subject interface
+class Subject {
+public:
+    virtual ~Subject() {}
+    virtual void notify() = 0;
+};
+
+// A real subject
+class RealSubject : public Subject {
+private:
+    std::string data;
+
+public:
+    RealSubject(const std::string& str) : data(str) {}
+
+    // The subscriber's update method
+    void doSomething() {
+        std::cout << ""RealSubject doing something..."" << std::endl;
+    }
+
+    virtual ~RealSubject() {}
+};
+
+// A proxy subject
+class ProxySubject : public Subject {
+private:
+    RealSubject* realSubject_;
+    std::list<Subscriber*> subscribers_;
+
+public:
+    ProxySubject(RealSubject& rs) : realSubject_(&rs) {}
+
+    // The proxy's update method
+    void notify() {
+        std::cout << ""Proxy notifying its subscribers..."" << std::endl;
+        for (auto subscriber : subscribers_) {
+            subscriber->update();
+        }
+    }
+
+    // Register a new subscriber
+    void registerSubscriber(Subscriber* s) {
+        subscribers_.push_back(s);
+    }
+
+    virtual ~ProxySubject() {}
+};
+
+// The observer interface
+class Subscriber {
+public:
+    virtual ~Subscriber() {}
+
+    // Update the observer's state
+    virtual void update() = 0;
+};
+
+// A real subscriber
+class RealSubscriber : public Subscriber {
+private:
+    std::string name_;
+
+public:
+    RealSubscriber(const std::string& str) : name_(str) {}
+
+    // The subscriber's update method
+    void update() override {
+        std::cout << ""RealSubscriber "" << name_ << "" updating..."" << std::endl;
+    }
+
+    virtual ~RealSubscriber() {}
+};
+
+int main() {
+    RealSubject realSubject(""RealSubject"");
+    ProxySubject proxy(&realSubject);
+
+    RealSubscriber subscriber1(""Subscriber 1"");
+    RealSubscriber subscriber2(""Subscriber 2"");
+
+    // Register the subscribers
+    proxy.registerSubscriber(&subscriber1);
+    proxy.registerSubscriber(&subscriber2);
+
+    // Have the subject do something, which will notify its subscribers
+    realSubject.doSomething();
+
+    return 0;
+}",0
+44,generate a a c++ sub node,"// Node.h: A class representing a single node in the tree.
+
+#ifndef NODE_H
+#define NODE_H
+
+class Node {
+public:
+    int value; // The value stored at this node.
+    Node* leftChild; // The child node to the left of this one.
+    Node* rightChild; // The child node to the right of this one.
+
+    // Constructor.  Initializes the node with the given value and
+    // sets its children to null.
+    Node(int val) : value(val), leftChild(nullptr), rightChild(nullptr) {}
+
+    // Destructor.  Frees any memory used by the node's children.
+    ~Node() {
+        if (leftChild != nullptr) {
+            delete leftChild;
+        }
+        if (rightChild != nullptr) {
+            delete rightChild;
+        }
+    }
+};
+
+#endif",0
+47,design a c++ sub node,"#include <iostream>
+#include <string>
+
+// Define a Node class to represent a node in the tree
+class Node {
+public:
+    // Constructor to initialize the node with its value and children
+    Node(const std::string& val, Node* left = nullptr, Node* right = nullptr)
+        : value(val), leftChild(left), rightChild(right) {}
+
+    // Getter for the value of the node
+    const std::string& getValue() const {
+        return value;
+    }
+
+    // Getter for the left child of the node
+    Node* getLeftChild() const {
+        return leftChild;
+    }
+
+    // Getter for the right child of the node
+    Node* getRightChild() const {
+        return rightChild;
+    }
+
+private:
+    std::string value;  // Value stored in this node
+    Node* leftChild;     // Left child of this node
+    Node* rightChild;    // Right child of this node
+};",0
+58,generate rate a a c++ sub node,"#include <random>
+#include <iostream>
+
+class Node {
+public:
+    double rate = 0.5; // initialize with default value
+
+    // constructor to set the rate
+    Node(double r) : rate(r) {}
+
+    void printRate() {
+        std::cout << ""Node rate: "" << rate << std::endl;
+    }
+};
+
+int main() {
+    // create a random number generator
+    std::random_device rd;
+    std::mt19937 eng(rd());
+    std::uniform_real_distribution<double> dist(0.1, 0.9);
+
+    // generate a random rate for the node
+    Node node(dist(eng));
+    node.printRate();
+
+    return 0;
+}",1.3091484209911144
+60,generate a c++ interface sub node,"// TreeNode.h (interface file)
+
+#ifndef TREENODE_H
+#define TREENODE_H
+
+class TreeNode {
+public:
+    virtual ~TreeNode() {} // pure virtual destructor
+
+    // common methods for all tree nodes
+    virtual void accept(Visitor& v) = 0;
+    virtual void print(int indentLevel) = 0;
+
+protected:
+    TreeNode() {}
+};
+
+#endif // TREENODE_H",0
+75,generate a c++ for ROS in c++,"#include <iostream>
+#include <ros/ros.h>
+
+int main(int argc, char** argv)
+{
+  // Initialize the ROS node
+  ros::init(argc, argv, ""ros_cpp_example"");
+  ros::NodeHandle nh;
+
+  // Create a publisher that publishes to the ""chatter"" topic
+  ros::Publisher chatter_pub = nh.advertise<std_msgs::String>(""chatter"", 10);
+
+  // Create a subscriber that subscribes to the ""chatter"" topic
+  ros::Subscriber chatter_sub = nh.subscribe(""chatter"");
+
+  // Loop until the node is shutdown
+  while (ros::ok())
+  {
+    // Publish a message to the ""chatter"" topic
+    std_msgs::String msg;
+    msg.data = ""Hello, ROS!"";
+    chatter_pub.publish(msg);
+
+    // Wait for 1 second before publishing again
+    ros::Duration timeout(1.0);
+    while (ros::ok() && chatter_sub.getTopicChars() == 0)
+      ros::spinOnce();
+  }
+
+  return 0;
+}",0
+77,build localization a c++ sub node,"#include <string>
+#include <locale>
+#include <sstream>
+
+class LocalizedSubnode {
+public:
+    LocalizedSubnode(std::string name, std::string description) :
+        name_(name), description_(description) {}
+
+    std::string getName() const { return name_; }
+    std::string getDescription() const { return description_; }
+
+private:
+    std::string name_;
+    std::string description_;
+};
+
+// Example usage:
+LocalizedSubnode node(""Example Node"", ""This is a sample node"");
+std::cout << ""Node Name: "" << node.getName().c_str() << std::endl;
+std::cout << ""Description: "" << node.getDescription().c_str() << std::endl;
+
+// To localize the node, you could use a locale-aware string formatting function:
+std::string localizedDesc = boost::format(""%1%2"", node.getName(), node.getDescription());
+std::cout << ""Localized Description: "" << localizedDesc.c_str() << std::endl;",0
+80,launch generate a c++ sub node,"launch generate --type=cpp-subnode ""MyProject/MyTarget"" ""MyCplusplusFile.cpp""",0
+81,generate a c++ sub in in cpp,"#include <iostream>
+
+int main() {
+  // Print ""Hello, World!"" to the console
+  std::cout << ""Hello, World!"" << std::endl;
+  return 0;
+}",2.034135846430244
+82,fabricate a c++ sub node,"class Node {
+public:
+    int value;
+    std::string label;
+
+    Node(int val, const std::string& lab) : value(val), label(lab) {}
+};",0
+87,generate generate a c++ sub node,"// Base class
+class Node {
+public:
+    virtual void print() = 0; // Pure virtual function
+};
+
+// Subclass: GenerateNode
+class GenerateNode : public Node {
+private:
+    int value;
+
+public:
+    GenerateNode(int val) : value(val) {}
+
+    void print() override {
+        std::cout << ""GenerateNode with value: "" << value << std::endl;
+    }
+};",0
+91,generate a task c++ sub node,"<task name=""MyTask"">
+    <subnode name=""SubNode1"">
+        <!-- properties and attributes for SubNode1 -->
+    </subnode>
+    <subnode name=""SubNode2"">
+        <!-- properties and attributes for SubNode2 -->
+    </subnode>
+</task>",0
+92,a c++ sub node,"class Node {
+public:
+    std::string data;
+    Node* left;  // pointer to the left child
+    Node* right; // pointer to the right child
+
+    Node(std::string d) : data(d), left(NULL), right(NULL) {}
+};",0
+96,generate a c++ sub,"#include <iostream>
+using namespace std;
+
+class Rectangle {
+public:
+    double length;
+    double width;
+
+    // constructor to initialize length and width
+    Rectangle(double l, double w) {
+        length = l;
+        width = w;
+    }
+
+    // function to calculate the area of the rectangle
+    double calculateArea() {
+        return length * width;
+    }
+};
+
+int main() {
+    double l, w;
+
+    cout << ""Enter the length: "";
+    cin >> l;
+
+    cout << ""Enter the width: "";
+    cin >> w;
+
+    Rectangle rect(l, w);
+
+    cout << ""The area of the rectangle is: "" << rect.calculateArea() << endl;
+    
+    return 0;
+}",4.239160971521819
+98,generate c++ sub node,"#include <iostream>
+
+class TreeNode {
+public:
+    int value;
+    TreeNode* leftChild;
+
+    TreeNode(int val) : value(val), leftChild(nullptr) {}
+};",0
+100,build a c++ sub node,"#include <vector>
+#include <string>
+
+class Node {
+public:
+    std::string value;
+    Node* parent;
+    std::vector<Node*> children;
+
+    // Constructor
+    Node(const std::string& val) : value(val), parent(nullptr) {}
+
+    // Add a child node
+    void addChild(Node* child) {
+        if (child->parent != nullptr) {
+            // If the child already has a parent, remove it first
+            child->parent->children.erase(std::remove(&*child, &*child + 1, child->parent->children.begin()), child->parent->children.end());
+        }
+        child->parent = this;
+        children.push_back(child);
+    }
+
+    // Remove a child node
+    void removeChild(Node* child) {
+        if (std::find(children.begin(), children.end(), child) != children.end()) {
+            children.erase(std::remove(&*child, &*child + 1, children.begin()), children.end());
+            child->parent = nullptr;
+        }
+    }
+};
+
+int main() {
+    Node root(""Root"");
+    Node a(""A"");
+    Node b(""B"");
+    Node c(""C"");
+    Node d(""D"");
+    Node e(""E"");
+
+    // Add the nodes to the tree
+    root.addChild(&a);
+    root.addChild(&b);
+    a.addChild(&c);
+    a.addChild(&d);
+    b.addChild(&e);
+
+    return 0;
+}",0
+104,generate a c++ robot sub node,"#include <ros/node.h>
+#include <ros/publisher.h>
+#include <ros/subscriber.h>
+#include <geometry_msgs/PoseStamped.h>
+
+class RobotArmNode {
+public:
+  RobotArmNode() {
+    ros::NodeHandle nh;
+    ros::Subscriber sub(""joint_states"", &RobotArmNode::jointStatesCallback, this);
+    ros::Publisher pub(""arm_pose"", &RobotArmNode::publishArmPose, this);
+
+    // Initialize the arm's joint angles to some default values
+    joints_[0] = 0.0; // shoulder
+    joints_[1] = 0.0; // elbow
+    joints_[2] = 0.0; // wrist
+  }
+
+  void jointStatesCallback(const sensor_msgs::JointState& msg) {
+    // Update the arm's joint angles from the incoming message
+    for (int i = 0; i < 3; i++) {
+      joints_[i] = msg.position[i];
+    }
+  }
+
+  void publishArmPose() {
+    geometry_msgs::PoseStamped pose;
+    pose.header.stamp = ros::Time::now();
+
+    // Calculate the arm's pose based on its joint angles
+    // (e.g. using forward kinematics)
+    pose.pose.position.x = ...; // calculate x position
+    pose.pose.position.y = ...; // calculate y position
+    pose.pose.position.z = ...; // calculate z position
+
+    pub.publish(pose);
+  }
+
+private:
+  std::vector<double> joints_;
+};",0
+106,generate a interface c++ sub sensor node,"#include <iostream>
+#include <string>
+
+class SubSensorNode {
+public:
+    // Constructor
+    SubSensorNode(std::string name, int id);
+
+    // Getters
+    std::string getName();
+    int getID();
+
+    // Setters
+    void setName(std::string name);
+    void setID(int id);
+
+    // Sensor data interface methods
+    virtual void readData() = 0;
+    virtual void processSensorData() = 0;
+
+protected:
+    std::string node_name_;
+    int node_id_;
+
+};
+
+class SubSensorNodeImpl : public SubSensorNode {
+public:
+    SubSensorNodeImpl(std::string name, int id) : SubSensorNode(name, id) {}
+
+    // Sensor data interface methods
+    void readData() override {
+        // Read sensor data (e.g., from a file or database)
+        std::cout << ""Read sensor data..."" << std::endl;
+    }
+
+    void processSensorData() override {
+        // Process the sensor data (e.g., perform calculations, filtering, etc.)
+        std::cout << ""Process sensor data..."" << std::endl;
+    }
+};
+
+int main() {
+    // Create a sub-sensor node
+    SubSensorNodeImpl myNode(""My Node"", 1);
+
+    // Read and process sensor data
+    myNode.readData();
+    myNode.processSensorData();
+
+    return 0;
+}",0
+123,make a c++ sub node,"class SubNode {
+public:
+    // Constructor
+    SubNode(int value = 0) : value(value), children() {}
+
+    // Copy constructor
+    SubNode(const SubNode& other)
+        : value(other.value), children(new std::vector<SubNode>(other.children)) {}
+
+    // Destructor
+    ~SubNode() {
+        for (auto child : children) {
+            delete child;
+        }
+        children.clear();
+    }
+
+    int getValue() const { return value; }
+    void setValue(int newValue) { value = newValue; }
+
+    std::vector<SubNode>* getChildren() { return &children; }
+    void addChild(SubNode* newNode) { children->push_back(newNode); }
+    void removeChild(SubNode* nodeToRemove) {
+        for (auto it = children->begin(); it != children->end(); ++it) {
+            if (*it == *nodeToRemove) {
+                children->erase(it);
+                delete nodeToRemove;
+                return;
+            }
+        }
+    }
+
+private:
+    int value;
+    std::vector<SubNode*> children;
+};",0
+125,create a c++ sub node,"c++
+// Node structure with a child node pointer
+struct Node {
+    int value;
+    Node* child; // This is the child node pointer
+};
+
+// Create a new node with a specific value and no child
+Node* createNode(int val) {
+    Node* node = new Node();
+    node->value = val;
+    node->child = nullptr; // No child initially
+    return node;
+}",0
+127,generate a node c++ sub sensor node,"#include <iostream>
+#include <thread>
+#include <mutex>
+
+class SensorNode {
+public:
+    SensorNode(int id, int samplingRate) : id(id), samplingRate(samplingRate) {}
+
+    void startSampling() {
+        std::cout << ""Sensor Node "" << id << "": Starting to sample at rate of "" << samplingRate << "" Hz."" << std::endl;
+
+        while (true) {
+            // Simulate sensor data
+            int sensorData = simulateSensorData();
+
+            // Print the sensor data
+            std::cout << ""Sensor Node "" << id << "": Sensor Data: "" << sensorData << std::endl;
+
+            // Wait for a specified amount of time before taking another reading
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000 / samplingRate));
+        }
+    }
+
+private:
+    int id;
+    int samplingRate;
+
+    int simulateSensorData() {
+        // Simulate sensor data by returning a random number between 0 and 100
+        return rand() % 101;
+    }
+};
+
+int main() {
+    SensorNode node1(1, 10);
+    SensorNode node2(2, 5);
+
+    std::thread thread1(&SensorNode::startSampling, &node1);
+    std::thread thread2(&SensorNode::startSampling, &node2);
+
+    thread1.detach();
+    thread2.detach();
+
+    return 0;
+}",0.6125320311029072
+151,generate a c++ sub sub sensor node,"c++
+#include <iostream>
+#include <string>
+#include <thread>
+
+using namespace std;
+
+// Define the sensor node class
+class SensorNode {
+public:
+    SensorNode(string name) : name_(name) {}
+
+    // Simulate data collection from sensors
+    void collectData() {
+        cout << ""Collecting data from sensors for "" << name_ << ""..."" << endl;
+        this_thread::sleep_for(chrono::seconds(1)); // simulate data collection time
+        cout << ""Data collected successfully!"" << endl;
+    }
+
+    // Simulate sending data to the main node
+    void sendData() {
+        cout << ""Sending data to the main node for "" << name_ << ""..."" << endl;
+        this_thread::sleep_for(chrono::seconds(1)); // simulate data transmission time
+        cout << ""Data sent successfully!"" << endl;
+    }
+
+private:
+    string name_;
+};
+
+int main() {
+    // Create a sensor node instance with name ""Sensor Node 1""
+    SensorNode sensorNode(""Sensor Node 1"");
+
+    // Start collecting data from sensors in the background
+    thread collectThread(&SensorNode::collectData, &sensorNode);
+    collectThread.detach();
+
+    // Wait for some time before sending data to the main node
+    this_thread::sleep_for(chrono::seconds(2));
+
+    // Send data to the main node
+    sensorNode.sendData();
+
+    return 0;
+}",0
+152,design a c++ sub actuator node,"c++
+#include <cmath>
+#include <iostream>
+
+class MotorSpeedController {
+public:
+    MotorSpeedController(float kp, float ki, float kd) : 
+        kp_(kp), ki_(ki), kd_(kd), last_error_(0.0f) {}
+
+    void update(float desired_speed, float velocity_feedback) {
+        // Calculate error
+        float error = desired_speed - velocity_feedback;
+
+        // PID controller
+        float pid_output;
+        if (error < 0.1f) { // Hysteresis to prevent oscillations
+            pid_output = 0.0f;
+        } else {
+            pid_output = kp_ * error + ki_ * integral(error, dt_) + kd_ * derivative(error);
+        }
+
+        // Motor command generation
+        motor_command_ = pid_output * gain_;
+
+        last_error_ = error; // Store error for next iteration
+    }
+
+    float getMotorCommand() { return motor_command_; }
+
+private:
+    float kp_, ki_, kd_;
+    float last_error_;
+    float integral(float error, float dt) {
+        return (last_error_ + error) * dt;
+    }
+    float derivative(float error) {
+        return error - last_error_;
+    }
+};
+
+// Node constants
+const float GAIN = 1.0f; // Motor command gain
+const float KP = 2.0f;   // Proportional gain
+const float KI = 0.5f;   // Integral gain
+const float KD = 0.2f;   // Derivative gain
+
+int main() {
+    MotorSpeedController node(KP, KI, KD);
+
+    // Simulate motor speed control
+    while (true) {
+        float desired_speed = 1000.0f; // Desired motor speed in RPM
+        float velocity_feedback = 900.0f; // Actual motor velocity in RPM
+
+        node.update(desired_speed, velocity_feedback);
+        float motor_command = node.getMotorCommand();
+
+        std::cout << ""Desired Speed: "" << desired_speed << "" RPM\n"";
+        std::cout << ""Velocity Feedback: "" << velocity_feedback << "" RPM\n"";
+        std::cout << ""Motor Command: "" << motor_command << ""\n"";
+    }
+    return 0;
+}",0
+154,generate a c++ planning sub node,"class PlanningSubNode {
+public:
+    PlanningSubNode(int id, std::string name, double cost, int duration) :
+        id(id), name(name), cost(cost), duration(duration) {}
+
+    int getId() const { return id; }
+    std::string getName() const { return name; }
+    double getCost() const { return cost; }
+    int getDuration() const { return duration; }
+
+private:
+    int id;
+    std::string name;
+    double cost;
+    int duration;
+};",0
+157,generate a c++ sub in node,"const childProcess = require('child_process');
+
+// Create a new process that runs the C++ executable
+const proc = childProcess.spawn('g++', ['your_cpp_file.cpp', '-o', 'output.exe']);
+
+// Set up the stdin, stdout, and stderr streams
+proc.stdin.setEncoding('utf8');
+proc.stdout.setEncoding('utf8');
+proc.stderr.setEncoding('utf8');
+
+// Pipe some data to the process's stdin stream
+proc.stdin.write('Hello, C++ program!\n');
+proc.stdin.end();
+
+// Handle the output from the process
+proc.stdout.on('data', (data) => {
+  console.log(`Output from C++ program: ${data}`);
+});
+
+proc.stderr.on('data', (data) => {
+  console.error(`Error from C++ program: ${data}`);
+});
+
+// Wait for the process to finish, then check its exit code
+proc.on('exit', (code) => {
+  if (code === 0) {
+    console.log('C++ program exited successfully');
+  } else {
+    console.error(`C++ program exited with error code ${code}`);
+  }
+});",0
+160,generate a c++ sub sub node,"#include <string>
+#include <vector>
+
+struct Node {
+  std::string name;
+  Node* parent;
+  std::vector<Node*> children;
+  void* data; // or any other type you want to use for storing data
+
+  Node(const std::string& name, Node* parent = nullptr) 
+    : name(name), parent(parent), children({}) {}
+};",0
+163,generate a c++ sub sub sensor robot node,"#include <ros/node.h>
+#include <ros/publish.h>
+#include <sensor_msgs/msg/LaserScan.h>
+
+class SubSensorNode {
+public:
+  SubSensorNode() : it_(ros::NodeHandle().subscribe(""sub_sensor_data"", 10)) {}
+
+  void run() {
+    while (ros::ok()) {
+      sensor_msgs::LaserScan::Ptr scan(new sensor_msgs::LaserScan());
+      // Simulate subsurface data
+      scan->header.stamp = ros::Time::now();
+      scan->angle_min = -M_PI/2.0;
+      scan->angle_max = M_PI/2.0;
+      scan->range_min = 0.1;
+      scan->range_max = 5.0;
+      // Add some random data
+      for (int i = 0; i < 360; ++i) {
+        float range = (rand() / static_cast<float>(RAND_MAX)) * 4.0 + 1.0;
+        scan->ranges.push_back(range);
+      }
+      it_.publish(scan);
+      ros::spinOnce();
+    }
+  }
+
+private:
+  ros::Subscriber it_;
+};
+
+int main(int argc, char** argv) {
+  // Initialize ROS node
+  ros::init(argc, argv, ""sub_sensor_node"");
+  ros::NodeHandle nh;
+  SubSensorNode node;
+
+  // Run the node
+  while (ros::ok()) {
+    node.run();
+    ros::spinOnce();
+  }
+
+  return 0;
+}",0
+168,robot generate a c++ sub node,"// MyRobot.cpp (generated by the robot)
+
+#include ""MyRobot.h""
+#include <iostream>
+
+MyRobot::MyRobot() : Robot() {
+  // Initialize robot state here
+}
+
+void MyRobot::moveForward() {
+  std::cout << ""Moving forward..."" << std::endl;
+}
+
+void MyRobot::turnLeft() {
+  std::cout << ""Turning left..."" << std::endl;
+}
+
+void MyRobot::turnRight() {
+  std::cout << ""Turning right..."" << std::endl;
+}",0
+169,generate a c++ sub in sensor node,"#include <iostream>
+#include <string>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <unistd.h>
+
+using namespace std;
+
+#define PORT 12345 // Port number to listen on
+
+class SensorNode {
+public:
+    int start();
+    void readSensors();
+    void sendData();
+
+private:
+    int sock; // Socket for communication
+    string sensorData; // Data from sensors
+};
+
+int SensorNode::start() {
+    // Create a socket
+    sock = socket(AF_INET, SOCK_DGRAM, 0);
+
+    if (sock < 0) {
+        cerr << ""Error creating socket."" << endl;
+        return -1;
+    }
+
+    // Set up the server address
+    sockaddr_in serv_addr;
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_port = htons(PORT);
+    inet_pton(AF_INET, ""127.0.0.1"", &serv_addr.sin_addr);
+
+    // Bind the socket to the port
+    if (bind(sock, (sockaddr*)&serv_addr, sizeof(serv_addr)) < 0) {
+        cerr << ""Error binding socket."" << endl;
+        return -1;
+    }
+
+    cout << ""Sensor node started. Listening on port "" << PORT << ""."" << endl;
+
+    return 0;
+}
+
+void SensorNode::readSensors() {
+    // Simulate reading sensor data
+    sensorData = ""Temperature: 25.5, Humidity: 60%"";
+    cout << ""Read sensors: "" << sensorData << endl;
+}
+
+void SensorNode::sendData() {
+    // Send the sensor data over the socket
+    string sendData = sensorData + ""\n"";
+    send(sock, sendData.c_str(), sendData.size(), 0);
+
+    cout << ""Sent sensor data."" << endl;
+}
+
+int main(int argc, char* argv[]) {
+    SensorNode node;
+
+    if (node.start() < 0) {
+        return -1;
+    }
+
+    while (true) {
+        // Read sensors
+        node.readSensors();
+
+        // Send the sensor data
+        node.sendData();
+    }
+
+    return 0;
+}",3.221789165324914
+170,generate data a c++ sub node,"#include <iostream>
+#include <vector>
+#include <algorithm>
+
+struct Node {
+    int data;
+    std::vector<Node*> children;
+
+    Node(int value) : data(value) {}
+};
+
+void generateRandomData(Node* node, int maxDepth, int maxValue) {
+    if (maxDepth == 0) {
+        return; // base case: no more recursion
+    }
+
+    node->data = rand() % maxValue;
+    for (int i = 0; i < rand() % 5 + 1; i++) { // generate random number of children
+        Node* child = new Node(rand() % maxValue);
+        node->children.push_back(child);
+        generateRandomData(child, maxDepth - 1, maxValue); // recursive call to generate subnodes
+    }
+}
+
+int main() {
+    srand(time(0)); // seed the random generator
+
+    Node root(0);
+    generateRandomData(&root, 4, 100);
+
+    // print out the generated data
+    std::cout << ""Root node: "" << root.data << std::endl;
+    for (const auto& child : root.children) {
+        std::cout << ""Child node: "" << child->data << std::endl;
+        for (const auto& grandchild : child->children) {
+            std::cout << ""Grandchild node: "" << grandchild->data << std::endl;
+        }
+    }
+
+    return 0;
+}",3.4031588288405636
+177,generate a c++ node,"class Node {
+public:
+    int value;
+    Node* next;
+
+    // Constructor
+    Node(int val) : value(val), next(nullptr) {}
+
+    // Destructor
+    ~Node() {}
+
+    // Print the node's value
+    void printValue() {
+        std::cout << ""Node value: "" << value << std::endl;
+    }
+};",0
+199,construct a c++ sub node,"struct Node {
+    int value; // the value stored in this node
+    Node* left; // pointer to the left child node
+    Node* right; // pointer to the right child node
+};
+
+// Example usage:
+
+Node* root = new Node;
+root->value = 5;
+
+Node* leftChild = new Node;
+leftChild->value = 2;
+
+Node* rightChild = new Node;
+rightChild->value = 8;
+
+root->left = leftChild;
+root->right = rightChild;",0

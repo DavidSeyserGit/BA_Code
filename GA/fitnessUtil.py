@@ -1,8 +1,129 @@
 import logging
-import radon.complexity as radon_complexity
-import radon.metrics as radon_metrics
-import radon.raw as radon_raw
+import re
+import math
+from collections import Counter
+#import radon.complexity as radon_complexity
+#import radon.metrics as radon_metrics
+#import radon.raw as radon_raw
 # import language_tool_python
+
+def halsteadVolume(code):
+    # Tokenize the code
+    tokens = re.findall(r'\b\w+\b|[^\w\s]', code)
+
+    # Define operators and categorize tokens
+    operators = set(['+', '-', '*', '/', '%', '++', '--', '==', '!=', '>', '<', '>=', '<=', 
+                     '&&', '||', '!', '&', '|', '^', '~', '<<', '>>', '=', '+=', '-=', 
+                     '*=', '/=', '%=', '&=', '|=', '^=', '<<=', '>>='])
+    operands = set()
+
+    operator_count = Counter()
+    operand_count = Counter()
+
+    for token in tokens:
+        if token in operators:
+            operator_count[token] += 1
+        else:
+            operands.add(token)
+            operand_count[token] += 1
+
+    # Calculate Halstead metrics
+    n1 = len(operator_count)
+    n2 = len(operand_count)
+    N1 = sum(operator_count.values())
+    N2 = sum(operand_count.values())
+
+    n = n1 + n2
+    N = N1 + N2
+
+    if n == 0:
+        V = 0
+    else:
+        V = N * math.log2(n)
+
+    if n2 == 0:
+        D = 0
+    else:
+        D = (n1 / 2) * (N2 / n2)
+
+    E = D * V
+
+    return 1/V #higher V indicates more complex code
+
+
+def Complexity(code):
+    tokens = re.findall(r'\b\w+\b|[^\w\s]', code)
+
+    complexity_keywords = set(['if', 'else', 'while', 'for', 'case', '&&', '||', 'catch', 'throw', '?', 'return'])
+
+    nodes = 1
+    edges = 0
+
+    # Count the nodes and edges based on the tokens
+    for token in tokens:
+        if token in complexity_keywords:
+            nodes += 1
+            edges += 2
+        elif token == 'else':
+            edges += 1
+
+    P = 1  
+    cyclomatic_complexity = edges - nodes + 2 * P
+
+    return 1/cyclomatic_complexity
+
+
+def CodePromptLength(prompt, code):
+    if not isinstance(code, str) or code is None:
+        code_length = float('inf')  #penalize for no code
+    else:
+        code_length =  len(code)
+        
+    prompt_length = len(prompt)
+    
+    return prompt_length, code_length
+
+
+def LevenshteinDistance(code, kc):
+    if code is None:
+        return float('inf')
+    
+    with open('target.txt', 'r') as file:
+        target = file.read()
+
+    m = len(code)
+    n = len(target)
+    
+    # Create a matrix to store the distances
+    dp = [[0] * (n + 1) for _ in range(m + 1)]
+
+    # Base cases: initialize first row and column
+    for i in range(m + 1):
+        dp[i][0] = i
+    for j in range(n + 1):
+        dp[0][j] = j
+
+    # Compute the distances
+    for i in range(1, m + 1):
+        for j in range(1, n + 1):
+            if code[i - 1] == target[j - 1]:
+                dp[i][j] = dp[i - 1][j - 1]
+            else:
+                dp[i][j] = min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]) + 1
+    # Return the Levenshtein distance
+    return kc / ((dp[m][n])+1)
+
+def hasDoubleWords(prompt): #if any duplicate words are present the score gets SUBTRACTED from the current score
+    words = prompt.lower().split()
+    return (len(words) != len(set(words))) #set only allows one instance of every entry so when words == set(words), any word is not duplicate
+
+def grammarScore():
+    pass
+
+
+'''
+radon only works for python code
+    -> write the same for a cpp code.
 
 def Complexity(code):
     if code is None:
@@ -45,7 +166,7 @@ def Complexity(code):
         
         )
         return fitness
-    
+    #apperantly gets a syntax error here with cpp code.
     except SyntaxError as se:
         logging.error(f"Syntax error in code: {se}")
         return 0
@@ -55,58 +176,3 @@ def Complexity(code):
         return 0
 
 '''
-def grammatical_score(prompt):
-    try:
-        # Initialize the grammar checker
-        tool = language_tool_python.LanguageTool('en-US')
-
-        # Check for grammar errors in the prompt
-        matches = tool.check(prompt)
-        
-        # If no grammar errors are found, return a high score
-        return(1/len(matches) if len(matches) > 0 else 1)
-    
-    except Exception as e:
-        print(f"Error checking grammar: {e}")
-        return 0
-'''
-
-def CodePromptLength(code, prompt, ka, kb):
-    if not isinstance(code, str) or code is None:
-        code_length = float('inf')  #penalize for no code
-    else:
-        code_length = kb * len(code)
-        
-    prompt_length = ka * len(prompt)
-    
-    return prompt_length, code_length
-
-
-def LevenshteinDistance(code, kc):
-    if code is None:
-        return float('inf')
-    
-    with open('target.txt', 'r') as file:
-        target = file.read()
-
-    m = len(code)
-    n = len(target)
-    
-    # Create a matrix to store the distances
-    dp = [[0] * (n + 1) for _ in range(m + 1)]
-
-    # Base cases: initialize first row and column
-    for i in range(m + 1):
-        dp[i][0] = i
-    for j in range(n + 1):
-        dp[0][j] = j
-
-    # Compute the distances
-    for i in range(1, m + 1):
-        for j in range(1, n + 1):
-            if code[i - 1] == target[j - 1]:
-                dp[i][j] = dp[i - 1][j - 1]
-            else:
-                dp[i][j] = min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]) + 1
-    # Return the Levenshtein distance
-    return kc / ((dp[m][n])+1)

@@ -21,27 +21,33 @@ def codeFromOpenai(prompt, model):
         
 def codeFromOllama(prompt, model):
     try:
-        url = 'http://localhost:11434/api/generate' #ollama api url
+        url = 'http://localhost:11434/api/generate' # ollama api url
         data = {
             "model": model,
             "prompt": prompt,
             "stream": False
         }
         r = requests.post(url, json=data)
-        if r.status_code == 200: #connection is succesful
+        if r.status_code == 200: # connection is successful
             response_data = r.json()
-            response = response_data.get('response') #filtering the output of the LLM to only the repsonse
-            start_index = response.find("```") #filtering for the codeblock
+            response = response_data.get('response') # filtering the output of the LLM to only the response
+            start_index = response.find("```") # filtering for the code block
             if start_index == -1:
                 return None
             end_index = response.find("```", start_index + 3)
             if end_index == -1:
                 return None 
             codeBlock = response[start_index + 3 : end_index].strip()
-            if codeBlock.startswith("python"):
-                codeBlock = codeBlock[len("python"):].strip()
+            
+            # Remove any language identifier at the beginning of the code block
+            first_line_end = codeBlock.find('\n')
+            if first_line_end != -1:
+                first_line = codeBlock[:first_line_end].strip()
+                if first_line.isalpha():
+                    codeBlock = codeBlock[first_line_end + 1:].strip()
+            
             return codeBlock
         
     except Exception as e:
-            logging.critical("Connection refused")
-    
+        logging.critical("Connection refused")
+        return None

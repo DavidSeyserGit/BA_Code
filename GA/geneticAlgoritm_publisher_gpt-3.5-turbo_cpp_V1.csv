@@ -1,0 +1,1845 @@
+generation,prompt,code,fitness
+0,make a ROS1 publisher in cpp,"#include ""ros/ros.h""
+#include ""std_msgs/String.h""
+
+int main(int argc, char **argv) {
+    // Initialize the ROS node
+    ros::init(argc, argv, ""publisher_node"");
+    ros::NodeHandle node;
+
+    // Create a publisher with topic name ""chatter"" and message type ""std_msgs/String""
+    ros::Publisher chatter_pub = node.advertise<std_msgs::String>(""chatter"", 10);
+
+    // Set the loop rate
+    ros::Rate loop_rate(1); // 1 Hz
+
+    int count = 0;
+    while (ros::ok()) {
+        // Create a message
+        std_msgs::String msg;
+        msg.data = ""Hello, ROS! "" + std::to_string(count);
+
+        // Publish the message
+        chatter_pub.publish(msg);
+
+        // Log the message to the console
+        ROS_INFO(""Published: %s"", msg.data.c_str());
+
+        // Spin once to process callbacks
+        ros::spinOnce();
+
+        // Sleep for the remaining time to achieve the specified loop rate
+        loop_rate.sleep();
+
+        count++;
+    }
+
+    return 0;
+}",9.160660633167724
+0,code ROS pub in cpp,"// Include ROS library
+#include <ros/ros.h>
+// Include custom message
+#include <your_package_name/CustomMsg.h>
+
+int main(int argc, char **argv) {
+    // Initialize ROS node
+    ros::init(argc, argv, ""custom_publisher"");
+    
+    // Create a node handle
+    ros::NodeHandle nh;
+    
+    // Create a publisher for CustomMsg on topic ""/custom_topic""
+    ros::Publisher pub = nh.advertise<your_package_name::CustomMsg>(""/custom_topic"", 10);
+    
+    // Set loop rate in Hz
+    ros::Rate loop_rate(10);
+    
+    // Create a custom message object
+    your_package_name::CustomMsg msg;
+    
+    // Fill in the custom message fields
+    msg.field1 = 1;
+    msg.field2 = 2.0;
+    msg.field3 = ""Hello, ROS!"";
+    
+    while (ros::ok()) {
+        // Publish the custom message
+        pub.publish(msg);
+        
+        // Print a message
+        ROS_INFO(""Custom message published"");
+        
+        // Spin once to process callbacks
+        ros::spinOnce();
+        
+        // Sleep to maintain the loop rate
+        loop_rate.sleep();
+    }
+    
+    return 0;
+}",0
+0,create a publisher for ROS in c++,"#include <ros/ros.h>
+#include <std_msgs/Int32.h>
+
+int main(int argc, char **argv) {
+    // Initialize the ROS node
+    ros::init(argc, argv, ""example_publisher"");
+    ros::NodeHandle nh;
+
+    // Create a publisher object
+    ros::Publisher pub = nh.advertise<std_msgs::Int32>(""/example_topic"", 10);
+
+    // Set the loop rate
+    ros::Rate loop_rate(1); // 1 Hz
+
+    int count = 0;
+    
+    while (ros::ok()) {
+        // Create a message object
+        std_msgs::Int32 msg;
+        msg.data = count;
+
+        // Publish the message
+        pub.publish(msg);
+
+        // Log the published message
+        ROS_INFO(""Published: %d"", msg.data);
+
+        // Spin once
+        ros::spinOnce();
+
+        // Sleep to maintain loop rate
+        loop_rate.sleep();
+
+        count++;
+    }
+
+    return 0;
+}",9.48475368897901
+0,generate a c++ pub node,"#include <ros/ros.h>
+#include <std_msgs/Int32.h>
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""publisher_node"");
+    ros::NodeHandle nh;
+
+    ros::Publisher pub = nh.advertise<std_msgs::Int32>(""number"", 10); // Topic: ""number"", Queue size: 10
+
+    ros::Rate loop_rate(1); // Publish at 1 Hz
+
+    int count = 0;
+
+    while (ros::ok()) {
+        std_msgs::Int32 msg;
+        msg.data = count;
+
+        ROS_INFO(""Publishing: %d"", msg.data);
+        pub.publish(msg);
+
+        ros::spinOnce();
+        loop_rate.sleep();
+
+        count++;
+    }
+
+    return 0;
+}",9.788997772096941
+1,generate a publisher for ROS in c++,"#include ""ros/ros.h""
+#include ""std_msgs/String.h""
+
+int main(int argc, char **argv) {
+    // Initialize the ROS node
+    ros::init(argc, argv, ""publisher_node"");
+    ros::NodeHandle nh;
+
+    // Create a publisher for publishing messages of type std_msgs::String on the 'chatter' topic
+    ros::Publisher pub = nh.advertise<std_msgs::String>(""chatter"", 10);
+
+    // Define the rate at which to publish messages (1 message per second)
+    ros::Rate loop_rate(1);
+
+    int count = 0;
+    while (ros::ok()) {
+        std_msgs::String msg;
+        msg.data = ""Hello, world! Count: "" + std::to_string(count);
+
+        // Publish the message
+        pub.publish(msg);
+
+        // Log the message to the console
+        ROS_INFO(""%s"", msg.data.c_str());
+
+        ros::spinOnce(); // Process callback functions
+
+        loop_rate.sleep(); // Sleep to maintain the specified publishing rate
+        count++;
+    }
+
+    return 0;
+}",9.163368502018098
+4,generate a c++ for ROS in c++,"#include <ros/ros.h>
+#include <std_msgs/String.h>
+
+int main(int argc, char** argv) {
+    // Initialize the ROS node
+    ros::init(argc, argv, ""publisher_node"");
+    ros::NodeHandle nh;
+
+    // Create a Publisher object
+    ros::Publisher pub = nh.advertise<std_msgs::String>(""my_topic"", 10);
+
+    // Set the loop rate (in Hz)
+    ros::Rate loop_rate(1); // 1 Hz
+
+    while (ros::ok()) {
+        // Create a message
+        std_msgs::String msg;
+        msg.data = ""Hello, ROS!"";
+
+        // Publish the message
+        pub.publish(msg);
+
+        // Log message to the console
+        ROS_INFO(""Message sent: %s"", msg.data.c_str());
+
+        // Spin once
+        ros::spinOnce();
+
+        // Sleep to maintain the loop rate
+        loop_rate.sleep();
+    }
+
+    return 0;
+}",6.519512971426996
+5,generate a publisher for ROS in data c++,"#include ""ros/ros.h""
+#include ""std_msgs/String.h""
+
+int main(int argc, char** argv) {
+    // Initialize the ROS node
+    ros::init(argc, argv, ""custom_publisher_node"");
+    ros::NodeHandle nh;
+
+    // Create a publisher that publishes messages of type std_msgs::String on the topic ""custom_topic""
+    ros::Publisher pub = nh.advertise<std_msgs::String>(""custom_topic"", 10);
+
+    // Set the loop rate in Hz
+    ros::Rate loop_rate(1); // 1 Hz
+
+    int count = 0;
+    while (ros::ok()) {
+        // Create a message object
+        std_msgs::String msg;
+        msg.data = ""Hello, ROS! Count: "" + std::to_string(count);
+
+        // Publish the message
+        pub.publish(msg);
+
+        // Log info to the console
+        ROS_INFO(""%s"", msg.data.c_str());
+
+        // Spin once to handle callbacks
+        ros::spinOnce();
+
+        // Sleep for the remaining time to achieve the desired loop rate
+        loop_rate.sleep();
+
+        // Increment the count
+        count++;
+    }
+
+    return 0;
+}",9.12008996106079
+9,generate a publisher for ROS in,"#!/usr/bin/env python
+
+import rospy
+from your_package.msg import CustomMessage
+
+def publisher():
+    # Initialize the ROS node
+    rospy.init_node('custom_publisher', anonymous=True)
+
+    # Create a publisher object
+    pub = rospy.Publisher('custom_topic', CustomMessage, queue_size=10)
+
+    # Create a custom message
+    msg = CustomMessage()
+    msg.data = ""Hello, world!""
+    msg.value = 42
+
+    # Publish the message at 1 Hz
+    rate = rospy.Rate(1)
+    while not rospy.is_shutdown():
+        pub.publish(msg)
+        rate.sleep()
+
+if __name__ == '__main__':
+    try:
+        publisher()
+    except rospy.ROSInterruptException:
+        pass",0
+10,generate a c++ pub cpp,"#include ""ros/ros.h""
+#include ""std_msgs/String.h""
+
+int main(int argc, char **argv) {
+    // Initialize the ROS node
+    ros::init(argc, argv, ""publisher_node"");
+    ros::NodeHandle nh;
+
+    // Create a Publisher object
+    ros::Publisher pub = nh.advertise<std_msgs::String>(""topic_name"", 10);
+
+    // Set the loop rate
+    ros::Rate loop_rate(1);
+
+    int count = 0;
+    
+    while (ros::ok()) {
+        // Create a message object
+        std_msgs::String msg;
+        msg.data = ""Hello, ROS! Count: "" + std::to_string(count);
+
+        // Publish the message
+        pub.publish(msg);
+
+        ROS_INFO(""%s"", msg.data.c_str());
+
+        // Spin once to let the node execute any callbacks
+        ros::spinOnce();
+
+        // Sleep for the remaining time to meet the loop frequency
+        loop_rate.sleep();
+        
+        count++;
+    }
+
+    return 0;
+}",9.232427159282159
+13,generate a c++ pub ROS in c++,"#include <ros/ros.h>
+#include <std_msgs/Int32.h>
+#include <cstdlib> // For generating random numbers
+
+int main(int argc, char **argv) {
+    ros::init(argc, argv, ""random_number_publisher_node"");
+    ros::NodeHandle nh;
+
+    ros::Publisher pub = nh.advertise<std_msgs::Int32>(""/random_numbers"", 10);
+    ros::Rate loop_rate(1); // Publishing rate of 1Hz
+
+    while (ros::ok()) {
+        std_msgs::Int32 msg;
+        msg.data = rand() % 100; // Generate a random number between 0 and 99
+
+        pub.publish(msg);
+        ROS_INFO(""Published random number: %d"", msg.data);
+
+        ros::spinOnce();
+        loop_rate.sleep();
+    }
+
+    return 0;
+}",6.689431212422866
+15,generate localization a c++ pub ROS in c++,"#include <ros/ros.h>
+#include <geometry_msgs/Pose2D.h>
+
+int main(int argc, char **argv) {
+    // Initialize the ROS node
+    ros::init(argc, argv, ""localization_publisher"");
+    ros::NodeHandle nh;
+
+    // Create a publisher for robot localization data
+    ros::Publisher pose_pub = nh.advertise<geometry_msgs::Pose2D>(""/robot_pose"", 10);
+
+    // Set the update rate for publishing (e.g., update at 10Hz)
+    ros::Rate rate(10); // 10Hz
+
+    while (ros::ok()) {
+        // Create a Pose2D message
+        geometry_msgs::Pose2D pose_msg;
+        
+        // Populate the pose message with localization data
+        pose_msg.x = 1.0; // Example x position
+        pose_msg.y = 2.0; // Example y position
+        pose_msg.theta = 0.7854; // Example orientation (45 degrees in radians)
+
+        // Publish the localization data
+        pose_pub.publish(pose_msg);
+
+        // Spin once to process callbacks
+        ros::spinOnce();
+
+        // Sleep for the remaining time to meet the desired update rate
+        rate.sleep();
+    }
+
+    return 0;
+}",5.804778232867479
+18,a c++ for ROS in c++,"#include ""ros/ros.h""
+#include ""std_msgs/String.h""
+
+void messageCallback(const std_msgs::String::ConstPtr& msg) {
+    ROS_INFO(""Received message: %s"", msg->data.c_str());
+}
+
+int main(int argc, char **argv) {
+    ros::init(argc, argv, ""listener_node"");
+    ros::NodeHandle nh;
+
+    ros::Subscriber sub = nh.subscribe(""chatter"", 1000, messageCallback);
+
+    ros::spin();
+
+    return 0;
+}",1.8244373976487651
+29,generate a publisher planning for ROS in c++,"#include ""ros/ros.h""
+#include ""std_msgs/String.h""
+
+int main(int argc, char **argv) {
+    // Initialize the ROS node
+    ros::init(argc, argv, ""publisher_node"");
+    ros::NodeHandle nh;
+
+    // Create a publisher with topic name and queue size
+    ros::Publisher pub = nh.advertise<std_msgs::String>(""/example_topic"", 10);
+
+    // Set the publish rate (e.g., 1 message every 1 second)
+    ros::Rate loop_rate(1);
+
+    int count = 0;
+    while (ros::ok()) {
+        // Create a message
+        std_msgs::String msg;
+        msg.data = ""Hello, World! "" + std::to_string(count);
+
+        // Publish the message
+        pub.publish(msg);
+
+        // Log the published message
+        ROS_INFO(""Published: %s"", msg.data.c_str());
+
+        // Sleep to maintain the publish rate
+        loop_rate.sleep();
+
+        // Update the count
+        count++;
+    }
+
+    return 0;
+}",9.449879857095716
+30,produce a c++ pub ROS in c++,"#include ""ros/ros.h""
+#include ""std_msgs/Int32.h""
+
+int main(int argc, char **argv) {
+    // Initialize the ROS node
+    ros::init(argc, argv, ""publisher_node"");
+    ros::NodeHandle nh;
+
+    // Create a publisher on the 'number' topic
+    ros::Publisher pub = nh.advertise<std_msgs::Int32>(""number"", 10);
+    
+    // Set the loop rate
+    ros::Rate loop_rate(1); // Publish at 1 Hz
+
+    int count = 0;
+    
+    while (ros::ok()) {
+        std_msgs::Int32 msg;
+        msg.data = count;
+
+        // Publish the message
+        pub.publish(msg);
+
+        ROS_INFO(""Published: %d"", msg.data);
+
+        ros::spinOnce();
+        loop_rate.sleep();
+
+        count++;
+    }
+
+    return 0;
+}",6.602178284478139
+32,a publisher for ROS in c++,"#include ""ros/ros.h""
+#include ""your_custom_msg_package/CustomMessage.h"" // Adjust this line with your custom message package and message type
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""custom_publisher_node"");
+    ros::NodeHandle nh;
+
+    ros::Publisher pub = nh.advertise<your_custom_msg_package::CustomMessage>(""custom_message_topic"", 10); // Adjust the topic and queue size
+
+    ros::Rate loop_rate(10); // Adjust the frequency
+
+    int count = 0;
+    while (ros::ok()) {
+        your_custom_msg_package::CustomMessage msg;
+        msg.data = count;
+
+        pub.publish(msg);
+        ROS_INFO(""Published: %d"", msg.data);
+
+        ros::spinOnce();
+        loop_rate.sleep();
+        count++;
+    }
+
+    return 0;
+}",0
+39,generate a c++ pub ROS c++,"#include <ros/ros.h>
+#include <std_msgs/Int32.h>
+#include <cstdlib>
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""publisher_node"");
+    ros::NodeHandle nh;
+
+    ros::Publisher pub = nh.advertise<std_msgs::Int32>(""random_numbers"", 10);
+
+    ros::Rate loop_rate(1);  // Publish at 1Hz
+
+    while (ros::ok()) {
+        std_msgs::Int32 msg;
+        msg.data = rand() % 100;  // Generate random integer between 0 and 99
+
+        pub.publish(msg);
+        ROS_INFO(""Published: %d"", msg.data);
+
+        ros::spinOnce();
+        loop_rate.sleep();
+    }
+
+    return 0;
+}",6.825008643799515
+40,generate a execution publisher for ROS in c++,"#include <ros/ros.h>
+#include <std_msgs/String.h>
+
+int main(int argc, char **argv) {
+    // Initialize the ROS node
+    ros::init(argc, argv, ""publisher_node"");
+    ros::NodeHandle nh;
+
+    // Create a publisher with topic name ""chatter"" that will publish std_msgs::String messages
+    ros::Publisher chatter_pub = nh.advertise<std_msgs::String>(""chatter"", 10);
+
+    ros::Rate loop_rate(1); // Message publishing rate (1 Hz)
+
+    int count = 0;
+    while (ros::ok()) {
+        std_msgs::String msg;
+        msg.data = ""Hello, ROS! Count: "" + std::to_string(count);
+
+        ROS_INFO(""%s"", msg.data.c_str());
+
+        chatter_pub.publish(msg); // Publish the message
+
+        ros::spinOnce(); // Process callbacks
+
+        loop_rate.sleep(); // Sleep to maintain 1 Hz publishing rate
+        count++;
+    }
+
+    return 0;
+}",9.519514736192868
+45,generate a c++ pub for ROS in c++,"#include ""ros/ros.h""
+#include ""std_msgs/Int32.h""
+
+int main(int argc, char **argv) {
+    // Initialize the ROS node
+    ros::init(argc, argv, ""publisher_node"");
+    ros::NodeHandle nh;
+
+    // Create a publisher for publishing integer messages on the topic '/counter'
+    ros::Publisher pub = nh.advertise<std_msgs::Int32>(""/counter"", 10);
+
+    // Set the publishing rate (1 Hz in this case)
+    ros::Rate rate(1);
+
+    int count = 0;
+    while (ros::ok()) {
+        // Create an integer message
+        std_msgs::Int32 msg;
+        msg.data = count;
+
+        // Publish the message
+        pub.publish(msg);
+
+        // Log the published message
+        ROS_INFO(""Published: %d"", msg.data);
+
+        // Increment the counter
+        count++;
+
+        // Spin once to process callbacks
+        ros::spinOnce();
+
+        // Sleep to maintain the publishing rate
+        rate.sleep();
+    }
+
+    return 0;
+}",5.989659495548164
+46,generate a c++ publisher for ROS in c++,"#include ""ros/ros.h""
+#include ""std_msgs/String.h""
+
+int main(int argc, char **argv) {
+    // Initialize the ROS node
+    ros::init(argc, argv, ""publisher_node"");
+    ros::NodeHandle nh;
+
+    // Create a publisher object
+    ros::Publisher pub = nh.advertise<std_msgs::String>(""chatter"", 10);
+
+    // Set the loop rate (in Hz)
+    ros::Rate loop_rate(1);
+
+    int count = 0;
+    while (ros::ok()) {
+        // Create a message object
+        std_msgs::String msg;
+        msg.data = ""Hello, world! "" + std::to_string(count);
+
+        // Publish the message
+        pub.publish(msg);
+
+        // Log the message to the console
+        ROS_INFO(""%s"", msg.data.c_str());
+
+        // Sleep to maintain the loop rate
+        loop_rate.sleep();
+
+        count++;
+    }
+
+    return 0;
+}",6.556959004767508
+47,generate a execution robot publisher for spin ROS in c++,"#include ""ros/ros.h""
+#include ""std_msgs/String.h""
+
+int main(int argc, char **argv) {
+    ros::init(argc, argv, ""robot_publisher_node"");
+    ros::NodeHandle nh;
+
+    ros::Publisher robot_publisher = nh.advertise<std_msgs::String>(""robot_topic"", 10);
+
+    ros::Rate loop_rate(1); // 1 Hz
+
+    int count = 0;
+    while (ros::ok()) {
+        std_msgs::String msg;
+        msg.data = ""Hello, I am the robot! Count: "" + std::to_string(count);
+
+        ROS_INFO(""%s"", msg.data.c_str());
+
+        robot_publisher.publish(msg);
+
+        ros::spinOnce();
+        loop_rate.sleep();
+
+        count++;
+    }
+
+    return 0;
+}",10.061531217584399
+48,generate a execution robot publisher c++,"#include <ros/ros.h>
+#include <std_msgs/String.h>
+
+int main(int argc, char** argv) {
+    // Initialize the ROS node
+    ros::init(argc, argv, ""robot_publisher_node"");
+    ros::NodeHandle nh;
+
+    // Create a publisher for publishing messages to the 'robot_command' topic
+    ros::Publisher pub = nh.advertise<std_msgs::String>(""robot_command"", 10);
+
+    // Set the publishing rate
+    ros::Rate rate(1);  // 1Hz
+
+    // Main loop to publish messages
+    while (ros::ok()) {
+        std_msgs::String msg;
+        msg.data = ""Move forward""; // Message to be published
+
+        // Publish the message
+        pub.publish(msg);
+
+        // Log the published message
+        ROS_INFO(""Published: %s"", msg.data.c_str());
+
+        // Wait for the next iteration
+        rate.sleep();
+    }
+
+    return 0;
+}",9.053778020439514
+49,generate a execution robot node,"#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import String
+
+class RobotControllerNode:
+    def __init__(self):
+        rospy.init_node('robot_controller_node', anonymous=True)
+        self.command_sub = rospy.Subscriber('robot_commands', String, self.command_callback)
+
+    def command_callback(self, data):
+        command = data.data
+        rospy.loginfo(""Received command: %s"", command)
+        
+        if command == 'move_forward':
+            self.move_forward()
+        elif command == 'turn_left':
+            self.turn_left()
+        elif command == 'turn_right':
+            self.turn_right()
+        else:
+            rospy.logwarn(""Unknown command received: %s"", command)
+
+    def move_forward(self):
+        rospy.loginfo(""Moving forward..."")
+
+    def turn_left(self):
+        rospy.loginfo(""Turning left..."")
+
+    def turn_right(self):
+        rospy.loginfo(""Turning right..."")
+
+if __name__ == '__main__':
+    try:
+        robot_controller = RobotControllerNode()
+        rospy.spin()
+    except rospy.ROSInterruptException:
+        pass",0
+56,generate a execution pub node,"#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import Int32
+
+class PublisherNode:
+    def __init__(self):
+        rospy.init_node('publisher_node', anonymous=True)
+        self.pub = rospy.Publisher('my_topic', Int32, queue_size=10)
+
+    def publish_data(self):
+        rate = rospy.Rate(1)  # 1Hz
+        count = 0
+
+        while not rospy.is_shutdown():
+            data_to_publish = count
+            rospy.loginfo(""Publishing: %d"" % data_to_publish)
+            self.pub.publish(data_to_publish)
+            count += 1
+            rate.sleep()
+
+if __name__ == '__main__':
+    try:
+        node = PublisherNode()
+        node.publish_data()
+    except rospy.ROSInterruptException:
+        pass",0
+61,generate a c++ control pub node,"#include ""ros/ros.h""
+#include ""std_msgs/Float32.h""
+
+int main(int argc, char **argv) {
+    // Initialize the ROS node
+    ros::init(argc, argv, ""control_publisher_node"");
+    ros::NodeHandle nh;
+
+    // Create a publisher for sending control commands
+    ros::Publisher control_pub = nh.advertise<std_msgs::Float32>(""control_commands"", 10);
+
+    // Set the control frequency (in Hz)
+    double control_frequency = 10; // 10 Hz
+    ros::Rate loop_rate(control_frequency);
+
+    // Main control loop
+    while (ros::ok()) {
+        // Create a control command message
+        std_msgs::Float32 control_msg;
+        control_msg.data = 1.0; // Example control command value
+
+        // Publish the control command
+        control_pub.publish(control_msg);
+
+        // Log the control command
+        ROS_INFO(""Published Control Command: %.2f"", control_msg.data);
+
+        ros::spinOnce();
+        loop_rate.sleep();
+    }
+
+    return 0;
+}",9.118762010301275
+65,build a execution robot node,"#!/usr/bin/env python
+
+import rospy
+
+class RobotExecutorNode:
+    def __init__(self):
+        rospy.init_node('robot_executor_node', anonymous=True)
+        rospy.on_shutdown(self.shutdown)
+
+    def run(self):
+        rate = rospy.Rate(10)  # 10Hz
+        while not rospy.is_shutdown():
+            # Add your robot execution logic here
+            rospy.loginfo('Executing robot actions...')
+            rate.sleep()
+
+    def shutdown(self):
+        rospy.loginfo('Shutting down robot_executor_node...')
+
+if __name__ == '__main__':
+    try:
+        executor_node = RobotExecutorNode()
+        executor_node.run()
+    except rospy.ROSInterruptException:
+        pass",0
+66,generate a execution robot in cpp,"#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+class RobotExecutionNode {
+public:
+    RobotExecutionNode() : nh_(""~"") {
+        // Initialize publisher
+        pub_ = nh_.advertise<geometry_msgs::Twist>(""/cmd_vel"", 10);
+
+        // Setup any other initializations here
+
+        // Run the main loop
+        mainLoop();
+    }
+
+    void mainLoop() {
+        while (ros::ok()) {
+            executeMovement();
+            ros::spinOnce();
+            loop_rate_.sleep();
+        }
+    }
+
+    void executeMovement() {
+        // Create and populate the movement command
+        geometry_msgs::Twist cmd_vel_msg;
+        cmd_vel_msg.linear.x = 0.1; // Forward linear speed
+        cmd_vel_msg.angular.z = 0.0; // No angular speed
+
+        // Publish the movement command
+        pub_.publish(cmd_vel_msg);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Publisher pub_;
+    ros::Rate loop_rate_{10}; // 10Hz loop rate
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""robot_execution_node"");
+    RobotExecutionNode node;
+    return 0;
+}",9.267464189069276
+67,generate a pub node,"#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import Int32
+import random
+
+def publish_random_number():
+    rospy.init_node('random_number_publisher', anonymous=True)
+    pub = rospy.Publisher('/random_numbers', Int32, queue_size=10)
+    rate = rospy.Rate(1)  # 1Hz
+
+    while not rospy.is_shutdown():
+        random_number = random.randint(1, 100)
+        rospy.loginfo(""Publishing random number: %d"", random_number)
+        pub.publish(random_number)
+        rate.sleep()
+
+if __name__ == '__main__':
+    try:
+        publish_random_number()
+    except rospy.ROSInterruptException:
+        pass",0
+72,generate a execution robot ROS in c++,"#include ""ros/ros.h""
+#include ""std_msgs/String.h""
+
+// Callback function for the subscriber
+void sensorDataCallback(const std_msgs::String::ConstPtr& msg)
+{
+    // Process sensor data received
+    std::string processed_data = msg->data + "" Processed"";
+
+    // Publish processed data
+    ros::NodeHandle nh;
+    ros::Publisher processed_data_pub = nh.advertise<std_msgs::String>(""/processed_data"", 10);
+    std_msgs::String processed_data_msg;
+    processed_data_msg.data = processed_data;
+    processed_data_pub.publish(processed_data_msg);
+}
+
+int main(int argc, char **argv)
+{
+    // Initialize the ROS node
+    ros::init(argc, argv, ""processing_node"");
+    ros::NodeHandle nh;
+
+    // Subscribe to the sensor data topic
+    ros::Subscriber sensor_data_sub = nh.subscribe(""/sensor_data"", 10, sensorDataCallback);
+
+    // Spin to wait for callbacks
+    ros::spin();
+
+    return 0;
+}",3.9039068028473203
+79,generate publisher for ROS in c++,"#include ""ros/ros.h""
+#include ""std_msgs/Int32.h""
+
+int main(int argc, char **argv) {
+    ros::init(argc, argv, ""publisher_node"");
+    ros::NodeHandle nh;
+
+    // Create a publisher with topic name ""/counter"" and buffer size 10
+    ros::Publisher pub = nh.advertise<std_msgs::Int32>(""/counter"", 10);
+
+    ros::Rate loop_rate(1); // 1 Hz
+
+    int count = 0;
+    while (ros::ok()) {
+        std_msgs::Int32 msg;
+        msg.data = count;
+
+        // Publish the message
+        pub.publish(msg);
+
+        ROS_INFO(""Published: %d"", msg.data);
+
+        ros::spinOnce();
+        loop_rate.sleep();
+
+        count++;
+    }
+
+    return 0;
+}",9.709405510533117
+82,make a c++ pub node,"#include ""ros/ros.h""
+#include ""std_msgs/String.h""
+
+int main(int argc, char **argv) {
+    ros::init(argc, argv, ""publisher_node""); // Initialize the ROS node
+    ros::NodeHandle nh; // Create a NodeHandle
+
+    ros::Publisher pub = nh.advertise<std_msgs::String>(""/example_topic"", 10); // Create a publisher that publishes to the /example_topic topic
+
+    ros::Rate loop_rate(1); // Set the publishing rate (1 Hz)
+
+    int count = 0;
+    while (ros::ok()) {
+        std_msgs::String msg;
+        msg.data = ""Hello, world! "" + std::to_string(count); // Create a message to publish
+
+        pub.publish(msg); // Publish the message
+
+        ROS_INFO(""Published: %s"", msg.data.c_str());
+
+        ros::spinOnce(); // Process any incoming ROS messages
+
+        loop_rate.sleep(); // Sleep for the rest of the cycle to meet the specified rate
+        count++;
+    }
+
+    return 0;
+}",9.191085360021559
+85,generate process a c++ pub node,"#include ""ros/ros.h""
+#include ""your_custom_msg_package/YourCustomMsg.h""
+
+int main(int argc, char **argv) {
+    ros::init(argc, argv, ""publisher_node"");
+    ros::NodeHandle nh;
+
+    ros::Publisher pub = nh.advertise<your_custom_msg_package::YourCustomMsg>(""custom_topic"", 10);
+
+    ros::Rate loop_rate(10); // 10 Hz
+
+    while (ros::ok()) {
+        your_custom_msg_package::YourCustomMsg msg;
+        // Fill in the message data
+        msg.data = 42;
+
+        pub.publish(msg);
+
+        ros::spinOnce();
+        loop_rate.sleep();
+    }
+
+    return 0;
+}",0
+92,create a execution pub node,"#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import String
+
+def execute_publisher():
+    # Initialize the ROS node with a unique name
+    rospy.init_node('execution_publisher', anonymous=True)
+    
+    # Create a publisher object that publishes messages of type String on the topic 'execution_topic'
+    pub = rospy.Publisher('execution_topic', String, queue_size=10)
+    
+    # Set the publishing rate (1 Hz in this example)
+    rate = rospy.Rate(1)
+    
+    while not rospy.is_shutdown():
+        # Create a message to publish
+        message = ""Execution message""
+        
+        # Publish the message
+        pub.publish(message)
+        
+        # Log the published message
+        rospy.loginfo('Published: %s' % message)
+        
+        rate.sleep()
+
+if __name__ == '__main__':
+    try:
+        execute_publisher()
+    except rospy.ROSInterruptException:
+        pass",0
+95,generate a data execution pub node,"#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import String
+from sensor_msgs.msg import Imu
+import random
+
+class DataExecutionPubNode:
+    def __init__(self):
+        rospy.init_node('data_execution_publisher')
+        
+        # Publisher for IMU sensor data
+        self.imu_pub = rospy.Publisher('/imu/data', Imu, queue_size=10)
+
+    def publish_imu_data(self):
+        imu_msg = Imu()
+        imu_msg.header.stamp = rospy.Time.now()
+        imu_msg.header.frame_id = 'base_link'
+
+        # Generate random sensor data
+        imu_msg.linear_acceleration.x = random.uniform(-2.0, 2.0)
+        imu_msg.linear_acceleration.y = random.uniform(-2.0, 2.0)
+        imu_msg.linear_acceleration.z = random.uniform(9.0, 11.0)
+
+        imu_msg.angular_velocity.x = random.uniform(-1.0, 1.0)
+        imu_msg.angular_velocity.y = random.uniform(-1.0, 1.0)
+        imu_msg.angular_velocity.z = random.uniform(-1.0, 1.0)
+
+        # Publish the IMU data
+        self.imu_pub.publish(imu_msg)
+
+if __name__ == '__main__':
+    try:
+        node = DataExecutionPubNode()
+        rate = rospy.Rate(10)  # 10Hz
+
+        while not rospy.is_shutdown():
+            node.publish_imu_data()
+            rate.sleep()
+
+    except rospy.ROSInterruptException:
+        pass",0
+103,construct a execution ROS in,,0
+106,generate a execution robot publisher in data c++,"#include ""ros/ros.h""
+#include ""std_msgs/String.h""
+
+int main(int argc, char **argv)
+{
+    // Initialize the ROS node
+    ros::init(argc, argv, ""robot_publisher"");
+    ros::NodeHandle nh;
+
+    // Create a publisher for sending data
+    ros::Publisher data_pub = nh.advertise<std_msgs::String>(""robot_data"", 10);
+
+    // Set the publishing rate
+    ros::Rate loop_rate(1); // 1 Hz
+
+    int count = 0;
+    
+    while (ros::ok())
+    {
+        // Create a message object
+        std_msgs::String msg;
+        msg.data = ""Data-"" + std::to_string(count);
+
+        // Publish the message
+        data_pub.publish(msg);
+        
+        ROS_INFO(""Published: %s"", msg.data.c_str());
+
+        // Increment count
+        count++;
+
+        // Spin once to process callbacks
+        ros::spinOnce();
+
+        // Sleep to maintain the defined publishing rate
+        loop_rate.sleep();
+    }
+
+    return 0;
+}",9.18161985808361
+108,generate message a execution robot node,"#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import String
+
+class RobotNode:
+    def __init__(self):
+        rospy.init_node('robot_node', anonymous=True)
+        self.pub = rospy.Publisher('robot_execution', String, queue_size=10)
+        rospy.Subscriber('robot_commands', String, self.callback)
+    
+    def callback(self, data):
+        # Process the command received from the user
+        command = data.data
+        
+        # Execute the command and perform the required actions
+        # This is a placeholder and should be replaced with actual code
+        
+        # Publish the execution status
+        execution_status = ""Executed command: {}"".format(command)
+        self.pub.publish(execution_status)
+    
+    def run(self):
+        rate = rospy.Rate(10)  # 10Hz
+        while not rospy.is_shutdown():
+            # Perform any regular tasks here if needed
+            rate.sleep()
+
+if __name__ == '__main__':
+    robot_node = RobotNode()
+    try:
+        robot_node.run()
+    except rospy.ROSInterruptException:
+        pass",0
+114,generate a execution robot publisher for c++,"#include ""ros/ros.h""
+#include ""your_robot_msgs/RobotInfo.h"" // Include your custom message header
+#include <string>
+
+int main(int argc, char **argv) {
+    // Initialize the ROS node
+    ros::init(argc, argv, ""robot_publisher"");
+    ros::NodeHandle nh;
+
+    // Create a Publisher for publishing RobotInfo messages
+    ros::Publisher pub = nh.advertise<your_robot_msgs::RobotInfo>(""/robot_info"", 10);
+
+    ros::Rate loop_rate(1); // Loop rate: 1 Hz
+
+    int sequence_id = 0;
+
+    while (ros::ok()) {
+        // Create and populate a RobotInfo message
+        your_robot_msgs::RobotInfo robot_msg;
+        robot_msg.header.seq = sequence_id++;
+        robot_msg.header.stamp = ros::Time::now();
+        robot_msg.robot_name = ""MyRobot"";
+        robot_msg.robot_id = 12345;
+        robot_msg.status = ""Running"";
+
+        // Publish the message
+        pub.publish(robot_msg);
+
+        ROS_INFO(""Published RobotInfo message: ID %d, Name: %s, Status: %s"",
+                 robot_msg.robot_id, robot_msg.robot_name.c_str(), robot_msg.status.c_str());
+
+        ros::spinOnce();
+        loop_rate.sleep();
+    }
+
+    return 0;
+}",0
+119,develop a execution robot node,"#include <ros/ros.h>
+#include <std_msgs/String.h>
+
+class ExecutionRobotNode {
+public:
+    ExecutionRobotNode() {
+        cmd_sub_ = nh_.subscribe(""robot_commands"", 10, &ExecutionRobotNode::commandCallback, this);
+        status_pub_ = nh_.advertise<std_msgs::String>(""robot_status"", 10);
+    }
+
+    void commandCallback(const std_msgs::String::ConstPtr& msg) {
+        ROS_INFO(""Received command: %s"", msg->data.c_str());
+        
+        // Process the received command
+        std::string command = msg->data;
+        if (command == ""move_forward"") {
+            simulateMovement(""Moving forward..."");
+        } else if (command == ""turn_left"") {
+            simulateMovement(""Turning left..."");
+        } else if (command == ""turn_right"") {
+            simulateMovement(""Turning right..."");
+        } else {
+            ROS_WARN(""Unknown command received"");
+        }
+    }
+
+    void simulateMovement(const std::string& action) {
+        ROS_INFO(""%s"", action.c_str());
+        
+        // Simulating robot action here
+        ros::Duration(1.0).sleep(); // Simulate action taking 1 second
+        
+        // Publish status message
+        std_msgs::String status_msg;
+        status_msg.data = action;
+        status_pub_.publish(status_msg);
+    }
+
+private:
+    ros::NodeHandle nh_;
+    ros::Subscriber cmd_sub_;
+    ros::Publisher status_pub_;
+};
+
+int main(int argc, char **argv) {
+    ros::init(argc, argv, ""execution_robot_node"");
+    ExecutionRobotNode node;
+
+    ros::spin();
+
+    return 0;
+}",3.3592717162952064
+122,generate a c++ pub planning node,"#include <ros/ros.h>
+#include <std_msgs/Int32.h>
+
+int main(int argc, char **argv) {
+    ros::init(argc, argv, ""planning_publisher_node"");
+    ros::NodeHandle nh;
+
+    ros::Publisher planning_pub = nh.advertise<std_msgs::Int32>(""planning_data"", 10);
+
+    ros::Rate loop_rate(1); // Set the publishing rate to 1 Hz
+
+    int planning_data = 0;
+
+    while (ros::ok()) {
+        std_msgs::Int32 msg;
+        msg.data = planning_data;
+
+        planning_pub.publish(msg);
+
+        ROS_INFO(""Publishing planning data: %d"", planning_data);
+
+        planning_data++;
+
+        ros::spinOnce();
+        loop_rate.sleep();
+    }
+
+    return 0;
+}",9.675329521435167
+125,generate system a execution pub node,"#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import String
+
+def publish_data():
+    pub = rospy.Publisher('data_topic', String, queue_size=10)
+    rospy.init_node('publisher_node', anonymous=True)
+    rate = rospy.Rate(1)  # 1 Hz
+    while not rospy.is_shutdown():
+        data_to_publish = ""Hello, ROS!""
+        rospy.loginfo(""Publishing: %s"" % data_to_publish)
+        pub.publish(data_to_publish)
+        rate.sleep()
+
+if __name__ == '__main__':
+    try:
+        publish_data()
+    except rospy.ROSInterruptException:
+        pass",0
+130,node generate a execution robot ROS in c++,"#include ""ros/ros.h""
+#include ""std_msgs/String.h""
+
+class RobotExecutionNode {
+public:
+    RobotExecutionNode() {
+        // Initialize ROS node handle
+        ros::NodeHandle nh;
+
+        // Create a publisher for the robot execution topic
+        execution_pub_ = nh.advertise<std_msgs::String>(""robot_execution"", 10);
+
+        // Publish the execution message every 1 second
+        execution_timer_ = nh.createTimer(ros::Duration(1.0), &RobotExecutionNode::publishExecutionMsg, this);
+    }
+
+    void publishExecutionMsg(const ros::TimerEvent&) {
+        std_msgs::String msg;
+        msg.data = ""Executing robot task..."";
+
+        // Publish the message
+        execution_pub_.publish(msg);
+    }
+
+private:
+    ros::Publisher execution_pub_;
+    ros::Timer execution_timer_;
+};
+
+int main(int argc, char **argv) {
+    // Initialize the ROS node
+    ros::init(argc, argv, ""robot_execution_node"");
+
+    // Create an instance of the RobotExecutionNode class
+    RobotExecutionNode robot_node;
+
+    // Spin to handle callbacks
+    ros::spin();
+
+    return 0;
+}",9.285748889168595
+140,generate a execution robot node node,"#include ""ros/ros.h""
+#include ""geometry_msgs/Twist.h""
+
+class ExecutionRobotNode {
+private:
+    ros::NodeHandle nh;
+    ros::Subscriber cmd_vel_sub;
+
+public:
+    ExecutionRobotNode() {
+        cmd_vel_sub = nh.subscribe(""/cmd_vel"", 1, &ExecutionRobotNode::cmdVelCallback, this);
+    }
+
+    void cmdVelCallback(const geometry_msgs::Twist::ConstPtr& msg) {
+        // Parse the incoming Twist message and execute velocity commands
+        double linear_x = msg->linear.x;
+        double angular_z = msg->angular.z;
+
+        // Execute movement commands here, e.g., drive motors based on linear_x and angular_z values
+        // Insert your robot-specific code here
+        
+        ROS_INFO(""Received cmd_vel command - Linear: %f, Angular: %f"", linear_x, angular_z);
+    }
+};
+
+int main(int argc, char** argv) {
+    ros::init(argc, argv, ""execution_robot_node"");
+    
+    ExecutionRobotNode node;
+
+    ros::spin();
+
+    return 0;
+}",1.6029010448207277
+142,build a execution pub node,"#include ""ros/ros.h""
+#include ""std_msgs/String.h""
+
+int main(int argc, char **argv) {
+    // Initialize the ROS node
+    ros::init(argc, argv, ""execution_publisher"");
+    ros::NodeHandle nh;
+
+    // Create a publisher that publishes messages of type std_msgs::String on the ""execution_status"" topic
+    ros::Publisher pub = nh.advertise<std_msgs::String>(""execution_status"", 10);
+
+    // Set the publishing rate (in Hz)
+    ros::Rate rate(1); // 1 Hz
+
+    while (ros::ok()) {
+        std_msgs::String msg;
+        msg.data = ""Executing..."";
+
+        // Publish the message
+        pub.publish(msg);
+
+        // Spin once to handle callbacks
+        ros::spinOnce();
+
+        // Sleep for the remaining time to achieve the specified rate
+        rate.sleep();
+    }
+
+    return 0;
+}",9.207886551530205
+147,generate a execution automaton node,"#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import String
+
+# Define the Execution Automaton Node class
+class ExecutionAutomatonNode:
+    def __init__(self):
+        # Initialize the ROS node
+        rospy.init_node('execution_automaton_node', anonymous=True)
+        
+        # Subscribe to a topic to receive commands
+        self.command_subscriber = rospy.Subscriber('command_topic', String, self.command_callback)
+        
+        # Initialize other variables or resources as needed
+        
+        # Spin to keep the node running
+        rospy.spin()
+    
+    # Callback function to process received commands
+    def command_callback(self, data):
+        command = data.data
+        
+        # Process the command received
+        if command == 'start':
+            self.start_execution()
+        elif command == 'stop':
+            self.stop_execution()
+        else:
+            rospy.logwarn('Unknown command received: %s', command)
+    
+    # Function to start the execution process
+    def start_execution(self):
+        # Add your code to start the execution process here
+        rospy.loginfo('Execution started')
+    
+    # Function to stop the execution process
+    def stop_execution(self):
+        # Add your code to stop the execution process here
+        rospy.loginfo('Execution stopped')
+
+if __name__ == '__main__':
+    try:
+        # Create an instance of the Execution Automaton Node class
+        execution_automaton_node = ExecutionAutomatonNode()
+    except rospy.ROSInterruptException:
+        pass",0
+153,create a data execution pub node,"#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import Int32
+
+class DataExecutionPublisher:
+    def __init__(self):
+        rospy.init_node('data_execution_publisher', anonymous=True)
+        self.pub = rospy.Publisher('data_topic', Int32, queue_size=10)
+        self.rate = rospy.Rate(1)  # 1 Hz
+
+    def publish_data(self):
+        data_value = 0
+        
+        while not rospy.is_shutdown():
+            # Modify the data_value here according to your requirements
+            data_value += 1
+
+            self.pub.publish(data_value)
+            self.rate.sleep()
+
+if __name__ == '__main__':
+    try:
+        dep = DataExecutionPublisher()
+        dep.publish_data()
+    except rospy.ROSInterruptException:
+        pass",0
+165,generate a execution pub ROS in c++,"#include ""ros/ros.h""
+#include ""std_msgs/String.h""
+
+int main(int argc, char **argv)
+{
+    // Initialize the ROS node
+    ros::init(argc, argv, ""publisher_node"");
+
+    // Create a node handle
+    ros::NodeHandle nh;
+
+    // Create a publisher object
+    ros::Publisher pub = nh.advertise<std_msgs::String>(""chatter"", 10);
+
+    // Set the publishing rate (in Hz)
+    ros::Rate loop_rate(1); // 1 Hz
+
+    int count = 0;
+
+    while (ros::ok())
+    {
+        // Create a message object
+        std_msgs::String msg;
+        msg.data = ""Hello, ROS! "" + std::to_string(count);
+
+        // Publish the message
+        pub.publish(msg);
+
+        ROS_INFO(""Message sent: %s"", msg.data.c_str());
+
+        // Spin once
+        ros::spinOnce();
+
+        // Sleep for the remaining time to match the publishing rate
+        loop_rate.sleep();
+
+        count++;
+    }
+
+    return 0;
+}",9.211547692906123
+166,generate a execution navigation robot node,"#!/usr/bin/env python
+
+import rospy
+from geometry_msgs.msg import PoseStamped
+from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
+import actionlib
+
+class NavigationNode:
+    def __init__(self):
+        rospy.init_node('navigation_node', anonymous=True)
+        self.goal_sub = rospy.Subscriber('/navigation/goal', PoseStamped, self.goal_callback)
+        self.move_base_client = actionlib.SimpleActionClient('move_base', MoveBaseAction)
+        self.move_base_client.wait_for_server()
+
+    def goal_callback(self, msg):
+        goal = MoveBaseGoal()
+        goal.target_pose = msg
+        self.move_base_client.send_goal(goal)
+        self.move_base_client.wait_for_result()
+        rospy.loginfo(""Goal reached!"")
+
+if __name__ == '__main__':
+    try:
+        nav_node = NavigationNode()
+        rospy.spin()
+    except rospy.ROSInterruptException:
+        pass",0
+168,generate mapping a c++ pub node,"#include <ros/ros.h>
+#include <std_msgs/String.h>
+
+int main(int argc, char **argv) {
+    // Initialize the ROS node
+    ros::init(argc, argv, ""mapping_publisher"");
+    ros::NodeHandle nh;
+
+    // Create a publisher for mapping data
+    ros::Publisher mapping_pub = nh.advertise<std_msgs::String>(""mapping_data"", 10);
+
+    // Set the publishing rate (e.g., 1 Hz)
+    ros::Rate loop_rate(1);
+
+    while (ros::ok()) {
+        // Create a mapping data message
+        std_msgs::String msg;
+        msg.data = ""Mapping data: { }""; // Add your mapping data here
+
+        // Publish the mapping data
+        mapping_pub.publish(msg);
+
+        // Log the published data
+        ROS_INFO(""Published: %s"", msg.data.c_str());
+
+        // Spin once and sleep to maintain the publishing rate
+        ros::spinOnce();
+        loop_rate.sleep();
+    }
+
+    return 0;
+}",9.199935234871347
+170,create a c++ pub node,"#include ""ros/ros.h""
+#include ""your_custom_msgs/CustomMsg.h"" // Include your custom message header file
+
+int main(int argc, char **argv) {
+    ros::init(argc, argv, ""publisher_node""); // Initialize the node
+    ros::NodeHandle nh; // Create a NodeHandle
+
+    ros::Publisher pub = nh.advertise<your_custom_msgs::CustomMsg>(""custom_topic"", 10); // Create a publisher
+
+    ros::Rate loop_rate(10); // Set the publishing rate
+
+    int count = 0;
+    while (ros::ok()) {
+        your_custom_msgs::CustomMsg msg; // Create an instance of your custom message
+
+        // Fill in the message data
+        msg.data = count;
+
+        // Publish the message
+        pub.publish(msg);
+
+        ROS_INFO(""Published: %d"", msg.data);
+
+        ros::spinOnce(); // Process callbacks
+
+        loop_rate.sleep(); // Sleep for the rest of the cycle to meet the specified publishing rate
+        count++;
+    }
+
+    return 0;
+}",0
+171,generate a a c++ pub node,"#include ""ros/ros.h""
+#include ""std_msgs/Int32.h""
+
+int main(int argc, char **argv)
+{
+    ros::init(argc, argv, ""publisher_node"");
+    ros::NodeHandle nh;
+
+    ros::Publisher pub = nh.advertise<std_msgs::Int32>(""/counter"", 10);
+
+    ros::Rate loop_rate(1); // 1 Hz
+
+    int count = 0;
+    while (ros::ok())
+    {
+        std_msgs::Int32 msg;
+        msg.data = count;
+
+        pub.publish(msg);
+
+        ROS_INFO(""Counter: %d"", msg.data);
+
+        ros::spinOnce();
+        loop_rate.sleep();
+
+        count++;
+    }
+
+    return 0;
+}",6.929352794324716
+173,generate a execution robot publisher in c++,"#include ""ros/ros.h""
+#include ""std_msgs/String.h""
+
+int main(int argc, char **argv) {
+    // Initialize the ROS node
+    ros::init(argc, argv, ""robot_publisher"");
+
+    // Create a node handle
+    ros::NodeHandle nh;
+
+    // Create a publisher object
+    ros::Publisher pub = nh.advertise<std_msgs::String>(""robot_commands"", 10);
+
+    // Set the loop rate
+    ros::Rate loop_rate(1);  // 1 Hz
+
+    // Main loop
+    while (ros::ok()) {
+        // Create a message
+        std_msgs::String msg;
+        msg.data = ""Move forward"";
+
+        // Publish the message
+        pub.publish(msg);
+
+        // Log the published message
+        ROS_INFO(""Published: %s"", msg.data.c_str());
+
+        // Spin once
+        ros::spinOnce();
+
+        // Sleep to maintain the loop rate
+        loop_rate.sleep();
+    }
+
+    return 0;
+}",9.479211621109574
+177,produce a execution pub node,"#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import String
+
+def publish_data():
+    # Initialize ROS node with a unique name
+    rospy.init_node('data_publisher', anonymous=True)
+
+    # Create a publisher object that will publish to the 'data_topic' topic
+    pub = rospy.Publisher('data_topic', String, queue_size=10)
+
+    # Set the publishing rate (1 Hz)
+    rate = rospy.Rate(1)
+
+    while not rospy.is_shutdown():
+        # Publish a message with the current timestamp
+        data = ""Data: {}"".format(rospy.get_time())
+        rospy.loginfo(data)
+        pub.publish(data)
+        rate.sleep()
+
+if __name__ == '__main__':
+    try:
+        publish_data()
+    except rospy.ROSInterruptException:
+        pass",0
+179,generate a execution robot,"#!/usr/bin/env python
+
+import rospy
+from geometry_msgs.msg import Twist
+
+class MoveRobot:
+    def __init__(self):
+        rospy.init_node('move_robot_node', anonymous=True)
+        self.cmd_vel_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
+        self.rate = rospy.Rate(10)  # 10 Hz
+        self.move_forward()
+
+    def move_forward(self):
+        move_cmd = Twist()
+        move_cmd.linear.x = 0.2  # move forward at 0.2 m/s
+        duration = 5  # move for 5 seconds
+        start_time = rospy.Time.now().to_sec()
+
+        while rospy.Time.now().to_sec() - start_time < duration:
+            self.cmd_vel_pub.publish(move_cmd)
+            self.rate.sleep()
+
+        stop_cmd = Twist()  # stop moving
+        self.cmd_vel_pub.publish(stop_cmd)
+
+if __name__ == '__main__':
+    try:
+        MoveRobot()
+    except rospy.ROSInterruptException:
+        pass",0
+181,generate a execution navigation bot node,"#!/usr/bin/env python
+
+import rospy
+from geometry_msgs.msg import PoseStamped
+from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
+import actionlib
+
+class NavigationBot:
+    def __init__(self):
+        rospy.init_node('navigation_bot')
+        
+        # Subscribe to the goal topic
+        self.goal_sub = rospy.Subscriber('goal', PoseStamped, self.goal_callback)
+        
+        # Initialize action client for move_base
+        self.move_base_client = actionlib.SimpleActionClient('move_base', MoveBaseAction)
+        self.move_base_client.wait_for_server()
+        rospy.loginfo(""Connected to move_base server"")
+        
+    def goal_callback(self, goal_msg):
+        goal = MoveBaseGoal()
+        goal.target_pose = goal_msg
+        self.move_base_client.send_goal(goal, done_cb=self.goal_done_callback)
+        
+    def goal_done_callback(self, status, result):
+        if status == 3:  # SUCCEEDED
+            rospy.loginfo(""Goal reached successfully"")
+        else:
+            rospy.logwarn(""Failed to reach the goal"")
+
+if __name__ == '__main__':
+    try:
+        navigation_bot = NavigationBot()
+        rospy.spin()
+    except rospy.ROSInterruptException:
+        pass",0
+187,message generate a c++ pub node,"#include <ros/ros.h>
+#include <std_msgs/Int32.h>
+#include <cstdlib>
+
+int main(int argc, char** argv) {
+    // Initialize the ROS node
+    ros::init(argc, argv, ""number_publisher"");
+    ros::NodeHandle nh;
+
+    // Create a publisher for a topic ""random_number""
+    ros::Publisher pub = nh.advertise<std_msgs::Int32>(""random_number"", 10);
+
+    // Set the loop rate (publish frequency)
+    ros::Rate loop_rate(1); // 1 Hz
+
+    while (ros::ok()) {
+        // Create a message object
+        std_msgs::Int32 msg;
+
+        // Generate a random integer between 0 and 100
+        msg.data = rand() % 101;
+
+        // Publish the message
+        pub.publish(msg);
+
+        // Log the published message
+        ROS_INFO(""Published: %d"", msg.data);
+
+        // Spin once to process callbacks
+        ros::spinOnce();
+
+        // Sleep to maintain the specified publishing frequency
+        loop_rate.sleep();
+    }
+
+    return 0;
+}",9.14309028393312
+188,execution generate a execution robot node,"#!/usr/bin/env python
+
+import rospy
+
+class RobotNode:
+    def __init__(self):
+        rospy.init_node('robot_node', anonymous=True)
+        self.rate = rospy.Rate(10)  # 10Hz
+
+    def run(self):
+        while not rospy.is_shutdown():
+            # Add your robot control logic here
+            rospy.loginfo(""Robot is moving..."")
+            self.rate.sleep()
+
+if __name__ == '__main__':
+    try:
+        robot = RobotNode()
+        robot.run()
+    except rospy.ROSInterruptException:
+        pass",0
+194,generate message a c++ pub node,"#include ""ros/ros.h""
+#include ""your_package/CustomMessage.h""  // Include your custom message header
+
+int main(int argc, char **argv) {
+    ros::init(argc, argv, ""publisher_node"");
+    ros::NodeHandle nh;
+
+    // Publisher for custom message
+    ros::Publisher custom_pub = nh.advertise<your_package::CustomMessage>(""custom_topic"", 10);
+
+    ros::Rate loop_rate(10);
+
+    while (ros::ok()) {
+        your_package::CustomMessage msg;
+        
+        // Set data in the custom message
+        msg.name = ""ROS"";
+        msg.value = 123;
+
+        custom_pub.publish(msg);
+
+        ros::spinOnce();
+        loop_rate.sleep();
+    }
+
+    return 0;
+}",0
+199,generate a process execution robot node,"#!/usr/bin/env python
+
+import rospy
+from std_msgs.msg import String
+import subprocess
+
+class ProcessExecutionNode:
+    def __init__(self):
+        rospy.init_node('process_execution_node')
+
+        self.process_sub = rospy.Subscriber('/process_request', String, self.process_request_callback)
+        self.process_pub = rospy.Publisher('/process_output', String, queue_size=10)
+
+    def process_request_callback(self, data):
+        rospy.loginfo(""Received process request: {}"".format(data.data))
+
+        try:
+            output = subprocess.check_output(data.data, shell=True)
+            self.process_pub.publish(output)
+        except subprocess.CalledProcessError as e:
+            rospy.logerr(""Failed to execute process: {}"".format(e))
+            self.process_pub.publish(""Failed to execute process: {}"".format(e))
+
+if __name__ == '__main__':
+    try:
+        node = ProcessExecutionNode()
+        rospy.spin()
+    except rospy.ROSInterruptException:
+        pass",0
